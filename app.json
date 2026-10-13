@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Darsino",
+    "slug": "darsino",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "uz.darsino.app" },
+    "android": { "package": "uz.darsino.app" },
+    "web": { "bundler": "metro", "favicon": "./assets/icon.png" },
+    "plugins": ["expo-font"]
+  }
+}
