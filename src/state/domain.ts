@@ -13,6 +13,7 @@ export type User = {
   interests: string[];
   goal: string;
   onboarded: boolean;
+  avatarFileId?: string | null;
 };
 export type TutorProfile = {
   userId: string;
@@ -33,6 +34,7 @@ export type Offering = StudyGroup & {
   published: boolean;
   reservedSeats: number;
   enrolledCount?: number;
+  coverFileId?: string | null;
 };
 export type LessonSession = {
   id: string;
@@ -76,6 +78,43 @@ export type Message = {
   time: string;
   mine: boolean;
   file?: string;
+  attachmentIds?: string[];
+};
+export type FilePurpose =
+  "avatar" | "verification" | "chat" | "material" | "cover";
+export type FileAsset = {
+  id: string;
+  ownerId: string;
+  purpose: FilePurpose;
+  bucketId: string;
+  objectPath: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  state: "pending" | "ready" | "deleting" | "deleted";
+  conversationId: string | null;
+  offeringId: string | null;
+  createdAt: string;
+};
+export type TutorDocument = {
+  id: string;
+  tutorId: string;
+  fileId: string;
+  documentType: "certificate" | "diploma" | "other";
+  label: string;
+  status: "pending" | "approved" | "rejected";
+  reviewNote: string;
+  createdAt: string;
+  reviewedAt: string | null;
+};
+export type LessonFile = {
+  id: string;
+  offeringId: string;
+  sessionId: string | null;
+  fileId: string;
+  title: string;
+  published: boolean;
+  createdAt: string;
 };
 export type Attendance = {
   sessionId: string;
@@ -113,6 +152,9 @@ export type Marketplace = {
   reviews: Review[];
   notifications: AppNotification[];
   favorites: Record<string, string[]>;
+  files?: FileAsset[];
+  tutorDocuments?: TutorDocument[];
+  lessonFiles?: LessonFile[];
 };
 export type Filters = {
   subject: string;

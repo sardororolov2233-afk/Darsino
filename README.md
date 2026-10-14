@@ -58,40 +58,21 @@ Sinov rejimi haqiqiy autentifikatsiya va qurilmalararo aloqa uchun mo‘ljallanm
 
 ## Supabase bilan ishlash
 
-1. Supabase loyihasida [Phone Login](https://supabase.com/docs/guides/auth/phone-login) ni yoqing, SMS provayder va 6 xonali OTPni sozlang.
-2. `supabase/migrations/202610140001_marketplace.sql` ni loyiha SQL editorida qo‘llang yoki Supabase CLI orqali `supabase db push` ishlating.
-3. `.env.example` asosida `.env` yarating:
+To‘liq SQL va ishga tushirish yo‘riqnomasi: [supabase/README.md](supabase/README.md).
 
-```dotenv
-EXPO_PUBLIC_BACKEND_MODE=supabase
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-publishable-or-anon-key
-```
+1. Supabase SQL Editor’da [Darsino_Supabase_setup.sql](supabase/Darsino_Supabase_setup.sql) faylini to‘liq bajaring. U 16 ta jadval, 5 ta private Storage bucket, RLS, RPC, Auth trigger va Realtime’ni tayyorlaydi. Mavjud Darsino bazasini ma’lumotlarini saqlagan holda yangilash va qayta bajarish test qilingan.
+2. Authentication’da Phone Login, SMS provayder va 6 xonali OTPni sozlang.
+3. `.env.example` asosida `.env` yarating; rejimni `supabase` qilib, loyiha URL va publishable / anon kalitini yozing. Ilovaga **service_role / secret kalitini kiritmang**. Ilovani qayta boshlang.
+4. Moderator alohida akkauntda telefonini tasdiqlagach, [moderator SQL](supabase/admin/01_assign_moderator.sql) ichidagi `target` UUID’ni almashtirib bajaring. Demo telefonlar real bazada huquq bermaydi.
+5. [Healthcheck SQL](supabase/admin/02_healthcheck.sql) bilan sozlamalarni tekshiring. Live bazaga demo foydalanuvchilar yoki e’lonlar kiritilmaydi.
 
-Ilova ichiga **service_role kalitini kiritmang**. URL va ochiq kalit kerak. `supabase` rejimida ulanish yoki autentifikatsiya xatosi demo bazaga o‘tishga sabab bo‘lmaydi. `EXPO_PUBLIC_BACKEND_MODE=demo` bilan demo rejimini ochiq tanlash mumkin.
+Ilova asosiy amallar uchun `darsino_snapshot()` va `darsino_mutate(command)` ishlatadi. Yozish, sig‘im, ustoz tasdig‘i, narx, darslar ustma-ust kelishi va fikr qoldirish huquqi serverda tekshiriladi. Diplom / sertifikatni egasi va moderator, chatni suhbat qatnashchilari, materiallarni esa faol guruh a’zolari ko‘radi. Boshqa akkaunt telefoni berilmaydi.
 
-4. Moderator bo‘ladigan akkaunt telefonini tasdiqlasin. Keyin administrator SQL editorida uning haqiqiy `auth.users.id` qiymati bilan rol tayinlaydi:
+Storage uchun [fayl xizmati](src/services/files.ts) avatar, hujjat, chat fayli, material va muqovani yuklash / bog‘lash / signed URL olish / o‘chirishga tayyor. Fayl tanlash tugmalari mavjud UI’ga hali qo‘shilmagan; bu paket backend va klient xizmatini tayyorlaydi. Barcha bucketlar private; fayl ustiga yozish taqiqlangan.
 
-```sql
-update public.darsino_profiles
-set role = 'moderator', name = 'Darsino moderatori', onboarded = true
-where id = 'AUTH_USER_UUID';
-```
+Ariza, xabar va bildirishnomalar uchun Realtime ulanishi qo‘shilgan. Kanal uzilsa 15 soniyalik polling va qo‘lda yangilash qoladi. Masofaviy push yuborish xizmati hali ulanmagan; telefondagi dars eslatmalari mahalliy ishlaydi.
 
-Demo moderator telefoni real rejimda maxsus huquq bermaydi. Ilova mijozidan moderator rolini olish mumkin emas.
-
-5. Ilovani qayta boshlang. Yangi Supabase bazasida katalog bo‘sh bo‘ladi: repetitor ro‘yxatdan o‘tadi, moderator tasdiqlaydi, repetitor dars e’lon qiladi va o‘quvchi ariza yuboradi. Namuna katalog live ma’lumotlarga aralashtirilmaydi.
-
-### Ma’lumotlar va ruxsatlar
-
-`darsino_snapshot()` faqat kirgan akkauntga ruxsat etilgan ma’lumotlarni qaytaradi. `darsino_mutate(command)` amallarni serverda tekshiradi. Jadval, ariza, qatnashchi, davomat, fikr va suhbatlar alohida Postgres jadvallarida saqlanadi. Jadvallarda RLS yoqilgan va `anon` / `authenticated` rollariga to‘g‘ridan-to‘g‘ri yozish yoki o‘qish ruxsati berilmagan; autentifikatsiyalangan RPC orqali foydalaniladi.
-
-- Tasdiqlashni faqat shu darsning tasdiqlangan repetitori bajaradi. Guruh sig‘imi tranzaksiya va qator qulfi bilan tekshiriladi; bir o‘quvchi ikki marta qo‘shilmaydi.
-- Narx va dars nomi serverdagi e’londan olinadi. Bir vaqtdagi repetitor darslari ustma-ust tushmaydi.
-- Fikr tugagan va davomatda qatnashgan dars uchungina qabul qilinadi.
-- Diplom / sertifikat ma’lumoti va moderator izohi egasi va moderatorga ochiq. Boshqa foydalanuvchining telefoni, arizalari, davomati va shaxsiy chati berilmaydi. Repetitor o‘z arizachilari va qatnashchilari ismini ko‘radi; profilning ochiq fan/hudud ma’lumotlari suhbatdoshlarga ko‘rinadi.
-- Native autentifikatsiya sessiyasi SecureStore orqali OS keychainida saqlanadi; katta qiymatlar navbat bilan bo‘laklanadi. Webda SDK sessiyasi AsyncStorage / localStorage orqali saqlanadi. Live marketplace ma’lumoti demo keshiga yozilmaydi.
-- Ilova ochiq paytda ma’lumotlar 15 soniyada yangilanadi; arizalar va bildirishnomalarda qo‘lda yangilash ham bor. Bu bosqichda masofaviy push yuborish xizmati ulanmagan. Telefon eslatmalari foydalanuvchi yoqqan darslar uchun mahalliy ishlaydi; jadval yangilanganda qayta rejalashtiriladi, akkauntdan chiqqanda olib tashlanadi.
+Native Auth sessiyasi SecureStore orqali saqlanadi, webda SDK AsyncStorage / localStorage’dan foydalanadi. Live marketplace demo keshiga yozilmaydi; server xatosi demo rejimiga avtomatik o‘tishga sabab bo‘lmaydi.
 
 ## Tekshirish
 
@@ -103,7 +84,7 @@ npm run export:all
 npm run format:check
 ```
 
-`npm test` — immutable demo oqimi, Postgres RPC / cheklovlar va kesh / token saqlash testlari. SQL testlari PGlite orqali haqiqiy PostgreSQL funksiyalarini ishlatadi; Supabase SMS provayderini sinamaydi.
+`npm test` — demo oqimi, PostgreSQL RPC / RLS, Storage metadata ruxsatlari, SQL o‘rnatish / qayta bajarish, fayl klienti, Realtime cleanup va kesh / token testlari. PGlite testlari haqiqiy PostgreSQL funksiyalarini bajaradi, ammo Supabase SMS, binary Storage HTTP yoki WebSocket serverini sinamaydi.
 
 `npm run test:ui` — ilovaning eksport qilingan Expo web bundle’ini JSDOMda ishga tushirib, o‘quvchi → repetitor → o‘quvchi, chat / sessiya saqlanishi va yangi repetitor → moderator → dars yaratish oqimlarini tekshiradi. Font yuklash va layout observerlari stub qilingan; bu piksel yoki native qurilma testi emas.
 

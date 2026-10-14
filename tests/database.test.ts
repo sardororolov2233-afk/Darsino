@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { PGlite } from "@electric-sql/pglite";
+import { applyMigrations, supabaseFixture } from "./supabaseFixture";
 import type { MarketCommand } from "../src/state/domain";
 
 const ids = {
@@ -33,20 +32,9 @@ test(
   "Postgres RPC enforces the complete marketplace flow and data boundaries",
   { timeout: 60000 },
   async (t) => {
-    const db = new PGlite();
+    const db = await supabaseFixture();
     try {
-      await db.exec(
-        "create role anon; create role authenticated; create schema auth; create table auth.users(id uuid primary key,phone text); create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;",
-      );
-      await db.exec(
-        await readFile(
-          new URL(
-            "../supabase/migrations/202610140001_marketplace.sql",
-            import.meta.url,
-          ),
-          "utf8",
-        ),
-      );
+      await applyMigrations(db);
       for (const [index, id] of Object.values(ids).entries())
         await db.query("insert into auth.users(id,phone) values($1,$2)", [
           id,

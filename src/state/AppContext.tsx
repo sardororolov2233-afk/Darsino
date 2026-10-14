@@ -42,6 +42,7 @@ import {
   registerReminderHandler,
 } from "../services/reminders";
 import { migrateLegacyDemo, readDemoCache } from "./migration";
+import { subscribeToMarketplace } from "../services/realtime";
 
 const storageKey = "@darsino/marketplace-v2";
 type AppContextType = {
@@ -189,6 +190,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       refresh().catch((e) => setSyncError(e.message));
     };
     const timer = setInterval(sync, 15000);
+    const stopRealtime = subscribeToMarketplace(client, actorId, sync);
     const subscription = NativeAppState.addEventListener("change", (state) => {
       if (state === "active") {
         client.auth.startAutoRefresh();
@@ -206,6 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
     return () => {
       clearInterval(timer);
+      stopRealtime();
       subscription.remove();
       auth.data.subscription.unsubscribe();
     };

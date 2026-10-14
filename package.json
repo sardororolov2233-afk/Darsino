@@ -43,12 +43,14 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/domain.test.ts tests/database.test.ts tests/persistence.test.ts",
+    "test": "node --import tsx --test tests/domain.test.ts tests/database.test.ts tests/storage.test.ts tests/supabaseClient.test.ts tests/persistence.test.ts",
     "export:web": "expo export --platform web",
     "test:e2e": "playwright test",
     "export:all": "expo export --platform all --max-workers 1",
     "test:ui": "EXPO_PUBLIC_BACKEND_MODE=demo expo export --platform web --max-workers 1 && node --import tsx --test tests/ui.test.ts",
-    "format:check": "prettier --check App.tsx src tests README.md package.json app.json tsconfig.json playwright.config.ts"
+    "format:check": "prettier --check App.tsx src tests scripts README.md docs/*.md supabase/README.md package.json app.json tsconfig.json playwright.config.ts",
+    "supabase:bundle": "node scripts/build-supabase.mjs",
+    "supabase:check": "node scripts/build-supabase.mjs --check"
   },
   "private": true,
   "engines": {
