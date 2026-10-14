@@ -1,15 +1,15 @@
 # Darsino — Supabase bazasi va Storage
 
-Bu paket repodagi Expo ilovasiga mos: telefon orqali kirish, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
+Bu paket repodagi Expo ilovasiga mos: email kodi, Google yoki Apple orqali kirish, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
 
 **Asosiy fayl: [Darsino_Supabase_setup.sql](Darsino_Supabase_setup.sql).** Uni Supabase SQL Editor’da bir marta ishga tushiring. Fayl bo‘sh loyiha uchun bazani yaratadi; oldingi Darsino migratsiyasi qo‘llangan bo‘lsa, ma’lumotlarni saqlagan holda yangilaydi. Qayta ishga tushirish ham test qilingan. Begona yoki qisman yaratilgan Darsino sxemasini aniqlasa, tranzaksiya xato bilan to‘xtaydi.
 
-SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti va SMS provayder sozlamalari sizning loyihangizdan olinadi.
+SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti, Email/SMTP va OAuth provider sozlamalari sizning loyihangizdan olinadi.
 
 ## 1. O‘rnatish tartibi
 
 1. Supabase loyihasini oching. SQL Editor’da `Darsino_Supabase_setup.sql` faylining **to‘liq matnini** loyiha administratori sifatida ishga tushiring. Supabase’ning tayyor `auth` va `storage` sxemalari kerak; oddiy PostgreSQL bazasining o‘zi yetmaydi.
-2. Authentication’da Phone provider’ni yoqing, haqiqiy SMS provayderni ulang va OTP uzunligini **6** qilib sozlang. SQL SMS yuborish provayderini, uning kalitlarini yoki mobil push xizmatini avtomatik sozlamaydi. Dashboard’dagi test telefonlari faqat ishlab chiqish uchun.
+2. Authentication’da **Email** provider va email tasdiqlashni yoqing. Confirm signup hamda Magic Link email shablonlarida `{{ .Token }}` bo‘lsin: [templates/email-otp.html](templates/email-otp.html) matnini ishlatish mumkin. UI 6–8 xonali kodni qabul qiladi. Haqiqiy foydalanuvchilar uchun custom SMTP sozlang; Supabase default email xizmati ishlab chiqish cheklovlariga ega. Google va Apple’ni quyidagi sozlash bo‘limi bo‘yicha yoqing. SMS provider kerak emas.
 3. Repodagi `.env.example` faylidan `.env` yarating:
 
    ```dotenv
@@ -18,35 +18,44 @@ SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti
    EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_OR_ANON_KEY
    ```
 
-   Ilovaga publishable / anon kalit kiritiladi. **`service_role`, secret key, database paroli va SMS provayder kalitini ilovaga qo‘ymang.** `EXPO_PUBLIC_*` qiymatlar ilova to‘plamida ochiq bo‘ladi.
+   Ilovaga publishable / anon kalit kiritiladi. **`service_role`, secret key, database paroli va SMTP parolini ilovaga qo‘ymang.** `EXPO_PUBLIC_*` qiymatlar ilova to‘plamida ochiq bo‘ladi.
 
 4. Ilovani qayta boshlang: `npm run web` yoki `npx expo start --clear`. Ochiq terminal ishlab turgan bo‘lsa, uni to‘xtatib qayta ishga tushiring.
-5. Moderator uchun alohida telefon bilan ilovaga SMS orqali kiring. Supabase Authentication → Users’dan shu akkaunt UUID’sini oling. [admin/01_assign_moderator.sql](admin/01_assign_moderator.sql) ichidagi `target uuid := null` o‘rniga shu UUID’ni yozib, SQL Editor’da alohida bajaring. O‘zgartirilmagan fayl ataylab xato bilan to‘xtaydi; hech kimga tasodifan rol bermaydi.
+5. Moderator uchun alohida email bilan email kodi, Google yoki Apple orqali ilovaga kiring. Supabase Authentication → Users’dan shu akkaunt UUID’sini oling. [admin/01_assign_moderator.sql](admin/01_assign_moderator.sql) ichidagi `target uuid := null` o‘rniga shu UUID’ni yozib, SQL Editor’da alohida bajaring. O‘zgartirilmagan fayl ataylab xato bilan to‘xtaydi; hech kimga tasodifan rol bermaydi.
 6. [admin/02_healthcheck.sql](admin/02_healthcheck.sql) ni bajaring: 16 ta Darsino jadvalida RLS, 5 ta private bucket, 7 ta Storage policy, Auth trigger va Realtime’dagi 3 ta jadval ko‘rinadi. `*_core` hamda `owned_file` funksiyalarida `authenticated_allowed=false` bo‘lishi kerak.
 7. Haqiqiy ikki akkaunt bilan tekshiring: repetitor ro‘yxatdan o‘tadi → moderator tasdiqlaydi → repetitor dars yaratadi → o‘quvchi ariza yuboradi → ustoz tasdiqlaydi → «Darslarim»da guruh paydo bo‘ladi. Live bazaga demo ustozlar yoki soxta Auth akkauntlari kiritilmaydi.
 
-SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` uchta migratsiyani tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
+SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` to‘rtta migratsiyani tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
+
+## Google, Apple va email sozlamalari
+
+- Google Cloud’da Web OAuth client yarating. Authorized redirect URI: `https://YOUR_PROJECT.supabase.co/auth/v1/callback`. Client ID va Client Secret’ni Supabase → Authentication → Providers → Google’da kiriting. Mobil ilovada Google kirishi tizim brauzeri va PKCE orqali ishlaydi.
+- Apple Developer’da Sign in with Apple’ni yoqing. iOS native App ID / Bundle ID: `uz.darsino.app`; Supabase Apple provider Client IDs ro‘yxatiga shu ID’ni qo‘shing. Web / Android uchun alohida Apple Services ID, Team ID, Key ID va private key / client secret sozlang. Apple Return URL ham Supabase’ning yuqoridagi `/auth/v1/callback` manzili bo‘ladi. Apple client secret’ini uning muddatiga ko‘ra yangilash kerak.
+- Supabase → Authentication → URL Configuration’da web origin’ni (`http://localhost:8081/` va production HTTPS origin), hamda `darsino://auth/callback` qaytish manzilini ruxsat etilgan ro‘yxatga qo‘shing. Web ilova o‘z origin’ining `/` sahifasiga qaytadi. Mobil ilova `darsino` scheme’ini ishlatadi; Expo Go o‘rniga development build yoki EAS build kerak. Yangi native pluginlar uchun eski o‘rnatilgan buildni qayta yig‘ing.
+- iOS’da native Apple oynasi, boshqa platformalarda Apple OAuth ishlatiladi. Kod Supabase PKCE yoki Apple ID token orqali sessiya oladi; OAuth tokenlari mobil ilova kodiga yozilmaydi. Bekor qilingan kirish yangi akkaunt yoki sessiya yaratmaydi.
+- Provider credential’lari va SMTP sozlamalarini SQL yoqib bermaydi. Ular Supabase / Google / Apple kabinetlarida sozlanadi. Demo tugmalari real provider ishlashining testi emas.
+- Eski bazaga faqat [004 migratsiyani](migrations/202610140004_email_social_auth.sql) qo‘llash yetadi (001–003 oldin bajarilgan bo‘lsa); yoki yangi umumiy setup faylini qayta bajarish mumkin. Faqat telefonli eski Auth akkauntida tasdiqlangan email bo‘lishi kerak. Eski UUID’ni saqlash uchun shu Auth akkauntiga emailni Supabase’ning emailni tasdiqlash / identity linking oqimi orqali ulang; boshqa yangi akkauntni avtomatik birlashtirish yo‘q.
 
 ## 2. Jadvallar
 
-| Jadval                    | Vazifasi                                                                           |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| `darsino_profiles`        | Auth UUID, tasdiqlangan telefon, rol, ism, hudud, fanlar, maqsad, avatar, bloklash |
-| `darsino_tutors`          | Mutaxassislik, tajriba, tasdiqlash matni, narx, dars shakli va moderator qarori    |
-| `darsino_offerings`       | Guruh / individual e’lon, ustoz, sig‘im, narx va muqova                            |
-| `darsino_sessions`        | Aniq boshlanish / tugash vaqti va darsga bog‘lanish                                |
-| `darsino_applications`    | O‘quvchi arizasi, qaror, izoh va individual dars so‘rovi                           |
-| `darsino_enrollments`     | Tasdiqlangan a’zolik va faol / chiqarilgan holat                                   |
-| `darsino_attendance`      | Darsdagi har bir o‘quvchining davomati                                             |
-| `darsino_reviews`         | Tugagan, qatnashilgan dars uchun bir martalik baho va fikr                         |
-| `darsino_messages`        | O‘quvchi–repetitor shaxsiy xabarlari                                               |
-| `darsino_notifications`   | Shaxsiy ilova bildirishnomalari va o‘qilgan holati                                 |
-| `darsino_favorites`       | Saqlangan repetitorlar                                                             |
-| `darsino_files`           | Fayl egasi, private bucket / yo‘l, MIME, hajm, kontekst va yuklash holati          |
-| `darsino_tutor_documents` | Diplom / sertifikat fayli, tekshiruv holati va moderator izohi                     |
-| `darsino_message_files`   | Faylning aniq shaxsiy xabarga bog‘lanishi                                          |
-| `darsino_lesson_files`    | Dars / mashg‘ulot materiali va ko‘rinish holati                                    |
-| `darsino_catalog`         | Repodagi fan, hudud, maqsad va dars shakli uchun boshlang‘ich qiymatlar            |
+| Jadval                    | Vazifasi                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `darsino_profiles`        | Auth UUID, tasdiqlangan email, ixtiyoriy eski telefon, rol, ism, hudud, fanlar, maqsad, avatar, bloklash |
+| `darsino_tutors`          | Mutaxassislik, tajriba, tasdiqlash matni, narx, dars shakli va moderator qarori                          |
+| `darsino_offerings`       | Guruh / individual e’lon, ustoz, sig‘im, narx va muqova                                                  |
+| `darsino_sessions`        | Aniq boshlanish / tugash vaqti va darsga bog‘lanish                                                      |
+| `darsino_applications`    | O‘quvchi arizasi, qaror, izoh va individual dars so‘rovi                                                 |
+| `darsino_enrollments`     | Tasdiqlangan a’zolik va faol / chiqarilgan holat                                                         |
+| `darsino_attendance`      | Darsdagi har bir o‘quvchining davomati                                                                   |
+| `darsino_reviews`         | Tugagan, qatnashilgan dars uchun bir martalik baho va fikr                                               |
+| `darsino_messages`        | O‘quvchi–repetitor shaxsiy xabarlari                                                                     |
+| `darsino_notifications`   | Shaxsiy ilova bildirishnomalari va o‘qilgan holati                                                       |
+| `darsino_favorites`       | Saqlangan repetitorlar                                                                                   |
+| `darsino_files`           | Fayl egasi, private bucket / yo‘l, MIME, hajm, kontekst va yuklash holati                                |
+| `darsino_tutor_documents` | Diplom / sertifikat fayli, tekshiruv holati va moderator izohi                                           |
+| `darsino_message_files`   | Faylning aniq shaxsiy xabarga bog‘lanishi                                                                |
+| `darsino_lesson_files`    | Dars / mashg‘ulot materiali va ko‘rinish holati                                                          |
+| `darsino_catalog`         | Repodagi fan, hudud, maqsad va dars shakli uchun boshlang‘ich qiymatlar                                  |
 
 Profil va e’lonning matnli maydonlari mavjud ilova kontraktini saqlash uchun `data jsonb` ichida qolgan; egalar, vaqtlar, rollar, arizalar va a’zolik alohida ustunlar / tashqi kalitlar orqali boshqariladi. Katalog boshlang‘ich qiymatlari mavjud UI satrlariga mos. UI hozir mavjud ro‘yxatlarini ishlatadi; `darsino_get_catalog()` yangi boshqariladigan forma uchun tayyor.
 
@@ -70,7 +79,7 @@ Bir akkauntda 1000 ta o‘chirilmagan fayl, oxirgi soatda ko‘pi bilan 20 ta oc
 
 ## 4. Fayl API’sidan foydalanish
 
-Ilovadagi tayyor klient: `src/services/files.ts`. Mavjud ekranlarda fayl tanlash tugmalari hali qo‘shilmagan; bu paket SQL, ruxsatlar, turlar va ulash xizmatini tayyorlaydi. Picker tanlangan faylni `ArrayBuffer`ga aylantirib ushbu xizmatga uzatadi. React Native uchun `Blob` / `FormData` o‘rniga `ArrayBuffer` ishlatiladi.
+Ilovadagi tayyor klient: `src/services/files.ts`. Profil va profilni tahrirlash ekranlarida avatar pickeri ulangan: rasm tanlanadi, markazdan kvadrat kesiladi, 512×512 JPEG tayyorlanadi, oldindan ko‘rsatiladi va alohida saqlash tugmasi orqali yuklanadi. Bekor qilish va rasmni olib tashlash ham bor. Ustoz kartasi, shaxsiy profil, chat va qatnashchilar rasmlari shu avatardan olinadi. Boshqa fayl turlari uchun klient xizmati tayyor, ularning picker ekranlari keyingi bosqichda. Picker tanlangan faylni `ArrayBuffer`ga aylantirib ushbu xizmatga uzatadi. React Native uchun `Blob` / `FormData` o‘rniga `ArrayBuffer` ishlatiladi.
 
 ```ts
 import { createFileService } from "./src/services/files";
@@ -115,8 +124,8 @@ Signed URL maxfiy havola sifatida ko‘riladi: uni DB, log yoki doimiy keshga yo
 
 ## 5. Ruxsatlar va Realtime
 
-- Auth trigger profilni `student` sifatida yaratadi va telefon tasdiqlanganda sinxronlaydi. User metadata’dagi `role` qabul qilinmaydi. Tasdiqlanmagan telefon yoki administrator `darsino_profiles.is_suspended=true` qilgan akkaunt RPC / fayllardan foydalana olmaydi.
-- `darsino_snapshot()` va `darsino_mutate(command)` mavjud ilova kontraktini saqlaydi. Qo‘shimcha `files`, `tutorDocuments`, `lessonFiles`, `avatarFileId`, `coverFileId`, `attachmentIds` keladi; snapshotda signed URL saqlanmaydi.
+- Auth trigger profilni `student` sifatida yaratadi va tasdiqlangan emailni sinxronlaydi. User metadata’dagi `role` qabul qilinmaydi. Tasdiqlanmagan email yoki administrator `darsino_profiles.is_suspended=true` qilgan akkaunt RPC / fayllardan foydalana olmaydi.
+- `darsino_snapshot()` va `darsino_mutate(command)` mavjud ilova kontraktini saqlaydi. Qo‘shimcha `files`, `tutorDocuments`, `lessonFiles`, `avatarFileId`, `coverFileId`, `attachmentIds`, faqat o‘z foydalanuvchisida `email` keladi; snapshotda signed URL saqlanmaydi.
 - Barcha 16 jadvalda RLS yoqilgan. Klient to‘g‘ridan-to‘g‘ri yozmaydi. Faqat notifications, messages va enrollments jadvallarida akkauntga tegishli `SELECT` bor; bu Realtime uchun. Qolgan ma’lumotlar vakolatlarni tekshiradigan RPC orqali olinadi.
 - `darsino_snapshot_core`, `darsino_mutate_core` va ichki yordamchilarning bajarilish ruxsati klientdan olib tashlangan. Moderator roli faqat administrator SQL orqali beriladi.
 - Storage’da ruxsat beruvchi policy bilan birga 4 ta restrictive guard bor. Boshqa ilovaning keng policy’si Darsino bucketlarini ochib yubormaydi; bu guardlar boshqa bucketlarning o‘z ruxsatlarini o‘zgartirmaydi. Data API exposed schemas ro‘yxatiga `auth` yoki `storage`ni qo‘shmang.
@@ -125,14 +134,15 @@ Signed URL maxfiy havola sifatida ko‘riladi: uni DB, log yoki doimiy keshga yo
 
 ## 6. Migratsiyalar va tekshirish
 
-| Fayl                                       | Tarkibi                                                                                                  |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `migrations/202610140001_marketplace.sql`  | Oldingi 11 asosiy jadval va marketplace RPC; tarixi o‘zgartirilmagan                                     |
-| `migrations/202610140002_storage.sql`      | Auth trigger, faol akkaunt nazorati, 4 fayl jadvali, private bucketlar, Storage RLS, upload / delete RPC |
-| `migrations/202610140003_api_realtime.sql` | Fayl bog‘lash, snapshot, katalog, moderator hujjat qarori va Realtime                                    |
-| `Darsino_Supabase_setup.sql`               | Uchala migratsiyadan generatsiya qilinadigan SQL Editor fayli                                            |
-| `admin/01_assign_moderator.sql`            | Aniq tasdiqlangan akkauntga moderator berish                                                             |
-| `admin/02_healthcheck.sql`                 | Faqat o‘qiydigan sozlama va qolib ketgan rezerv diagnostikasi                                            |
+| Fayl                                            | Tarkibi                                                                                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `migrations/202610140001_marketplace.sql`       | Oldingi 11 asosiy jadval va marketplace RPC; tarixi o‘zgartirilmagan                                               |
+| `migrations/202610140002_storage.sql`           | Dastlabki Auth trigger, faol akkaunt nazorati, 4 fayl jadvali, private bucketlar, Storage RLS, upload / delete RPC |
+| `migrations/202610140003_api_realtime.sql`      | Fayl bog‘lash, snapshot, katalog, moderator hujjat qarori va Realtime                                              |
+| `migrations/202610140004_email_social_auth.sql` | Email/Google/Apple kirishi, telefon talabini olib tashlash va email maxfiyligi                                     |
+| `Darsino_Supabase_setup.sql`                    | To‘rtta migratsiyadan generatsiya qilinadigan SQL Editor fayli                                                     |
+| `admin/01_assign_moderator.sql`                 | Aniq tasdiqlangan akkauntga moderator berish                                                                       |
+| `admin/02_healthcheck.sql`                      | Faqat o‘qiydigan sozlama va qolib ketgan rezerv diagnostikasi                                                      |
 
 ```bash
 npm ci
@@ -145,6 +155,6 @@ npm run export:all
 npm run format:check
 ```
 
-PostgreSQL funksiyalari, haqiqiy RLS va tranzaksiyalar PGlite’da tekshiriladi. Testdagi Supabase `auth` / `storage` jadvallari minimal fixture; ular haqiqiy SMS, Storage binary HTTP, signed URL yuklab olish yoki Realtime WebSocket serverini ishga tushirmaydi. Fayl klienti va Realtime unsubscribe / refresh tartibi alohida stub testlarda tekshiriladi. Production loyiha sozlangach, haqiqiy ikki akkaunt va fayl bilan shu oqimni qo‘shimcha tekshiring.
+PostgreSQL funksiyalari, haqiqiy RLS va tranzaksiyalar PGlite’da tekshiriladi. Testdagi Supabase `auth` / `storage` jadvallari minimal fixture; ular haqiqiy Email/OAuth, Storage binary HTTP, signed URL yuklab olish yoki Realtime WebSocket serverini ishga tushirmaydi. Fayl klienti va Realtime unsubscribe / refresh tartibi alohida stub testlarda tekshiriladi. Production loyiha sozlangach, haqiqiy ikki akkaunt va fayl bilan shu oqimni qo‘shimcha tekshiring.
 
-Rasmiy manbalar: [Phone Auth](https://supabase.com/docs/guides/auth/phone-login), [Auth users](https://supabase.com/docs/guides/auth/users), [Storage RLS](https://supabase.com/docs/guides/storage/security/access-control), [Storage schema](https://supabase.com/docs/guides/storage/schema/design), [ArrayBuffer upload](https://supabase.com/docs/reference/javascript/storage-from-upload), [Realtime Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes).
+Rasmiy manbalar: [Email OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless), [Auth users](https://supabase.com/docs/guides/auth/users), [Storage RLS](https://supabase.com/docs/guides/storage/security/access-control), [Storage schema](https://supabase.com/docs/guides/storage/schema/design), [ArrayBuffer upload](https://supabase.com/docs/reference/javascript/storage-from-upload), [Realtime Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes).

@@ -3,8 +3,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 export type RootStackParamList = {
   Splash: undefined;
   Welcome: undefined;
-  Phone: undefined;
-  Verify: undefined;
+  SignIn: undefined;
+  VerifyEmail: undefined;
   Setup: undefined;
   Main:
     | {

@@ -1,4 +1,4 @@
--- Run separately in the Supabase SQL Editor AFTER this person signs in by SMS.
+-- Run separately in the Supabase SQL Editor AFTER this person signs in by email, Google or Apple.
 -- Replace NULL with the verified user's auth.users.id, in single quotes.
 -- This is an administrator operation, never a client RPC or an Auth metadata role.
 begin;
@@ -6,8 +6,8 @@ do $$
 declare target uuid := null; -- Example syntax: '00000000-0000-4000-8000-000000000000'
 begin
   if target is null then raise exception 'Replace target UUID with your verified moderator Auth user ID.'; end if;
-  if not exists(select 1 from auth.users where id=target and phone_confirmed_at is not null and nullif(phone,'') is not null) then
-    raise exception 'Moderator must first verify a phone number using Supabase Auth.';
+  if not exists(select 1 from auth.users where id=target and email_confirmed_at is not null and nullif(email,'') is not null) then
+    raise exception 'Moderator must first verify an email using Supabase Auth.';
   end if;
   -- Do not convert an active tutor/student account and orphan its existing role data.
   if exists(select 1 from public.darsino_tutors where user_id=target)

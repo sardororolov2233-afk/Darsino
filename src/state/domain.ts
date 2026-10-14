@@ -7,6 +7,7 @@ export type User = {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   city: string;
   area: string;
   role: Role;
@@ -14,6 +15,7 @@ export type User = {
   goal: string;
   onboarded: boolean;
   avatarFileId?: string | null;
+  demoAvatarUri?: string;
 };
 export type TutorProfile = {
   userId: string;
@@ -235,6 +237,7 @@ export const blankUser: User = {
   id: "",
   name: "",
   phone: "",
+  email: "",
   city: "Toshkent",
   area: "Yunusobod",
   role: "student",

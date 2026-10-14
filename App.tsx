@@ -19,8 +19,8 @@ import type { RootStackParamList } from "./src/navigation";
 import {
   SplashScreen,
   WelcomeScreen,
-  PhoneScreen,
-  VerifyScreen,
+  SignInScreen,
+  VerifyEmailScreen,
   SetupScreen,
 } from "./src/screens/AuthScreens";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -221,8 +221,8 @@ function Navigator() {
           <Stack.Group navigationKey="auth">
             <Stack.Screen name="Splash" component={SplashScreen} />
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="Phone" component={PhoneScreen} />
-            <Stack.Screen name="Verify" component={VerifyScreen} />
+            <Stack.Screen name="SignIn" component={SignInScreen} />
+            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
           </Stack.Group>
         ) : !signedIn ? (
           <Stack.Group navigationKey="onboarding">

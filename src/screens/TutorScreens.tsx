@@ -3,7 +3,6 @@ import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   AppText,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -33,6 +32,7 @@ import {
 import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
 import { C } from "../theme";
+import { UserAvatar } from "../components/UserAvatar";
 
 export function TutorHomeScreen() {
   const { user, market, requests, notifications } = useApp(),
@@ -153,7 +153,10 @@ function ApplicationDecisionCard({ request }: { request: BookingRequest }) {
   return (
     <Card>
       <View style={uiStyles.row}>
-        <Avatar initials={initials(student?.name || "O‘quvchi")} />
+        <UserAvatar
+          userId={student?.id}
+          initials={initials(student?.name || "O‘quvchi")}
+        />
         <View style={{ flex: 1 }}>
           <AppText variant="heading">{student?.name || "O‘quvchi"}</AppText>
           <AppText variant="caption" color={C.muted}>
@@ -724,7 +727,10 @@ export function ManageClassScreen({
         return (
           <Card key={e.id}>
             <View style={uiStyles.row}>
-              <Avatar initials={initials(student?.name || "O‘quvchi")} />
+              <UserAvatar
+                userId={student?.id}
+                initials={initials(student?.name || "O‘quvchi")}
+              />
               <View style={{ flex: 1 }}>
                 <AppText variant="heading">
                   {student?.name || "O‘quvchi"}
@@ -878,7 +884,10 @@ export function ModerationScreen() {
                 }
               >
                 <View style={uiStyles.row}>
-                  <Avatar initials={initials(tutor?.name || "Repetitor")} />
+                  <UserAvatar
+                    userId={tutor?.id}
+                    initials={initials(tutor?.name || "Repetitor")}
+                  />
                   <View style={{ flex: 1 }}>
                     <AppText variant="heading">{tutor?.name}</AppText>
                     <AppText color={C.muted}>{p.subjects.join(" · ")}</AppText>

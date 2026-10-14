@@ -3,7 +3,6 @@ import { Linking, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   AppText,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -33,6 +32,8 @@ import { initials } from "../state/model";
 import { scheduleReminder } from "../services/reminders";
 import { TutorCard, money } from "./DiscoveryScreens";
 import { C } from "../theme";
+import { UserAvatar } from "../components/UserAvatar";
+import { AvatarEditor } from "../components/AvatarEditor";
 
 export function RequestCard({ request }: { request: BookingRequest }) {
   const navigation = useAppNavigation();
@@ -429,7 +430,13 @@ export function ChatsScreen() {
             onPress={() => navigation.navigate("Conversation", { id })}
           >
             <View style={uiStyles.row}>
-              <Avatar initials={initials(name)} />
+              <UserAvatar
+                userId={id
+                  .split(":")
+                  .slice(1)
+                  .find((uid) => uid !== user.id)}
+                initials={initials(name)}
+              />
               <View style={{ flex: 1, gap: 4 }}>
                 <AppText variant="heading">{name}</AppText>
                 <AppText variant="caption" numberOfLines={1} color={C.muted}>
@@ -691,9 +698,11 @@ export function ProfileScreen() {
         }
       />
       <Card style={{ alignItems: "center", padding: 24 }}>
-        <Avatar initials={initials(user.name)} size={88} />
+        <AvatarEditor />
         <AppText variant="title">{user.name}</AppText>
-        <AppText color={C.muted}>{user.phone}</AppText>
+        <AppText color={C.muted} style={{ textAlign: "center" }}>
+          {user.email || ""}
+        </AppText>
         <Chip
           label={
             user.role === "student"
@@ -770,7 +779,7 @@ export function ProfileScreen() {
       ) : null}
       <AppText variant="caption" color={C.muted}>
         {mode === "demo"
-          ? "Sinov rejimi · ma’lumotlar shu qurilmada saqlanadi. Boshqa rolni tekshirish uchun hisobdan chiqib, o‘sha akkaunt raqami bilan kiring."
+          ? "Sinov rejimi · ma’lumotlar shu qurilmada saqlanadi. Boshqa rolni tekshirish uchun hisobdan chiqib, o‘sha akkaunt emaili bilan kiring."
           : "Supabase ulangan · ma’lumotlar akkauntingiz bilan sinxronlanadi."}
       </AppText>
       <Feedback
@@ -838,6 +847,9 @@ export function EditProfileScreen() {
       }
     >
       <Header title="Profilni tahrirlash" onBack={() => navigation.goBack()} />
+      <Card>
+        <AvatarEditor />
+      </Card>
       <Field label="Ism va familiya" value={name} onChangeText={setName} />
       <Field label="Shahar" value={city} onChangeText={setCity} />
       <Field label="Hudud" value={area} onChangeText={setArea} />

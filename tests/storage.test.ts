@@ -48,7 +48,7 @@ test(
         unconfirmed,
       ].entries())
         await db.query(
-          "insert into auth.users(id,phone,phone_confirmed_at,raw_user_meta_data) values($1,$2,$3,$4)",
+          "insert into auth.users(id,phone,email_confirmed_at,raw_user_meta_data) values($1,$2,$3,$4)",
           [
             id,
             `99890123456${i}`,
@@ -162,7 +162,7 @@ test(
           );
           await assert.rejects(
             rpc(unconfirmed, "darsino_snapshot"),
-            /Tasdiqlangan telefon/,
+            /Tasdiqlangan email/,
           );
           await assert.rejects(
             rpc(student, "darsino_snapshot_core"),

@@ -9,6 +9,8 @@ import {
 export const DEMO_CODE = "421806";
 export const DEMO_TUTOR_PHONE = "+998901111111";
 export const DEMO_MODERATOR_PHONE = "+998900000001";
+export const DEMO_TUTOR_EMAIL = "dilnoza@darsino.demo";
+export const DEMO_MODERATOR_EMAIL = "moderator@darsino.demo";
 export function emptyMarketplace(): Marketplace {
   return {
     version: 2,
@@ -32,6 +34,7 @@ export function demoMarketplace(): Marketplace {
     id: t.id,
     name: t.name,
     phone: i === 0 ? DEMO_TUTOR_PHONE : `+99890111111${i + 1}`,
+    email: i === 0 ? DEMO_TUTOR_EMAIL : `${t.id}@darsino.demo`,
     area: t.area,
     role: "tutor",
     interests: [t.subject],
@@ -42,6 +45,7 @@ export function demoMarketplace(): Marketplace {
     id: "demo-moderator",
     name: "Darsino moderatori",
     phone: DEMO_MODERATOR_PHONE,
+    email: DEMO_MODERATOR_EMAIL,
     role: "moderator",
     onboarded: true,
   });
@@ -90,6 +94,40 @@ export function demoAccount(
     id: `user-${phone.replace(/\D/g, "")}`,
     phone,
     role: requestedRole === "moderator" ? "student" : requestedRole,
+  };
+  return { market: { ...m, users: [...m.users, user] }, user };
+}
+export function demoEmailAccount(
+  m: Marketplace,
+  email: string,
+  requestedRole: User["role"],
+) {
+  const normalized = email.trim().toLowerCase();
+  // Existing device caches retain their teacher/moderator IDs and relationships.
+  const existing =
+    m.users.find((u) => u.email?.toLowerCase() === normalized) ||
+    m.users.find((u) =>
+      normalized === DEMO_TUTOR_EMAIL
+        ? u.phone === DEMO_TUTOR_PHONE
+        : normalized === DEMO_MODERATOR_EMAIL
+          ? u.phone === DEMO_MODERATOR_PHONE
+          : false,
+    );
+  if (existing) {
+    const user = { ...existing, email: normalized };
+    return {
+      user,
+      market: {
+        ...m,
+        users: m.users.map((u) => (u.id === user.id ? user : u)),
+      },
+    };
+  }
+  const user: User = {
+    ...blankUser,
+    id: `email-${normalized}`,
+    email: normalized,
+    role: requestedRole === "tutor" ? "tutor" : "student",
   };
   return { market: { ...m, users: [...m.users, user] }, user };
 }

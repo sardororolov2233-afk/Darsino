@@ -25,10 +25,11 @@ import { useAppNavigation } from "../navigation";
 import { useApp } from "../state/AppContext";
 import {
   DEMO_CODE,
-  DEMO_MODERATOR_PHONE,
-  DEMO_TUTOR_PHONE,
+  DEMO_MODERATOR_EMAIL,
+  DEMO_TUTOR_EMAIL,
 } from "../state/demo";
 import { C } from "../theme";
+import { ProviderButtons } from "../components/ProviderButtons";
 
 export function SplashScreen() {
   const navigation = useAppNavigation();
@@ -54,7 +55,7 @@ export function WelcomeScreen() {
           title="Boshlash"
           icon="arrow-right"
           variant="gold"
-          onPress={() => navigation.navigate("Phone")}
+          onPress={() => navigation.navigate("SignIn")}
         />
       }
     >
@@ -83,79 +84,92 @@ export function WelcomeScreen() {
       </View>
       {mode === "demo" ? (
         <AppText variant="caption" color={C.muted}>
-          Sinov rejimi · SMS kodi {DEMO_CODE}. Repetitor: {DEMO_TUTOR_PHONE};
-          moderator: {DEMO_MODERATOR_PHONE}. Boshqa raqam bilan yangi akkaunt
+          Sinov rejimi · email kodi {DEMO_CODE}. Repetitor: {DEMO_TUTOR_EMAIL};
+          moderator: {DEMO_MODERATOR_EMAIL}. Boshqa email bilan yangi akkaunt
           ochiladi.
         </AppText>
       ) : null}
     </Screen>
   );
 }
-export function PhoneScreen() {
+export function SignInScreen() {
   const navigation = useAppNavigation();
-  const { user, mode, requestCode } = useApp();
-  const [phone, setPhone] = useState(user.phone.replace(/^\+998/, ""));
+  const { user, mode, requestCode, signInWithProvider, syncError } = useApp();
+  const [email, setEmail] = useState(user.email || "");
   const action = useAction();
-  function next() {
+  const next = () =>
     action.run(
-      async () => {
-        const digits = phone.replace(/\D/g, "");
-        if (
-          digits.length !== 9 &&
-          !(digits.length === 12 && digits.startsWith("998"))
-        )
-          throw new Error("Telefon raqamingizni 9 ta raqam bilan kiriting.");
-        await requestCode(`+${digits.length === 9 ? "998" : ""}${digits}`);
-      },
-      () => navigation.navigate("Verify"),
+      () => requestCode(email),
+      () => navigation.navigate("VerifyEmail"),
     );
-  }
   return (
     <Screen
       background={C.white}
       bottom={
-        <Button title="Davom etish" loading={action.busy} onPress={next} />
+        <Button
+          title="Emailga kod yuborish"
+          icon="mail"
+          loading={action.busy}
+          onPress={next}
+        />
       }
     >
       <Header
-        title="Telefon orqali kirish"
+        title="Kirish yoki ro‘yxatdan o‘tish"
         onBack={() => navigation.goBack()}
       />
       <View style={styles.symbol}>
-        <Icon name="smartphone" size={32} />
+        <Icon name="log-in" size={30} />
       </View>
-      <AppText variant="display">
-        Birinchi qadam —{`\n`}telefon raqamingiz.
-      </AppText>
+      <AppText variant="display">Darsinoga{`\n`}xush kelibsiz.</AppText>
       <AppText color={C.muted}>
-        {mode === "demo"
-          ? "Sinov kodi bilan ilova oqimini tekshiring."
-          : "Raqamingizga SMS tasdiqlash kodi yuboramiz."}
+        Google yoki Apple akkauntingiz bilan davom eting. Email orqali ham tez
+        kirishingiz mumkin.
       </AppText>
-      <View style={uiStyles.row}>
-        <AppText variant="heading">+998</AppText>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Telefon raqamingiz"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            autoComplete="tel"
-            placeholder="90 123 45 67"
-          />
-        </View>
+      <ProviderButtons
+        demo={mode === "demo"}
+        busy={action.busy}
+        onPress={(provider) => action.run(() => signInWithProvider(provider))}
+      />
+      <View style={[uiStyles.row, { marginVertical: 6 }]}>
+        <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
+        <AppText variant="caption" color={C.muted}>
+          yoki email orqali
+        </AppText>
+        <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
       </View>
-      <Feedback {...action} />
+      <Field
+        label="Email manzilingiz"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="ism@example.com"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        autoCapitalize="none"
+        autoCorrect={false}
+        onSubmitEditing={next}
+        returnKeyType="send"
+      />
       <AppText variant="caption" color={C.muted}>
-        Avval ro‘yxatdan o‘tgan bo‘lsangiz, shu raqam bilan akkauntingizga
-        qaytasiz.
+        Parol kerak emas. Emailingizga bir martalik tasdiqlash kodi yuboramiz.
+        Mavjud akkauntingiz bo‘lsa, shu email bilan qaytasiz.
       </AppText>
+      <Feedback error={action.error || syncError} />
+      {mode === "demo" ? (
+        <Card style={{ backgroundColor: C.goldSoft }}>
+          <AppText variant="caption">
+            Sinov rejimi: email yuborilmaydi, kod {DEMO_CODE}. Google va Apple
+            tugmalari ham sinov akkauntini ochadi.
+          </AppText>
+        </Card>
+      ) : null}
     </Screen>
   );
 }
-export function VerifyScreen() {
+export function VerifyEmailScreen() {
   const navigation = useAppNavigation();
-  const { user, mode, requestCode, verifyCode } = useApp();
+  const { user, mode, requestCode, verifyCode, syncError } = useApp();
   const [code, setCode] = useState("");
   const [remaining, setRemaining] = useState(60);
   const action = useAction();
@@ -173,36 +187,40 @@ export function VerifyScreen() {
           loading={action.busy}
           onPress={() =>
             action.run(async () => {
-              if (code.length !== 6)
-                throw new Error("6 xonali kodni kiriting.");
+              if (!/^\d{6,8}$/.test(code))
+                throw new Error("Emaildagi 6–8 xonali kodni kiriting.");
               return verifyCode(code);
             })
           }
         />
       }
     >
-      <Header title="Raqamni tasdiqlash" onBack={() => navigation.goBack()} />
+      <Header title="Emailni tasdiqlash" onBack={() => navigation.goBack()} />
       <View style={styles.symbol}>
-        <Icon name="shield" size={32} />
+        <Icon name="mail" size={32} />
       </View>
-      <AppText variant="display">Tasdiqlash kodini{`\n`}kiriting.</AppText>
+      <AppText variant="display">Emailingizni{`\n`}tekshiring.</AppText>
       <AppText color={C.muted}>
-        {user.phone}{" "}
+        {user.email}{" "}
         {mode === "demo"
           ? `· sinov kodi ${DEMO_CODE}`
-          : "raqamiga yuborilgan kod."}
+          : "manziliga yuborilgan kodni kiriting."}
       </AppText>
       <Field
-        label="SMS tasdiqlash kodi"
+        label="Email tasdiqlash kodi"
         value={code}
-        onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 6))}
+        onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 8))}
         keyboardType="number-pad"
-        autoComplete="sms-otp"
+        autoComplete="one-time-code"
         textContentType="oneTimeCode"
-        maxLength={6}
-        style={{ fontSize: 26, letterSpacing: 12, textAlign: "center" }}
+        maxLength={8}
+        style={{ fontSize: 24, letterSpacing: 5, textAlign: "center" }}
       />
-      <Feedback {...action} />
+      <Feedback error={action.error || syncError} />
+      <AppText variant="caption" color={C.muted}>
+        Xat ko‘rinmasa, Spam jildini tekshiring. Kodning amal qilish muddati
+        emailda ko‘rsatiladi.
+      </AppText>
       <Button
         title={
           remaining
@@ -213,10 +231,16 @@ export function VerifyScreen() {
         disabled={remaining > 0 || action.busy}
         onPress={() =>
           action.run(
-            () => requestCode(user.phone),
+            () => requestCode(user.email || ""),
             () => setRemaining(60),
           )
         }
+      />
+      <Button
+        title="Emailni o‘zgartirish"
+        variant="outline"
+        disabled={action.busy}
+        onPress={() => navigation.goBack()}
       />
     </Screen>
   );

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import {
   AppText,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -29,6 +28,7 @@ import {
 } from "../state/domain";
 import type { Tutor } from "../data/catalog";
 import { C } from "../theme";
+import { UserAvatar } from "../components/UserAvatar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 export const money = (value: number) =>
   `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
@@ -55,8 +55,8 @@ export function TutorCard({ tutor }: { tutor: Tutor }) {
   return (
     <Card>
       <View style={uiStyles.row}>
-        <Avatar initials={tutor.initials} size={56} />
-        <View style={{ flex: 1, gap: 2 }}>
+        <UserAvatar userId={tutor.id} initials={tutor.initials} size={56} />
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <AppText variant="heading">{tutor.name}</AppText>
           <AppText variant="caption" color={C.muted}>
             {tutor.subject} · {tutor.specialty}
@@ -95,19 +95,35 @@ export function TutorCard({ tutor }: { tutor: Tutor }) {
         {tutor.area} · {tutor.experience} yil tajriba ·{" "}
         {tutor.modes.join(" / ")}
       </AppText>
-      <View style={uiStyles.between}>
-        <AppText variant="heading">
-          {money(tutor.price)}
-          <AppText variant="caption" color={C.muted}>
-            {" "}
-            / dars
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <View
+          style={{
+            flexGrow: 1,
+            flexShrink: 1,
+            flexBasis: 170,
+            minWidth: 0,
+            gap: 2,
+          }}
+        >
+          <AppText variant="heading" style={{ flexShrink: 1 }}>
+            {money(tutor.price)}
           </AppText>
-        </AppText>
+          <AppText variant="caption" color={C.muted}>
+            bir dars uchun
+          </AppText>
+        </View>
         <Button
           title="Profil"
           variant="soft"
           onPress={() => navigation.navigate("Tutor", { id: tutor.id })}
-          style={{ minHeight: 44 }}
+          style={{ minHeight: 44, flexShrink: 0 }}
         />
       </View>
       <Feedback {...action} />
@@ -160,7 +176,15 @@ export function TutorsScreen() {
           />
         ))}
       </View>
-      <View style={uiStyles.between}>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
         <AppText variant="label">{results.length} repetitor</AppText>
         <View style={uiStyles.wrap}>
           {["Mosligi", "Arzonroq", "Reyting"].map((s) => (
@@ -379,7 +403,7 @@ export function TutorScreen({
     >
       <Header title="Repetitor profili" onBack={() => navigation.goBack()} />
       <Card style={{ alignItems: "center", padding: 24 }}>
-        <Avatar initials={tutor.initials} size={88} />
+        <UserAvatar userId={tutor.id} initials={tutor.initials} size={88} />
         <AppText variant="title">{tutor.name}</AppText>
         <Chip label="Tasdiqlangan repetitor" tone="green" />
         <AppText color={C.muted}>

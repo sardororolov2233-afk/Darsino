@@ -8,7 +8,7 @@ import { nextDates } from "../src/state/domain";
 // Runs the real exported Expo bundle. Font/observer stubs replace browser layout APIs only.
 const root = resolve("dist");
 const cacheKey = "@darsino/marketplace-v2";
-async function app(saved?: string) {
+async function app(saved?: string, photoBrowserStubs = false) {
   assert.ok(
     existsSync(join(root, "index.html")),
     "Run npm run test:ui to export the app first.",
@@ -41,6 +41,54 @@ async function app(saved?: string) {
       ],
     },
     beforeParse(w) {
+      if (photoBrowserStubs) {
+        // JSDOM has no image decoder/canvas encoder. Exercise the real picker,
+        // manipulator calls, preview, save/remove UI and persistence with these
+        // browser primitives stubbed; this does not check image pixel quality.
+        let blobId = 0;
+        w.URL.createObjectURL = () => `blob:https://darsino.test/${++blobId}`;
+        w.URL.revokeObjectURL = () => {};
+        w.Image = function () {
+          const element = w.document.createElement("img");
+          Object.defineProperties(element, {
+            naturalWidth: { value: 800 },
+            naturalHeight: { value: 600 },
+            src: {
+              get: () => "blob:photo",
+              set: () =>
+                queueMicrotask(() =>
+                  element.dispatchEvent(new w.Event("load")),
+                ),
+            },
+          });
+          return element;
+        } as unknown as typeof w.Image;
+        w.HTMLCanvasElement.prototype.getContext = (() => ({
+          drawImage() {},
+          clearRect() {},
+          getImageData: (
+            _x: number,
+            _y: number,
+            width: number,
+            height: number,
+          ) => ({
+            width,
+            height,
+            data: new Uint8ClampedArray(width * height * 4),
+          }),
+          putImageData() {},
+          createImageData: (width: number, height: number) => ({
+            width,
+            height,
+            data: new Uint8ClampedArray(width * height * 4),
+          }),
+        })) as any;
+        w.HTMLCanvasElement.prototype.toBlob = function (callback, type) {
+          callback(
+            new w.Blob(["stub-image-bytes"], { type: type || "image/png" }),
+          );
+        };
+      }
       w.matchMedia = (q) => ({
         matches: false,
         media: q,
@@ -137,8 +185,21 @@ async function app(saved?: string) {
     );
   }
   async function click(label: string, role = "button") {
-    await wait(() => find(label, role), label);
-    find(label, role)!.click();
+    await wait(() => {
+      const element = find(label, role);
+      return (
+        element &&
+        element.getAttribute("aria-disabled") !== "true" &&
+        !element.hasAttribute("disabled")
+      );
+    }, label);
+    find(label, role)!.dispatchEvent(
+      new w.MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        altKey: false,
+      }),
+    );
     await new Promise((r) => setTimeout(r, 30));
   }
   async function fill(label: string, value: string) {
@@ -161,11 +222,11 @@ async function app(saved?: string) {
     field.dispatchEvent(new w.Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 20));
   }
-  async function login(phone: string) {
+  async function login(email: string) {
     await click("Boshlash");
-    await fill("Telefon raqamingiz", phone);
-    await click("Davom etish");
-    await fill("SMS tasdiqlash kodi", "421806");
+    await fill("Email manzilingiz", email);
+    await click("Emailga kod yuborish");
+    await fill("Email tasdiqlash kodi", "421806");
     await click("Tasdiqlash");
   }
   async function logout() {
@@ -194,7 +255,7 @@ test(
   async () => {
     let ui = await app();
     try {
-      await ui.login("901234567");
+      await ui.login("sardor@example.com");
       await ui.fill("Ism va familiya", "Sardor Test");
       await ui.click("Universitetga kirish");
       await ui.click("Darsinoga kirish");
@@ -210,7 +271,7 @@ test(
         "not enrolled while pending",
       );
       await ui.logout();
-      await ui.login("901111111");
+      await ui.login("dilnoza@darsino.demo");
       await ui.wait(() => ui.text("Repetitor kabineti"), "tutor home");
       await ui.click("Arizalar", "tab");
       await ui.fill("O‘quvchiga izoh", "Xush kelibsiz");
@@ -225,7 +286,7 @@ test(
       await ui.click("Jadvalni saqlash");
       await ui.click("Orqaga");
       await ui.logout();
-      await ui.login("901234567");
+      await ui.login("sardor@example.com");
       await ui.wait(
         () => ui.text("Bugun nimani"),
         "returning student skips onboarding",
@@ -250,7 +311,7 @@ test(
       await ui.wait(() => ui.text("Darsga tayyorman."), "student message");
       await ui.click("Orqaga");
       await ui.logout();
-      await ui.login("901111111");
+      await ui.login("dilnoza@darsino.demo");
       await ui.click("Chat", "tab");
       await ui.click("Suhbat: Sardor Test");
       await ui.wait(
@@ -261,10 +322,10 @@ test(
       await ui.click("Xabarni yuborish");
       await ui.click("Orqaga");
       await ui.logout();
-      await ui.login("901234567");
+      await ui.login("sardor@example.com");
       await ui.wait(() => ui.text("Bugun nimani"), "student return");
       await ui.wait(
-        () => JSON.parse(ui.cache()).actorId === "user-998901234567",
+        () => JSON.parse(ui.cache()).actorId === "email-sardor@example.com",
         "cache saved",
       );
       const saved = ui.cache();
@@ -292,13 +353,139 @@ test(
 );
 
 test(
+  "exported sign-in shows email, Google and Apple with validation and the chosen role",
+  { timeout: 60000 },
+  async () => {
+    for (const provider of ["Google", "Apple"]) {
+      const ui = await app();
+      try {
+        if (provider === "Apple") await ui.click("Repetitor");
+        await ui.click("Boshlash");
+        await ui.wait(
+          () =>
+            ui.find("Google orqali davom etish") &&
+            ui.find("Apple orqali davom etish"),
+          "social login choices",
+        );
+        await ui.click("Emailga kod yuborish");
+        await ui.wait(
+          () => ui.text("To‘g‘ri email manzilini kiriting."),
+          "email error",
+        );
+        assert.equal(ui.text("SMS tasdiqlash kodi"), false);
+        // Allow RN Web to flush its disabled-state passive effect after validation.
+        await new Promise((r) => setTimeout(r, 500));
+        await ui.click(`${provider} orqali davom etish`);
+        await ui.wait(
+          () =>
+            ui.find(
+              provider === "Apple"
+                ? "Profilni tekshiruvga yuborish"
+                : "Darsinoga kirish",
+            ),
+          "provider onboarding",
+        );
+        await ui.wait(
+          () =>
+            !!ui.cache() &&
+            JSON.parse(ui.cache()).actorId ===
+              `email-${provider.toLowerCase()}@darsino.demo`,
+          "demo provider session",
+        );
+        const saved = JSON.parse(ui.cache());
+        assert.equal(
+          saved.market.users.find((u: any) => u.id === saved.actorId).role,
+          provider === "Apple" ? "tutor" : "student",
+        );
+        assert.deepEqual(ui.errors, []);
+      } finally {
+        ui.dom.window.close();
+      }
+    }
+  },
+);
+
+test(
+  "exported profile photo previews, persists after reload, cancels and removes",
+  { timeout: 60000 },
+  async () => {
+    let ui = await app(undefined, true);
+    try {
+      await ui.login("dilnoza@darsino.demo");
+      await ui.click("Profil", "tab");
+      const choose = async () => {
+        await ui.click(
+          ui.find("Rasmni o‘zgartirish")
+            ? "Rasmni o‘zgartirish"
+            : "Rasm yuklash",
+        );
+        await ui.wait(
+          () => ui.dom.window.document.querySelector('input[type="file"]'),
+          "system file picker",
+        );
+        const input =
+          ui.dom.window.document.querySelector('input[type="file"]')!;
+        Object.defineProperty(input, "files", {
+          value: [
+            new ui.dom.window.File(["fake-photo"], "avatar.png", {
+              type: "image/png",
+            }),
+          ],
+        });
+        input.dispatchEvent(
+          new ui.dom.window.Event("change", { bubbles: true }),
+        );
+        await ui.wait(() => ui.find("Rasmni saqlash"), "photo preview ready");
+      };
+      await choose();
+      await ui.click("Rasmni bekor qilish");
+      assert.ok(
+        !JSON.parse(ui.cache()).market.users.find(
+          (u: any) => u.id === "dilnoza",
+        ).demoAvatarUri,
+      );
+      await choose();
+      await ui.click("Rasmni saqlash");
+      await ui.wait(() => ui.text("Profil rasmi yangilandi."), "photo saved");
+      await ui.wait(
+        () =>
+          JSON.parse(ui.cache())
+            .market.users.find((u: any) => u.id === "dilnoza")
+            .demoAvatarUri?.startsWith("data:image/jpeg;base64,"),
+        "photo persisted",
+      );
+      const saved = ui.cache();
+      assert.deepEqual(ui.errors, []);
+      ui.dom.window.close();
+      ui = await app(saved, true);
+      await ui.click("Profil", "tab");
+      await ui.click("Rasmni olib tashlash");
+      await ui.wait(
+        () => ui.text("Profil rasmi olib tashlandi."),
+        "photo removed",
+      );
+      await ui.wait(
+        () =>
+          !JSON.parse(ui.cache()).market.users.find(
+            (u: any) => u.id === "dilnoza",
+          ).demoAvatarUri,
+        "removal persisted",
+      );
+      assert.deepEqual(ui.errors, []);
+    } finally {
+      ui.dom.window.close();
+    }
+  },
+);
+
+test(
   "exported tutor onboarding requires moderator approval before creating a class",
   { timeout: 60000 },
   async () => {
     const ui = await app();
     try {
       await ui.click("Repetitor");
-      await ui.login("909999999");
+      await ui.login("yangi@example.com");
       await ui.fill("Ism va familiya", "Yangi Repetitor");
       await ui.fill("Yo‘nalish", "IELTS");
       await ui.fill("Tajriba (yil)", "3");
@@ -314,7 +501,7 @@ test(
         "true",
       );
       await ui.logout();
-      await ui.login("900000001");
+      await ui.login("moderator@darsino.demo");
       await ui.click("Yangi Repetitor profilini tekshirish");
       await ui.wait(
         () => ui.text("Diplom D123456"),
@@ -323,7 +510,7 @@ test(
       await ui.click("Repetitorni tasdiqlash");
       await ui.wait(() => ui.text("Navbat bo‘sh"), "moderation saved");
       await ui.logout();
-      await ui.login("909999999");
+      await ui.login("yangi@example.com");
       await ui.wait(() => ui.text("Tasdiqlangan repetitor"), "approved tutor");
       await ui.click("Yangi dars yoki guruh");
       await ui.fill("Dars / guruh nomi", "IELTS yangi guruh");
@@ -342,7 +529,8 @@ test(
       assert.ok(
         data.market.tutorProfiles.some(
           (p: any) =>
-            p.userId === "user-998909999999" && p.verification === "approved",
+            p.userId === "email-yangi@example.com" &&
+            p.verification === "approved",
         ),
       );
       assert.deepEqual(ui.errors, []);

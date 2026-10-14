@@ -1,12 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
-async function login(page: Page, phone: string) {
+async function login(page: Page, email: string) {
   await page.getByRole("button", { name: "Boshlash", exact: true }).click();
   await page
-    .getByRole("textbox", { name: "Telefon raqamingiz", exact: true })
-    .fill(phone);
-  await page.getByRole("button", { name: "Davom etish", exact: true }).click();
+    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
+    .fill(email);
   await page
-    .getByRole("textbox", { name: "SMS tasdiqlash kodi", exact: true })
+    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .fill("421806");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
 }
@@ -23,7 +25,7 @@ test("student application requires tutor approval before My Lessons", async ({
   page,
 }) => {
   await page.goto("/");
-  await login(page, "901234567");
+  await login(page, "sardor@example.com");
   await page
     .getByRole("textbox", { name: "Ism va familiya", exact: true })
     .fill("Sardor Test");
@@ -51,14 +53,14 @@ test("student application requires tutor approval before My Lessons", async ({
     page.getByText("Guruhlar hali qo‘shilmagan", { exact: true }),
   ).toBeVisible();
   await logout(page);
-  await login(page, "901111111");
+  await login(page, "dilnoza@darsino.demo");
   await page.getByRole("tab", { name: "Arizalar", exact: true }).click();
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await expect(
     page.getByText("Yangi arizalar yo‘q", { exact: true }),
   ).toBeVisible();
   await logout(page);
-  await login(page, "901234567");
+  await login(page, "sardor@example.com");
   await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await expect(
@@ -70,30 +72,34 @@ test("student application requires tutor approval before My Lessons", async ({
     page.getByText("IELTS 6.5+ guruhi", { exact: true }).first(),
   ).toBeVisible();
 });
-test("phone validation and empty tutor search have actionable errors", async ({
+test("email validation and empty tutor search have actionable errors", async ({
   page,
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Boshlash", exact: true }).click();
-  await page.getByRole("button", { name: "Davom etish", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
+    .click();
   await expect(
-    page.getByText("Telefon raqamingizni 9 ta raqam bilan kiriting.", {
+    page.getByText("Email manzilingizni 9 ta raqam bilan kiriting.", {
       exact: true,
     }),
   ).toBeVisible();
   await page
-    .getByRole("textbox", { name: "Telefon raqamingiz", exact: true })
-    .fill("901234567");
-  await page.getByRole("button", { name: "Davom etish", exact: true }).click();
+    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
+    .fill("sardor@example.com");
   await page
-    .getByRole("textbox", { name: "SMS tasdiqlash kodi", exact: true })
+    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .fill("111111");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await expect(
     page.getByText("Sinov rejimida kod: 421806", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("textbox", { name: "SMS tasdiqlash kodi", exact: true })
+    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .fill("421806");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await page
