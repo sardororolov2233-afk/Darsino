@@ -1,77 +1,100 @@
 # Darsino
 
-Berilgan 20 ekranli Figma dizayni asosidagi **React Native + Expo + TypeScript** mobil frontend. Interfeys o‘zbek tilida; Android, iOS va web uchun bitta kod bazasi ishlatiladi. Ranglar, Manrope shrifti va SVG logotiplar `Darsino_UI_20_screens (2).zip` materiallaridan olingan.
+Expo / React Native ilovasi: o‘quvchilar repetitor topadi, ochiq guruh yoki individual darsga ariza yuboradi; repetitor tasdiqlagach guruh va jadval «Darslarim»da ko‘rinadi. Repetitor profili moderator tomonidan tekshiriladi.
+
+Darsino logotipi, ko‘k-sariq ranglar va Manrope shrifti saqlangan. Rollarga mos kabinetlar, tushunarli holatlar, bo‘sh natijalar, xato izohlari va kamida 44 px bosiladigan boshqaruvlar qo‘shilgan.
 
 ## Ishga tushirish
 
-Node.js 24.3+ tavsiya etiladi. Node 20.19.4+ va 22.13+ ham qo‘llanadi.
+Node.js 24 va npm ishlating:
 
 ```bash
 npm ci
-npm start
+npm run web
+# Telefon / emulyator uchun:
+npm run android
+npm run ios
 ```
 
-Expo Go’ning SDK 57 bilan mos versiyasida QR kod orqali oching. Android emulyatori uchun `npm run android`, macOS’dagi iOS simulyatori uchun `npm run ios`, brauzer uchun `npm run web` ishlating. Cloud muhitda mobil qurilmadan ulanish tarmoq imkoniyatlariga bog‘liq; brauzer tekshiruvi mobil o‘lchamda ham ishlaydi.
+## O‘quvchi oqimi
 
-Kirish uchun istalgan to‘g‘ri O‘zbekiston telefon raqamini kiriting. **Demo tasdiqlash kodi: `421806`**. SMS yuborilmaydi.
+1. Email kodi, Google yoki Apple akkaunti bilan kirish / ro‘yxatdan o‘tish. Telefon talab qilinmaydi.
+2. Ism, shahar, hudud, fanlar va o‘qish maqsadini tanlash.
+3. Repetitorlarni fan, hudud, narx, reyting va dars shakli bo‘yicha filtrlash; profil, ochiq guruhlar va haqiqiy fikrlarni ko‘rish.
+4. Ustozga yozish yoki guruh / individual darsga ariza yuborish.
+5. Ariza javobini kutish yoki kutilayotgan arizani bekor qilish.
+6. Tasdiqlangan guruh, individual dars va jadvalni «Darslarim»da ko‘rish.
+7. Bildirishnomalarni o‘qish; telefonda tanlangan darsga 15 daqiqa oldin mahalliy eslatma yoqish. Onlayn dars manzili HTTPS havola bo‘lsa, «Darsga kirish» orqali ochiladi.
+8. Dars tugab, repetitor «qatnashgan» deb belgilagach bir marta fikr qoldirish.
 
-## Tayyor funksiyalar
+## Repetitor oqimi
 
-- Yuklanish, xush kelibsiz, rol tanlash, telefon va kod tekshiruvi, profil yaratish.
-- Bosh sahifa va beshta bo‘limli pastki navigatsiya.
-- Repetitorlarni ism, fan va hudud bo‘yicha qidirish; narx, reyting va dars shakli filtrlari; saralash.
-- Repetitor profili, tanlanadigan sana/vaqt va sinov darsi so‘rovi.
-- Guruhlar, guruh tafsilotlari va qo‘shilish so‘rovi.
-- Amaliy tadbirlar, kategoriya tanlash, tafsilotlar va ishtirok so‘rovi.
-- Xonalarni qidirish, qulaylik filtrlari, sana/vaqt/davomiylik tanlash va avtomatik bron narxi.
-- So‘rov holati ekrani, dars jadvali, kalendar va yuborilgan so‘rovlar ro‘yxati.
-- Chat qidiruvi, ustoz/guruh filtrlari va qurilmada saqlanadigan matnli suhbatlar.
-- Profil tahriri, saqlangan e’lonlarni ochish/o‘chirish, yordam va chiqish.
+1. Email, Google yoki Apple orqali akkaunt ochish va repetitor rolini tanlash.
+2. Fan, yo‘nalish, tajriba, diplom / sertifikat ma’lumoti, bio, narx, dars shakli va qabul vaqtlarini kiritish.
+3. Moderator tekshiruvini kutish. Rad etilgan profilni izoh asosida tuzatib qayta yuborish.
+4. Tasdiqlangach individual dars yoki guruh yaratish: o‘rinlar, narx, manzil va aniq jadval. Yaratish formasi 1–12 ta haftalik darsni oldindan ko‘rsatadi.
+5. O‘z darslariga kelgan arizalarni izoh bilan tasdiqlash yoki rad etish.
+6. Qatnashchilarni ko‘rish, ularga yozish, boshlangan dars uchun davomat belgilash va zarur bo‘lsa guruhdan chiqarish.
+7. Kelgusi dars vaqtini o‘zgartirish yoki ochiq e’lonni yopish / ochish. Jadval o‘zgarsa qatnashchilarga bildirishnoma keladi.
 
-Profil, so‘rovlar, saqlanganlar, filtrlar va xabarlar **AsyncStorage** orqali qurilmada saqlanadi. Hisobdan chiqish demo foydalanuvchi ma’lumotlarini tozalaydi. Darslar, narxlar va boshlang‘ich suhbatlar dizayndagi namuna ma’lumotlardir.
+**Xona band qilish va to‘lovlar keyingi versiyaga qoldirilgan.** Avvalgi tadbir / xona namuna bronlari amaldagi buyurtma sifatida yuborilmaydi.
 
-## Backend uchun ulanish nuqtalari
+## Sinov rejimi
 
-Bu loyiha frontend namunasidir. Haqiqiy autentifikatsiya/SMS, server orqali bron tasdiqlash, real chat, bildirishnoma, qo‘ng‘iroq, fayl uzatish va to‘lov xizmatlari ulanmagan. So‘rovlar avtomatik tasdiqlanmaydi, pul olinmaydi; yuborilgan xabarlar boshqa odamga yetkazilmaydi. Qo‘shimcha tillar va repetitor boshqaruv paneli hozircha mavjud emas.
+Sozlamalarsiz ilova aniq belgilangan mahalliy sinov rejimida ochiladi. Email yuborilmaydi; tasdiqlash kodi `421806`. Google va Apple tugmalari demo akkaunt ochadi, haqiqiy OAuth oynasi ochilmaydi. Ma’lumotlar shu qurilmada saqlanadi.
 
-`src/state/AppContext.tsx` dagi `completeOnboarding`, `submitRequest` va `sendMessage` keyinchalik API bilan bog‘lash uchun ajratilgan. Katalog namunalari `src/data/catalog.ts` da. Haqiqiy tokenlarni AsyncStorage’ga kiritish o‘rniga server autentifikatsiyasi uchun xavfsiz saqlashni alohida ulang.
+| Akkaunt                        | Email                         | Natija                         |
+| ------------------------------ | ----------------------------- | ------------------------------ |
+| Yangi o‘quvchi                 | Masalan, `sardor@example.com` | Profilni to‘ldirish            |
+| Tasdiqlangan repetitor Dilnoza | `dilnoza@darsino.demo`        | Arizalar va guruh boshqaruvi   |
+| Sinov moderatori               | `moderator@darsino.demo`      | Repetitor profilini tekshirish |
+| Yangi repetitor                | Boshqa email, repetitor roli  | Profilni moderatorga yuborish  |
+
+Mavjud akkauntga qayta kirganda uning roli saqlanadi. Moderator roli ro‘yxatdan o‘tish tanlovida yo‘q. Demo bazadagi oldindan band o‘rinlar alohida ko‘rsatiladi; ular soxta o‘quvchi akkauntlariga aylantirilmaydi. Reyting faqat qoldirilgan fikrlardan hisoblanadi.
+
+`@darsino/frontend-v1` ma’lumotlari yangi formatga ko‘chiriladi: profil, saqlangan ustozlar va yuborilgan xabarlar qoladi; aniq sanasi bo‘lmagan eski so‘rovlar tarixga arxivlanadi. Ulardan avtomatik tasdiq yoki dars yaratilmaydi.
+
+Sinov rejimi qurilmalararo autentifikatsiya uchun mo‘ljallanmagan. Profil rasmlari demo rejimida qurilmada, live rejimida private Supabase Storage’da saqlanadi.
+
+## Supabase bilan ishlash
+
+To‘liq SQL va ishga tushirish yo‘riqnomasi: [supabase/README.md](supabase/README.md).
+
+1. Supabase SQL Editor’da [Darsino_Supabase_setup.sql](supabase/Darsino_Supabase_setup.sql) faylini to‘liq bajaring. U 16 ta jadval, 5 ta private Storage bucket, RLS, RPC, Auth trigger va Realtime’ni tayyorlaydi. Mavjud Darsino bazasini ma’lumotlarini saqlagan holda yangilash va qayta bajarish test qilingan.
+2. Authentication’da Email, Google va Apple providerlarini sozlang. Email shabloniga `{{ .Token }}` qo‘ying, custom SMTP va OAuth qaytish manzillarini yo‘riqnoma bo‘yicha ulang. SMS provider talab qilinmaydi.
+3. `.env.example` asosida `.env` yarating; rejimni `supabase` qilib, loyiha URL va publishable / anon kalitini yozing. Ilovaga **service_role / secret kalitini kiritmang**. Ilovani qayta boshlang.
+4. Moderator alohida akkauntda emailini tasdiqlagach, [moderator SQL](supabase/admin/01_assign_moderator.sql) ichidagi `target` UUID’ni almashtirib bajaring. Demo emaillar real bazada huquq bermaydi.
+5. [Healthcheck SQL](supabase/admin/02_healthcheck.sql) bilan sozlamalarni tekshiring. Live bazaga demo foydalanuvchilar yoki e’lonlar kiritilmaydi.
+
+Ilova asosiy amallar uchun `darsino_snapshot()` va `darsino_mutate(command)` ishlatadi. Yozish, sig‘im, ustoz tasdig‘i, narx, darslar ustma-ust kelishi va fikr qoldirish huquqi serverda tekshiriladi. Diplom / sertifikatni egasi va moderator, chatni suhbat qatnashchilari, materiallarni esa faol guruh a’zolari ko‘radi. Boshqa akkauntning emaili va telefoni berilmaydi.
+
+Storage uchun [fayl xizmati](src/services/files.ts) avatar, hujjat, chat fayli, material va muqovani yuklash / bog‘lash / signed URL olish / o‘chirishga tayyor. Profil va profilni tahrirlash ekranlarida rasm tanlash, oldindan ko‘rish, saqlash, almashtirish va olib tashlash ulangan. Avatar ustoz kartasi, profili, chat va qatnashchilar ro‘yxatida ko‘rinadi. Boshqa fayl turlarining picker UI’si keyingi bosqichda. Barcha bucketlar private; fayl ustiga yozish taqiqlangan.
+
+Ariza, xabar va bildirishnomalar uchun Realtime ulanishi qo‘shilgan. Kanal uzilsa 15 soniyalik polling va qo‘lda yangilash qoladi. Masofaviy push yuborish xizmati hali ulanmagan; telefondagi dars eslatmalari mahalliy ishlaydi.
+
+Native Auth sessiyasi SecureStore orqali saqlanadi, webda SDK AsyncStorage / localStorage’dan foydalanadi. Live marketplace demo keshiga yozilmaydi; server xatosi demo rejimiga avtomatik o‘tishga sabab bo‘lmaydi.
 
 ## Tekshirish
 
 ```bash
 npm run typecheck
-npx playwright install chromium
 npm test
-npx expo export --platform all
+npm run test:ui
+npm run export:all
+npm run format:check
 ```
 
-Playwright testlari telefon/kod validatsiyasi, qidiruv/filtr, to‘rt turdagi so‘rov, xona narxi, chat, profil tahriri, chiqish va qayta ochilganda ma’lumotlar saqlanishini tekshiradi. Testlar Metro serverini avtomatik ishga tushiradi yoki ishlayotgan serverdan foydalanadi.
+`npm test` — email OTP, PKCE callback, emailga mos SQL ruxsatlari, demo oqimi, PostgreSQL RPC / RLS, Storage metadata ruxsatlari, SQL o‘rnatish / qayta bajarish, fayl klienti, Realtime cleanup va kesh / token testlari. PGlite testlari haqiqiy PostgreSQL funksiyalarini bajaradi, ammo Supabase email/OAuth, binary Storage HTTP yoki WebSocket serverini sinamaydi.
 
-Cloud muhitdagi Chromium uchun:
+`npm run test:ui` — ilovaning eksport qilingan Expo web bundle’ini JSDOMda ishga tushirib, o‘quvchi → repetitor → o‘quvchi, chat / sessiya saqlanishi va yangi repetitor → moderator → dars yaratish oqimlarini tekshiradi. Font yuklash va layout observerlari stub qilingan; bu piksel yoki native qurilma testi emas.
+
+Oddiy brauzer mavjud muhitda:
 
 ```bash
-PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium npm test -- --workers=2
+npx playwright install chromium
+npm run test:e2e
 ```
 
-Android/iOS JavaScript paketlari yig‘iladi; haqiqiy qurilma yoki simulyatorda alohida tekshirish tavsiya etiladi. APK/IPA ushbu tekshiruvda yaratilmaydi.
+`DARSINO_TEST_BASE_URL` bilan tayyor test serverini, `PLAYWRIGHT_CHROMIUM_EXECUTABLE` bilan mavjud Chromiumni tanlash mumkin. E2E serveri demo rejimida ishlaydi.
 
-## Loyiha tuzilmasi
-
-```text
-App.tsx                       # Root stack va pastki tab navigatsiyasi
-src/theme.ts                  # Dizayn ranglari va shriftlar
-src/components/               # UI elementlari, SVG brand va illustratsiyalar
-src/screens/AuthScreens.tsx   # 01–05
-src/screens/HomeScreen.tsx    # 06
-src/screens/DiscoveryScreens.tsx # 07–13, 15–16
-src/screens/ActivityScreens.tsx  # 14, 17–20, profil tahriri
-src/state/                    # Holat va qurilmada saqlash
-src/data/catalog.ts           # Namuna katalogi
-tests/frontend.spec.ts        # Brauzer orqali funksional testlar
-```
-
-[Figma dizayni](https://www.figma.com/design/I475KWRE4OwHs988phwTCG/Darsino?node-id=2-65)
-
-Frontend elementlari haqiqiy native komponentlar orqali yaratilgan; ekranlar PNG tasvirlari sifatida ko‘rsatilmaydi.
-
-Tayyor interfeys ko‘rinishlari: [xush kelibsiz](docs/screenshots/welcome.png), [bosh sahifa](docs/screenshots/home.png), [ustoz profili](docs/screenshots/tutor.png), [profil](docs/screenshots/profile.png).
+Real email yetkazilishi, Google/Apple provider sozlamalari, Supabase loyiha konfiguratsiyasi, native rasm pickeri va telefon eslatmasi staging loyihasi va real qurilmada alohida tekshirilishi kerak. Joriy avtomatik tekshiruv natijalari [docs/verification.md](docs/verification.md) da.

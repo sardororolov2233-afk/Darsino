@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 const externalServer = process.env.DARSINO_TEST_BASE_URL;
 export default defineConfig({
   testDir: "./tests",
+  testMatch: "**/*.spec.ts",
   fullyParallel: true,
   retries: 0,
   timeout: 60000,
@@ -24,6 +25,7 @@ export default defineConfig({
         timeout: 120000,
         env: {
           BROWSER: "none",
+          EXPO_PUBLIC_BACKEND_MODE: "demo",
           EXPO_UNSTABLE_HEADLESS: "1",
           EXPO_NO_DEPENDENCY_VALIDATION: "0",
           EXPO_NO_TELEMETRY: "1",

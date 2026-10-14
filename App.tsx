@@ -19,8 +19,8 @@ import type { RootStackParamList } from "./src/navigation";
 import {
   SplashScreen,
   WelcomeScreen,
-  PhoneScreen,
-  VerifyScreen,
+  SignInScreen,
+  VerifyEmailScreen,
   SetupScreen,
 } from "./src/screens/AuthScreens";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -42,7 +42,19 @@ import {
   ConversationScreen,
   ProfileScreen,
   EditProfileScreen,
+  NotificationsScreen,
+  ReviewScreen,
 } from "./src/screens/ActivityScreens";
+import {
+  ApplicationsScreen,
+  CreateOfferingScreen,
+  ManageClassScreen,
+  ModerationScreen,
+  ModerateTutorScreen,
+  TutorClassesScreen,
+  TutorHomeScreen,
+  TutorProfileScreen,
+} from "./src/screens/TutorScreens";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 const theme = {
@@ -58,6 +70,90 @@ const theme = {
   },
 };
 function MainTabs() {
+  const { user, requests } = useApp();
+  const studentTabs = [
+    {
+      name: "Home",
+      title: "Bosh",
+      icon: "home" as const,
+      component: HomeScreen,
+    },
+    {
+      name: "Search",
+      title: "Qidirish",
+      icon: "search" as const,
+      component: TutorsScreen,
+    },
+    {
+      name: "Lessons",
+      title: "Darslarim",
+      icon: "book-open" as const,
+      component: LessonsScreen,
+    },
+    {
+      name: "Chats",
+      title: "Chat",
+      icon: "message-circle" as const,
+      component: ChatsScreen,
+    },
+    {
+      name: "Profile",
+      title: "Profil",
+      icon: "user" as const,
+      component: ProfileScreen,
+    },
+  ];
+  const tutorTabs = [
+    {
+      name: "Home",
+      title: "Kabinet",
+      icon: "home" as const,
+      component: TutorHomeScreen,
+    },
+    {
+      name: "Applications",
+      title: "Arizalar",
+      icon: "inbox" as const,
+      component: ApplicationsScreen,
+    },
+    {
+      name: "Classes",
+      title: "Darslar",
+      icon: "book-open" as const,
+      component: TutorClassesScreen,
+    },
+    {
+      name: "Chats",
+      title: "Chat",
+      icon: "message-circle" as const,
+      component: ChatsScreen,
+    },
+    {
+      name: "Profile",
+      title: "Profil",
+      icon: "user" as const,
+      component: ProfileScreen,
+    },
+  ];
+  const tabs =
+    user.role === "tutor"
+      ? tutorTabs
+      : user.role === "moderator"
+        ? [
+            {
+              name: "Moderation",
+              title: "Tekshiruv",
+              icon: "shield" as const,
+              component: ModerationScreen,
+            },
+            {
+              name: "Profile",
+              title: "Profil",
+              icon: "user" as const,
+              component: ProfileScreen,
+            },
+          ]
+        : studentTabs;
   return (
     <Tab.Navigator
       screenOptions={{
@@ -79,38 +175,7 @@ function MainTabs() {
         tabBarIcon: ({ focused, color }) => <Icon name="home" color={color} />,
       }}
     >
-      {[
-        {
-          name: "Home",
-          title: "Bosh",
-          icon: "home" as const,
-          component: HomeScreen,
-        },
-        {
-          name: "Search",
-          title: "Qidirish",
-          icon: "search" as const,
-          component: TutorsScreen,
-        },
-        {
-          name: "Lessons",
-          title: "Darslarim",
-          icon: "book-open" as const,
-          component: LessonsScreen,
-        },
-        {
-          name: "Chats",
-          title: "Chat",
-          icon: "message-circle" as const,
-          component: ChatsScreen,
-        },
-        {
-          name: "Profile",
-          title: "Profil",
-          icon: "user" as const,
-          component: ProfileScreen,
-        },
-      ].map((tab) => (
+      {tabs.map((tab) => (
         <Tab.Screen
           key={tab.name}
           name={tab.name}
@@ -118,6 +183,11 @@ function MainTabs() {
           options={{
             title: tab.title,
             tabBarAccessibilityLabel: tab.title,
+            tabBarBadge:
+              tab.name === "Applications" &&
+              requests.some((r) => r.status === "pending")
+                ? requests.filter((r) => r.status === "pending").length
+                : undefined,
             tabBarIcon: ({ focused, color }) => (
               <View style={[styles.tabIcon, focused && styles.activeTab]}>
                 <Icon name={tab.icon} color={color} size={21} />
@@ -130,7 +200,7 @@ function MainTabs() {
   );
 }
 function Navigator() {
-  const { ready, signedIn } = useApp();
+  const { ready, signedIn, authenticated, user } = useApp();
   if (!ready)
     return (
       <View style={styles.loading}>
@@ -147,16 +217,19 @@ function Navigator() {
           animation: "slide_from_right",
         }}
       >
-        {!signedIn ? (
+        {!signedIn && !authenticated ? (
           <Stack.Group navigationKey="auth">
             <Stack.Screen name="Splash" component={SplashScreen} />
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="Phone" component={PhoneScreen} />
-            <Stack.Screen name="Verify" component={VerifyScreen} />
+            <Stack.Screen name="SignIn" component={SignInScreen} />
+            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+          </Stack.Group>
+        ) : !signedIn ? (
+          <Stack.Group navigationKey="onboarding">
             <Stack.Screen name="Setup" component={SetupScreen} />
           </Stack.Group>
         ) : (
-          <Stack.Group navigationKey="app">
+          <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="Tutors" component={TutorsScreen} />
             <Stack.Screen
@@ -174,6 +247,21 @@ function Navigator() {
             <Stack.Screen name="Request" component={RequestScreen} />
             <Stack.Screen name="Conversation" component={ConversationScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="TutorProfile" component={TutorProfileScreen} />
+            <Stack.Screen
+              name="CreateOffering"
+              component={CreateOfferingScreen}
+            />
+            <Stack.Screen name="ManageClass" component={ManageClassScreen} />
+            <Stack.Screen
+              name="ModerateTutor"
+              component={ModerateTutorScreen}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+            />
+            <Stack.Screen name="Review" component={ReviewScreen} />
           </Stack.Group>
         )}
       </Stack.Navigator>

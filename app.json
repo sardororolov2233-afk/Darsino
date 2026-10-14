@@ -6,9 +6,35 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "ios": { "supportsTablet": true, "bundleIdentifier": "uz.darsino.app" },
-    "android": { "package": "uz.darsino.app" },
-    "web": { "bundler": "metro", "favicon": "./assets/icon.png" },
-    "plugins": ["expo-font"]
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uz.darsino.app",
+      "usesAppleSignIn": true
+    },
+    "android": {
+      "package": "uz.darsino.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png",
+      "lang": "uz",
+      "themeColor": "#092B53",
+      "description": "Maqsadingizga mos repetitorni toping, guruhga ariza yuboring va darslaringizni kuzating."
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Profilingizga rasm qo‘yish uchun Darsinoga rasmlaringizdan tanlashga ruxsat bering.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "scheme": "darsino"
   }
 }

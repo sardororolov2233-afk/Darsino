@@ -1,657 +1,370 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, TextInput, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View } from "react-native";
 import {
   AppText,
-  Avatar,
   Button,
+  Card,
   Chip,
   Field,
   Header,
   Icon,
   Screen,
+  uiStyles,
 } from "../components/ui";
 import { Brand } from "../components/Brand";
 import { WelcomeIllustration } from "../components/Illustrations";
+import { Feedback, useAction } from "../components/feedback";
+import {
+  AREAS,
+  GOALS,
+  SUBJECTS,
+  TutorFields,
+  initialTutor,
+} from "../components/TutorForm";
 import { useAppNavigation } from "../navigation";
 import { useApp } from "../state/AppContext";
+import {
+  DEMO_CODE,
+  DEMO_MODERATOR_EMAIL,
+  DEMO_TUTOR_EMAIL,
+} from "../state/demo";
 import { C } from "../theme";
-
-const DEMO_CODE = "421806";
-const INTERESTS = [
-  "Ingliz tili",
-  "Matematika",
-  "Tarix",
-  "IT",
-  "Rus tili",
-  "Fizika",
-];
-const ROLES = [
-  { value: "student" as const, label: "O‘quvchi" },
-  { value: "tutor" as const, label: "Repetitor" },
-  { value: "owner" as const, label: "Xona egasi" },
-];
-
-function NumberPad({
-  onDigit,
-  onDelete,
-}: {
-  onDigit: (digit: string) => void;
-  onDelete: () => void;
-}) {
-  return (
-    <View style={styles.keypad}>
-      {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "delete"].map(
-        (key, index) =>
-          key === "" ? (
-            <View key={`empty-${index}`} style={styles.key} />
-          ) : (
-            <Pressable
-              key={key}
-              accessibilityRole="button"
-              accessibilityLabel={
-                key === "delete" ? "Oxirgi raqamni o‘chirish" : `${key} raqami`
-              }
-              onPress={() => (key === "delete" ? onDelete() : onDigit(key))}
-              style={({ pressed }) => [
-                styles.key,
-                styles.activeKey,
-                pressed && styles.pressedKey,
-              ]}
-            >
-              {key === "delete" ? (
-                <Icon name="delete" size={21} color={C.navy} />
-              ) : (
-                <AppText variant="heading" style={styles.keyText}>
-                  {key}
-                </AppText>
-              )}
-            </Pressable>
-          ),
-      )}
-    </View>
-  );
-}
-
-function InlineError({ message }: { message: string }) {
-  return message ? (
-    <AppText
-      variant="caption"
-      accessibilityLiveRegion="polite"
-      style={styles.error}
-    >
-      {message}
-    </AppText>
-  ) : null;
-}
+import { ProviderButtons } from "../components/ProviderButtons";
 
 export function SplashScreen() {
   const navigation = useAppNavigation();
-  const pulse = useRef(new Animated.Value(0.3)).current;
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.3,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    animation.start();
-    const timeout = setTimeout(() => navigation.replace("Welcome"), 1200);
-    return () => {
-      clearTimeout(timeout);
-      animation.stop();
-    };
-  }, [navigation, pulse]);
+    const timeout = setTimeout(() => navigation.replace("Welcome"), 500);
+    return () => clearTimeout(timeout);
+  }, [navigation]);
   return (
-    <Screen scroll={false} background={C.white} style={styles.authContent}>
-      <View style={styles.splash}>
-        <Brand width={282} />
-        <AppText style={styles.tagline}>Bilim sari ochiq yo‘l</AppText>
-        <Animated.View
-          style={[styles.loadingDots, { opacity: pulse }]}
-          accessibilityLabel="Ilova yuklanmoqda"
-        >
-          <View style={[styles.dot, { backgroundColor: C.navy }]} />
-          <View style={[styles.dot, { backgroundColor: C.gold }]} />
-          <View style={[styles.dot, { backgroundColor: C.border }]} />
-        </Animated.View>
-        <AppText variant="caption" style={styles.loadingCaption}>
-          Yangi imkoniyatlar tayyorlanmoqda...
-        </AppText>
-      </View>
+    <Screen scroll={false} background={C.white} style={styles.center}>
+      <Brand width={260} />
+      <AppText color={C.muted}>Bilim sari ochiq yo‘l</AppText>
     </Screen>
   );
 }
-
 export function WelcomeScreen() {
   const navigation = useAppNavigation();
-  const { user, setUser } = useApp();
+  const { user, setUser, mode } = useApp();
   return (
     <Screen
       background={C.white}
-      style={styles.authContent}
       bottom={
-        <View style={styles.welcomeBottom}>
-          <Button
-            title="Boshlash"
-            variant="gold"
-            onPress={() => navigation.navigate("Phone")}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Mavjud hisobga kirish"
-            onPress={() => navigation.navigate("Phone")}
-            style={styles.loginLink}
-          >
-            <AppText variant="caption" style={styles.navy}>
-              Hisobingiz bormi? <AppText variant="label">Kirish</AppText>
-            </AppText>
-          </Pressable>
-        </View>
+        <Button
+          title="Boshlash"
+          icon="arrow-right"
+          variant="gold"
+          onPress={() => navigation.navigate("SignIn")}
+        />
       }
     >
-      <View style={styles.welcomeBrand}>
-        <Brand width={171} />
-      </View>
-      <View style={styles.illustration}>
-        <WelcomeIllustration height={220} />
-      </View>
-      <AppText variant="title" style={styles.welcomeTitle}>
-        Darsingga{"\n"}hammasi tayyor.
+      <Brand width={170} />
+      <WelcomeIllustration height={230} />
+      <Chip label="USTOZ VA O‘QUVCHI BIR JOYDA" tone="gold" />
+      <AppText variant="display">
+        Maqsadingizga mos{`\n`}ustozni toping.
       </AppText>
-      <AppText style={styles.description}>
-        Ustozlar, guruhlar va amaliy tadbirlar — barchasi bir joyda.
+      <AppText color={C.muted}>
+        Repetitor bilan gaplashing, guruhga ariza yuboring va darslaringizni bir
+        joyda kuzating.
       </AppText>
-      <AppText variant="caption" style={styles.roleLabel}>
-        Darsinodan kim sifatida foydalanasiz?
-      </AppText>
-      <View style={styles.chips}>
-        {ROLES.map((role) => (
+      <View style={uiStyles.wrap}>
+        {[
+          { role: "student" as const, label: "O‘quvchi" },
+          { role: "tutor" as const, label: "Repetitor" },
+        ].map((r) => (
           <Chip
-            key={role.value}
-            label={role.label}
-            selected={user.role === role.value}
-            onPress={() => setUser({ role: role.value })}
+            key={r.role}
+            label={r.label}
+            selected={user.role === r.role}
+            onPress={() => setUser({ role: r.role })}
           />
         ))}
       </View>
+      {mode === "demo" ? (
+        <AppText variant="caption" color={C.muted}>
+          Sinov rejimi · email kodi {DEMO_CODE}. Repetitor: {DEMO_TUTOR_EMAIL};
+          moderator: {DEMO_MODERATOR_EMAIL}. Boshqa email bilan yangi akkaunt
+          ochiladi.
+        </AppText>
+      ) : null}
     </Screen>
   );
 }
-
-function phoneDigits(value: string) {
-  const digits = value.replace(/\D/g, "");
-  const hasCountryCode =
-    /^\s*\+998/.test(value) ||
-    (digits.length === 12 && digits.startsWith("998"));
-  return (hasCountryCode ? digits.slice(3) : digits).slice(0, 9);
-}
-
-function formatPhone(value: string) {
-  return [
-    value.slice(0, 2),
-    value.slice(2, 5),
-    value.slice(5, 7),
-    value.slice(7, 9),
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-export function PhoneScreen() {
+export function SignInScreen() {
   const navigation = useAppNavigation();
-  const { user, setUser } = useApp();
-  const [digits, setDigits] = useState(() => phoneDigits(user.phone || ""));
-  const [error, setError] = useState("");
-  const updateDigits = (value: string) => {
-    setDigits(phoneDigits(value));
-    setError("");
-  };
-  const continueToCode = () => {
-    if (digits.length !== 9) {
-      setError("Telefon raqamingizni 9 ta raqam bilan kiriting.");
-      return;
-    }
-    setUser({ phone: `+998${digits}` });
-    navigation.navigate("Verify");
-  };
+  const { user, mode, requestCode, signInWithProvider, syncError } = useApp();
+  const [email, setEmail] = useState(user.email || "");
+  const action = useAction();
+  const next = () =>
+    action.run(
+      () => requestCode(email),
+      () => navigation.navigate("VerifyEmail"),
+    );
   return (
     <Screen
       background={C.white}
-      style={styles.authContent}
       bottom={
-        <NumberPad
-          onDigit={(digit) => {
-            setDigits((current) =>
-              current.length < 9 ? current + digit : current,
-            );
-            setError("");
-          }}
-          onDelete={() => updateDigits(digits.slice(0, -1))}
+        <Button
+          title="Emailga kod yuborish"
+          icon="mail"
+          loading={action.busy}
+          onPress={next}
         />
       }
     >
-      <Header title="Kirish" onBack={() => navigation.goBack()} />
-      <AppText variant="title" style={styles.pageTitle}>
-        Telefon raqamingiz
+      <Header
+        title="Kirish yoki ro‘yxatdan o‘tish"
+        onBack={() => navigation.goBack()}
+      />
+      <View style={styles.symbol}>
+        <Icon name="log-in" size={30} />
+      </View>
+      <AppText variant="display">Darsinoga{`\n`}xush kelibsiz.</AppText>
+      <AppText color={C.muted}>
+        Google yoki Apple akkauntingiz bilan davom eting. Email orqali ham tez
+        kirishingiz mumkin.
       </AppText>
-      <AppText style={styles.description}>
-        Kirish yoki hisob ochish uchun raqamingizni kiriting.
+      <ProviderButtons
+        demo={mode === "demo"}
+        busy={action.busy}
+        onPress={(provider) => action.run(() => signInWithProvider(provider))}
+      />
+      <View style={[uiStyles.row, { marginVertical: 6 }]}>
+        <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
+        <AppText variant="caption" color={C.muted}>
+          yoki email orqali
+        </AppText>
+        <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
+      </View>
+      <Field
+        label="Email manzilingiz"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="ism@example.com"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        autoCapitalize="none"
+        autoCorrect={false}
+        onSubmitEditing={next}
+        returnKeyType="send"
+      />
+      <AppText variant="caption" color={C.muted}>
+        Parol kerak emas. Emailingizga bir martalik tasdiqlash kodi yuboramiz.
+        Mavjud akkauntingiz bo‘lsa, shu email bilan qaytasiz.
       </AppText>
-      <AppText variant="caption" style={styles.countryLabel}>
-        O‘zbekiston · +998
+      <Feedback error={action.error || syncError} />
+      {mode === "demo" ? (
+        <Card style={{ backgroundColor: C.goldSoft }}>
+          <AppText variant="caption">
+            Sinov rejimi: email yuborilmaydi, kod {DEMO_CODE}. Google va Apple
+            tugmalari ham sinov akkauntini ochadi.
+          </AppText>
+        </Card>
+      ) : null}
+    </Screen>
+  );
+}
+export function VerifyEmailScreen() {
+  const navigation = useAppNavigation();
+  const { user, mode, requestCode, verifyCode, syncError } = useApp();
+  const [code, setCode] = useState("");
+  const [remaining, setRemaining] = useState(60);
+  const action = useAction();
+  useEffect(() => {
+    if (!remaining) return;
+    const timer = setTimeout(() => setRemaining((v) => v - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [remaining]);
+  return (
+    <Screen
+      background={C.white}
+      bottom={
+        <Button
+          title="Tasdiqlash"
+          loading={action.busy}
+          onPress={() =>
+            action.run(async () => {
+              if (!/^\d{6,8}$/.test(code))
+                throw new Error("Emaildagi 6–8 xonali kodni kiriting.");
+              return verifyCode(code);
+            })
+          }
+        />
+      }
+    >
+      <Header title="Emailni tasdiqlash" onBack={() => navigation.goBack()} />
+      <View style={styles.symbol}>
+        <Icon name="mail" size={32} />
+      </View>
+      <AppText variant="display">Emailingizni{`\n`}tekshiring.</AppText>
+      <AppText color={C.muted}>
+        {user.email}{" "}
+        {mode === "demo"
+          ? `· sinov kodi ${DEMO_CODE}`
+          : "manziliga yuborilgan kodni kiriting."}
       </AppText>
       <Field
-        value={formatPhone(digits)}
-        onChangeText={updateDigits}
-        placeholder="90 123 45 67"
-        icon="phone"
-        keyboardType="phone-pad"
-        showSoftInputOnFocus={false}
-        accessibilityLabel="Telefon raqamingiz"
-        textContentType="telephoneNumber"
-        autoComplete="tel-national"
-        maxLength={17}
+        label="Email tasdiqlash kodi"
+        value={code}
+        onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 8))}
+        keyboardType="number-pad"
+        autoComplete="one-time-code"
+        textContentType="oneTimeCode"
+        maxLength={8}
+        style={{ fontSize: 24, letterSpacing: 5, textAlign: "center" }}
       />
-      <InlineError message={error} />
-      <View style={styles.continueButton}>
-        <Button title="Davom etish" onPress={continueToCode} />
-      </View>
-      <AppText variant="caption" style={styles.disclaimer}>
-        Raqamingiz hisobingizni himoyalash uchun ishlatiladi.
+      <Feedback error={action.error || syncError} />
+      <AppText variant="caption" color={C.muted}>
+        Xat ko‘rinmasa, Spam jildini tekshiring. Kodning amal qilish muddati
+        emailda ko‘rsatiladi.
       </AppText>
-      <AppText variant="caption" style={styles.disclaimer}>
-        Davom etish orqali Foydalanish shartlari va Maxfiylik siyosatiga rozilik
-        bildirasiz.
-      </AppText>
-      <View style={styles.demoInfo}>
-        <Icon name="info" size={16} color={C.muted} />
-        <AppText variant="caption" style={styles.demoText}>
-          Sinov rejimi: SMS yuborilmaydi.
-        </AppText>
-      </View>
-    </Screen>
-  );
-}
-
-export function VerifyScreen() {
-  const navigation = useAppNavigation();
-  const { user } = useApp();
-  const [code, setCode] = useState("");
-  const [remaining, setRemaining] = useState(28);
-  const [error, setError] = useState("");
-  const [resent, setResent] = useState(false);
-  const codeInput = useRef<TextInput>(null);
-  useEffect(() => {
-    const interval = setInterval(
-      () => setRemaining((value) => Math.max(0, value - 1)),
-      1000,
-    );
-    return () => clearInterval(interval);
-  }, []);
-  const updateCode = (value: string) => {
-    setCode(value.replace(/\D/g, "").slice(0, 6));
-    setError("");
-  };
-  const verify = () => {
-    if (code.length !== 6) {
-      setError("6 xonali tasdiqlash kodini kiriting.");
-      return;
-    }
-    if (code !== DEMO_CODE) {
-      setError("Kod noto‘g‘ri. Sinov uchun 421806 kodini kiriting.");
-      return;
-    }
-    navigation.navigate("Setup");
-  };
-  const phone = phoneDigits(user.phone || "");
-  const masked =
-    phone.length === 9
-      ? `+998 ${phone.slice(0, 2)} ••• ${phone.slice(5, 7)} ${phone.slice(7)}`
-      : "+998 raqamingiz";
-  return (
-    <Screen
-      background={C.white}
-      style={styles.authContent}
-      bottom={
-        <NumberPad
-          onDigit={(digit) => updateCode(code + digit)}
-          onDelete={() => updateCode(code.slice(0, -1))}
-        />
-      }
-    >
-      <Header title="Tasdiqlash" onBack={() => navigation.goBack()} />
-      <AppText variant="title" style={styles.pageTitle}>
-        SMS kodni kiriting
-      </AppText>
-      <AppText style={styles.description}>
-        {masked} uchun 6 xonali tasdiqlash kodini kiriting.
-      </AppText>
-      <Pressable
-        onPress={() => codeInput.current?.focus()}
-        style={styles.codeContainer}
-        accessibilityLabel="Tasdiqlash kodini kiriting"
-      >
-        <View style={styles.codeBoxes}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.codeBox,
-                index === Math.min(code.length, 5) && styles.activeCodeBox,
-              ]}
-            >
-              <AppText variant="heading" style={styles.codeDigit}>
-                {code[index] || ""}
-              </AppText>
-            </View>
-          ))}
-        </View>
-        <TextInput
-          ref={codeInput}
-          testID="otp-input"
-          accessibilityLabel="SMS tasdiqlash kodi"
-          value={code}
-          onChangeText={updateCode}
-          maxLength={6}
-          keyboardType="number-pad"
-          textContentType="oneTimeCode"
-          autoComplete="sms-otp"
-          caretHidden
-          showSoftInputOnFocus={false}
-          style={styles.hiddenCodeInput}
-        />
-      </Pressable>
-      <InlineError message={error} />
-      <View style={styles.resendRow}>
-        {remaining > 0 ? (
-          <AppText variant="caption" style={styles.muted}>
-            Kodni qayta yuborish · 00:{String(remaining).padStart(2, "0")}
-          </AppText>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setRemaining(28);
-              setResent(true);
-              setCode("");
-              setError("");
-            }}
-          >
-            <AppText variant="label" style={styles.navy}>
-              Kodni qayta yuborish
-            </AppText>
-          </Pressable>
-        )}
-      </View>
-      <Button title="Tasdiqlash" onPress={verify} />
-      <Pressable
-        accessibilityRole="button"
+      <Button
+        title={
+          remaining
+            ? `Kodni qayta yuborish · ${remaining}s`
+            : "Kodni qayta yuborish"
+        }
+        variant="soft"
+        disabled={remaining > 0 || action.busy}
+        onPress={() =>
+          action.run(
+            () => requestCode(user.email || ""),
+            () => setRemaining(60),
+          )
+        }
+      />
+      <Button
+        title="Emailni o‘zgartirish"
+        variant="outline"
+        disabled={action.busy}
         onPress={() => navigation.goBack()}
-        style={styles.changeNumber}
-      >
-        <AppText variant="caption" style={styles.navy}>
-          Raqamni o‘zgartirish
-        </AppText>
-      </Pressable>
-      <View style={styles.securityNote}>
-        <Icon name="shield" size={22} color={C.navy} />
-        <AppText variant="caption" style={styles.navy}>
-          Kodni hech kimga bermang.
-        </AppText>
-      </View>
-      <AppText
-        variant="caption"
-        accessibilityLiveRegion="polite"
-        style={styles.demoCode}
-      >
-        {resent ? "Sinov kodi qayta tayyorlandi: " : "Sinov uchun kod: "}
-        <AppText variant="label" style={styles.navy}>
-          {DEMO_CODE}
-        </AppText>
-      </AppText>
+      />
     </Screen>
   );
 }
-
 export function SetupScreen() {
-  const navigation = useAppNavigation();
   const { user, setUser, completeOnboarding } = useApp();
-  const [name, setName] = useState(user.name || "");
-  const [city, setCity] = useState(user.city || "Toshkent");
-  const [interests, setInterests] = useState<string[]>(
-    user.interests?.length ? user.interests : ["Ingliz tili"],
-  );
-  const [error, setError] = useState("");
-  const initials =
-    name
-      .trim()
-      .split(/\s+/)
-      .map((part) => part[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "S";
-  const toggleInterest = (interest: string) =>
-    setInterests((current) =>
-      current.includes(interest)
-        ? current.filter((value) => value !== interest)
-        : [...current, interest],
-    );
-  const finish = () => {
-    if (name.trim().length < 2) {
-      setError("Ism va familiyangizni kiriting.");
-      return;
-    }
-    if (city.trim().length < 2) {
-      setError("Shaharingizni kiriting.");
-      return;
-    }
-    if (!interests.length) {
-      setError("Kamida bitta qiziqishni tanlang.");
-      return;
-    }
-    setUser({ name: name.trim(), city: city.trim(), interests });
-    completeOnboarding();
-  };
+  const [name, setName] = useState(user.name),
+    [city, setCity] = useState(user.city),
+    [area, setArea] = useState(user.area);
+  const [interests, setInterests] = useState(user.interests),
+    [goal, setGoal] = useState(user.goal);
+  const [tutor, setTutor] = useState(initialTutor);
+  const action = useAction();
+  const isTutor = user.role === "tutor";
   return (
     <Screen
-      background={C.white}
-      style={styles.authContent}
       bottom={
-        <Button title="Darsinoga kirish" variant="gold" onPress={finish} />
+        <Button
+          title={isTutor ? "Profilni tekshiruvga yuborish" : "Darsinoga kirish"}
+          loading={action.busy}
+          onPress={() =>
+            action.run(async () => {
+              if (name.trim().length < 2)
+                throw new Error("Ism va familiyangizni kiriting.");
+              await completeOnboarding(
+                {
+                  name,
+                  city,
+                  area,
+                  interests: isTutor ? tutor.subjects : interests,
+                  goal: isTutor ? "Dars berish" : goal,
+                },
+                isTutor ? tutor : undefined,
+              );
+            })
+          }
+        />
       }
     >
-      <Header title="Profilni to‘ldirish" onBack={() => navigation.goBack()} />
-      <View style={styles.profileAvatar}>
-        <Avatar initials={initials} size={68} tone="blue" />
-        <AppText variant="caption" style={styles.avatarLabel}>
-          Sizning profil belgingiz
-        </AppText>
+      <Header title={isTutor ? "Repetitor profili" : "Siz haqingizda"} />
+      <AppText color={C.muted}>
+        {isTutor
+          ? "Profilingiz tekshirilgach dars va guruh e’lon qilasiz."
+          : "Tavsiyalarni faningiz, hududingiz va maqsadingizga moslaymiz."}
+      </AppText>
+      <View style={uiStyles.wrap}>
+        <Chip
+          label="O‘quvchi"
+          selected={!isTutor}
+          onPress={() => setUser({ role: "student" })}
+        />
+        <Chip
+          label="Repetitor"
+          selected={isTutor}
+          onPress={() => setUser({ role: "tutor" })}
+        />
       </View>
-      <View style={styles.formField}>
+      <Card>
         <Field
           label="Ism va familiya"
           value={name}
-          onChangeText={(value) => {
-            setName(value);
-            setError("");
-          }}
-          placeholder="Ism va familiyangiz"
-          icon="user"
-          textContentType="name"
+          onChangeText={setName}
           autoComplete="name"
-          autoCapitalize="words"
-          returnKeyType="next"
-          accessibilityLabel="Ism va familiya"
         />
-      </View>
-      <View style={styles.formField}>
-        <Field
-          label="Shahar"
-          value={city}
-          onChangeText={(value) => {
-            setCity(value);
-            setError("");
-          }}
-          placeholder="Toshkent"
-          icon="map-pin"
-          textContentType="addressCity"
-          autoCapitalize="words"
-          accessibilityLabel="Shahar"
-        />
-      </View>
-      <AppText variant="caption" style={styles.interestLabel}>
-        Qiziqishlaringiz
-      </AppText>
-      <View style={styles.interestChips}>
-        {INTERESTS.map((interest) => (
-          <Chip
-            key={interest}
-            label={interest}
-            selected={interests.includes(interest)}
-            onPress={() => {
-              toggleInterest(interest);
-              setError("");
-            }}
-          />
-        ))}
-      </View>
-      <View style={styles.goalCard}>
-        <Icon name="star" size={23} color={C.navy} />
-        <View style={styles.flex}>
-          <AppText variant="caption" style={styles.navy}>
-            {interests.includes("Ingliz tili")
-              ? "Maqsad: IELTS natijamni oshirish"
-              : "Maqsad: yangi bilimlarni egallash"}
-          </AppText>
-          <AppText variant="caption" style={styles.goalCaption}>
-            Tavsiyalarni sizga moslaymiz
-          </AppText>
+        <Field label="Shahar" value={city} onChangeText={setCity} />
+        <Field label="Hudud" value={area} onChangeText={setArea} />
+        <View style={uiStyles.wrap}>
+          {AREAS.slice(0, 3).map((v) => (
+            <Chip
+              key={v}
+              label={v}
+              selected={area === v}
+              onPress={() => setArea(v)}
+            />
+          ))}
         </View>
-      </View>
-      <InlineError message={error} />
+      </Card>
+      {isTutor ? (
+        <Card>
+          <TutorFields value={tutor} onChange={setTutor} />
+        </Card>
+      ) : (
+        <>
+          <AppText variant="heading">Qaysi fanlarni o‘rganasiz?</AppText>
+          <View style={uiStyles.wrap}>
+            {SUBJECTS.map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={interests.includes(v)}
+                onPress={() =>
+                  setInterests((p) =>
+                    p.includes(v) ? p.filter((s) => s !== v) : [...p, v],
+                  )
+                }
+              />
+            ))}
+          </View>
+          <AppText variant="heading">O‘qish maqsadingiz</AppText>
+          <View style={uiStyles.wrap}>
+            {GOALS.map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={goal === v}
+                onPress={() => setGoal(v)}
+              />
+            ))}
+          </View>
+        </>
+      )}
+      <Feedback {...action} />
     </Screen>
   );
 }
-
 const styles = StyleSheet.create({
-  authContent: { gap: 0 },
-  flex: { flex: 1 },
-  navy: { color: C.navy },
-  muted: { color: C.muted },
-  splash: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingBottom: 56,
-  },
-  tagline: { color: C.muted, marginTop: 22, fontSize: 14 },
-  loadingDots: { flexDirection: "row", gap: 10, marginTop: 65 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  loadingCaption: { color: C.muted, marginTop: 17, textAlign: "center" },
-  welcomeBrand: { paddingTop: 12, marginBottom: 16 },
-  illustration: {
-    height: 220,
-    borderRadius: 25,
-    overflow: "hidden",
-    backgroundColor: C.blueSoft,
-    marginBottom: 16,
-  },
-  welcomeTitle: { fontSize: 29, lineHeight: 37, marginBottom: 12 },
-  description: { color: C.muted, fontSize: 14, lineHeight: 23 },
-  roleLabel: { color: C.muted, marginTop: 16, marginBottom: 13 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  welcomeBottom: { gap: 6 },
-  loginLink: { alignItems: "center", paddingVertical: 10 },
-  pageTitle: { marginTop: 11, marginBottom: 12, fontSize: 28, lineHeight: 36 },
-  countryLabel: { color: C.muted, marginTop: 15, marginBottom: 12 },
-  continueButton: { marginTop: 13 },
-  disclaimer: { color: C.muted, lineHeight: 19, marginTop: 13 },
-  demoInfo: {
-    flexDirection: "row",
-    gap: 7,
-    alignItems: "center",
-    marginTop: 15,
-  },
-  demoText: { color: C.muted },
-  error: { color: C.error, marginTop: 9, lineHeight: 19 },
-  keypad: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingTop: 8 },
-  key: {
-    width: "31.5%",
-    flexGrow: 1,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-  },
-  activeKey: { backgroundColor: C.background },
-  pressedKey: { backgroundColor: C.blueSoft },
-  keyText: { fontSize: 18 },
-  codeContainer: { position: "relative", marginTop: 17 },
-  codeBoxes: { flexDirection: "row", gap: 9 },
-  codeBox: {
-    flex: 1,
-    height: 62,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeCodeBox: {
+  center: { alignItems: "center", justifyContent: "center", gap: 24 },
+  symbol: {
+    width: 70,
+    height: 70,
+    borderRadius: 24,
     backgroundColor: C.goldSoft,
-    borderColor: C.gold,
-    borderWidth: 1.5,
-  },
-  codeDigit: { fontSize: 23 },
-  hiddenCodeInput: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    color: "transparent",
-    backgroundColor: "transparent",
-    fontSize: 1,
-    opacity: 0.01,
-  },
-  resendRow: { minHeight: 45, justifyContent: "center" },
-  changeNumber: { paddingVertical: 16 },
-  securityNote: {
-    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: C.blueSoft,
-    borderRadius: 13,
-    paddingHorizontal: 13,
-    paddingVertical: 12,
-    gap: 7,
+    justifyContent: "center",
+    marginTop: 20,
   },
-  demoCode: { color: C.muted, marginTop: 12, lineHeight: 20 },
-  profileAvatar: { alignItems: "center", marginTop: 8, marginBottom: 18 },
-  avatarLabel: { marginTop: 10, color: C.navy },
-  formField: { marginBottom: 16 },
-  interestLabel: { color: C.muted, marginBottom: 11 },
-  interestChips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 9,
-    marginBottom: 14,
-  },
-  goalCard: {
-    backgroundColor: C.goldSoft,
-    borderRadius: 17,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-  },
-  goalCaption: { color: C.muted, fontSize: 10, lineHeight: 17 },
 });

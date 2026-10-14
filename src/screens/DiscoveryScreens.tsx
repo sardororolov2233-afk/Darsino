@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { useRoute, type RouteProp } from "@react-navigation/native";
+import { Pressable, View } from "react-native";
 import {
   AppText,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -14,1328 +12,751 @@ import {
   Screen,
   uiStyles,
 } from "../components/ui";
-import {
-  EventIllustration,
-  RoomIllustration,
-} from "../components/Illustrations";
-import { BottomNavigation } from "../components/BottomNavigation";
-import {
-  events,
-  formatPrice,
-  groups,
-  rooms,
-  tutors,
-  type PracticeEvent,
-  type StudyGroup,
-  type StudyRoom,
-  type Tutor,
-} from "../data/catalog";
+import { Feedback, useAction } from "../components/feedback";
+import { SUBJECTS, AREAS } from "../components/TutorForm";
 import { useAppNavigation, type RootStackParamList } from "../navigation";
 import { useApp } from "../state/AppContext";
-import { defaultFilters, type Filters } from "../state/model";
+import { defaultFilters } from "../state/model";
+import {
+  dateLabel,
+  dmId,
+  nextDates,
+  timeLabel,
+  toLessonTime,
+  type Filters,
+  type Offering,
+} from "../state/domain";
+import type { Tutor } from "../data/catalog";
 import { C } from "../theme";
-
-const normalize = (value: string) =>
-  value
-    .toLocaleLowerCase()
-    .replace(/[‘’ʻʼ']/g, "")
-    .trim();
-const matches = (query: string, values: string[]) =>
-  normalize(values.join(" ")).includes(normalize(query));
-export const filterTutors = (filters: Filters, query = "") =>
-  tutors.filter(
-    (tutor) =>
-      (!filters.subject ||
-        filters.subject === "Barchasi" ||
-        tutor.subject === filters.subject) &&
-      (!filters.area ||
-        ["Barcha tumanlar", "Toshkent"].includes(filters.area) ||
-        tutor.area === filters.area) &&
-      (filters.mode === "Barchasi" ||
-        !filters.mode ||
-        tutor.modes.includes(filters.mode)) &&
-      tutor.price >= filters.minPrice &&
-      tutor.price <= filters.maxPrice &&
-      tutor.rating >= filters.minRating &&
-      matches(query, [tutor.name, tutor.subject, tutor.specialty, tutor.area]),
-  );
-
-function SaveButton({ id }: { id: string }) {
-  const { favorites, toggleFavorite } = useApp();
-  const saved = favorites.includes(id);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={saved ? "Saqlanganlardan olib tashlash" : "Saqlash"}
-      accessibilityState={{ selected: saved }}
-      onPress={(event) => {
-        event.stopPropagation();
-        toggleFavorite(id);
-      }}
-      hitSlop={10}
-      style={styles.saveButton}
-    >
-      <Icon name="heart" size={23} color={saved ? C.gold : C.muted} />
-      {saved ? <View style={styles.savedDot} /> : null}
-    </Pressable>
+import { UserAvatar } from "../components/UserAvatar";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+export const money = (value: number) =>
+  `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
+export function filterTutors(catalog: Tutor[], filters: Filters, query = "") {
+  const q = query.trim().toLocaleLowerCase();
+  return catalog.filter(
+    (t) =>
+      (filters.subject === "Barchasi" ||
+        (t.subjects || [t.subject]).includes(filters.subject)) &&
+      (filters.area === "Barcha hududlar" || t.area === filters.area) &&
+      (filters.mode === "Barchasi" || t.modes.includes(filters.mode)) &&
+      t.price >= filters.minPrice &&
+      t.price <= filters.maxPrice &&
+      t.rating >= filters.minRating &&
+      `${t.name} ${t.subjects?.join(" ") || t.subject} ${t.specialty} ${t.area}`
+        .toLocaleLowerCase()
+        .includes(q),
   );
 }
-function InfoLine({
-  icon,
-  children,
-  color = C.muted,
-}: {
-  icon: React.ComponentProps<typeof Icon>["name"];
-  children: React.ReactNode;
-  color?: string;
-}) {
-  return (
-    <View style={[uiStyles.row, { gap: 5 }]}>
-      <Icon name={icon} size={17} color={color} />
-      <AppText variant="caption" color={color} style={styles.flex}>
-        {children}
-      </AppText>
-    </View>
-  );
-}
-function SectionTitle({ title, aside }: { title: string; aside?: string }) {
-  return (
-    <View style={uiStyles.between}>
-      <AppText variant="heading">{title}</AppText>
-      {aside ? (
-        <AppText variant="caption" color={C.muted}>
-          {aside}
-        </AppText>
-      ) : null}
-    </View>
-  );
-}
-function Benefits({
-  items,
-  green = false,
-}: {
-  items: string[];
-  green?: boolean;
-}) {
-  return (
-    <View
-      style={[
-        styles.benefits,
-        green && { backgroundColor: C.greenSoft, padding: 16 },
-      ]}
-    >
-      {items.map((item) => (
-        <View key={item} style={[uiStyles.row, { gap: 6 }]}>
-          <Icon name="check" size={18} color={C.green} />
-          <AppText variant="caption" color={C.green} style={styles.flex}>
-            {item}
-          </AppText>
-        </View>
-      ))}
-    </View>
-  );
-}
-function DemoLabel() {
-  return (
-    <AppText variant="caption" color={C.muted} style={styles.demo}>
-      Namuna ma’lumotlar · so‘rovlar qurilmada saqlanadi
-    </AppText>
-  );
-}
-const trialDates = [
-  "14 oktabr, chorshanba",
-  "15 oktabr, payshanba",
-  "16 oktabr, juma",
-];
-function DateChoice({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={{ gap: 8 }}>
-      <Pressable
-        style={styles.selectField}
-        accessibilityRole="button"
-        accessibilityLabel="Dars sanasini tanlash"
-        accessibilityState={{ expanded: open }}
-        onPress={() => setOpen(!open)}
-      >
-        <Icon name="calendar" color={C.muted} />
-        <AppText color={C.muted} style={styles.flex}>
-          {value}
-        </AppText>
-        <Icon name="chevron-down" color={C.muted} size={16} />
-      </Pressable>
-      {open ? (
-        <Card style={{ padding: 8 }}>
-          {trialDates.map((date) => (
-            <Pressable
-              key={date}
-              accessibilityRole="button"
-              accessibilityState={{ selected: date === value }}
-              onPress={() => {
-                onChange(date);
-                setOpen(false);
-              }}
-              style={[
-                styles.dateOption,
-                date === value && { backgroundColor: C.blueSoft },
-              ]}
-            >
-              <AppText>{date}</AppText>
-              {date === value ? <Icon name="check" size={17} /> : null}
-            </Pressable>
-          ))}
-        </Card>
-      ) : null}
-    </View>
-  );
-}
-
 export function TutorCard({ tutor }: { tutor: Tutor }) {
-  const nav = useAppNavigation();
+  const navigation = useAppNavigation(),
+    { favorites, toggleFavorite, user } = useApp();
+  const action = useAction();
   return (
-    <Card
-      accessibilityLabel={`${tutor.name} profilini ko‘rish`}
-      onPress={() => nav.navigate("Tutor", { id: tutor.id })}
-      style={styles.tutorCard}
-    >
+    <Card>
       <View style={uiStyles.row}>
-        <Avatar initials={tutor.initials} size={50} />
-        <View style={[styles.flex, { gap: 2 }]}>
-          <AppText variant="label">{tutor.name}</AppText>
+        <UserAvatar userId={tutor.id} initials={tutor.initials} size={56} />
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <AppText variant="heading">{tutor.name}</AppText>
           <AppText variant="caption" color={C.muted}>
             {tutor.subject} · {tutor.specialty}
           </AppText>
-          <View style={[uiStyles.row, { gap: 3 }]}>
-            <Icon name="star" size={15} color={C.gold} />
-            <AppText variant="caption" color={C.muted}>
-              {tutor.rating} ({tutor.reviews} sharh)
-            </AppText>
-          </View>
         </View>
-        <SaveButton id={`tutor:${tutor.id}`} />
+        {user.role === "student" ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              favorites.includes(tutor.id)
+                ? `${tutor.name}ni saqlanganlardan olib tashlash`
+                : `${tutor.name}ni saqlash`
+            }
+            onPress={() => action.run(() => toggleFavorite(tutor.id))}
+            style={{ padding: 12 }}
+          >
+            <Icon
+              name="heart"
+              color={favorites.includes(tutor.id) ? C.error : C.muted}
+            />
+          </Pressable>
+        ) : null}
       </View>
-      <View style={styles.cardDivider} />
-      <View style={uiStyles.between}>
-        <InfoLine icon="map-pin">{tutor.area}</InfoLine>
-        <View style={styles.priceColumn}>
-          <AppText variant="label">{formatPrice(tutor.price)}</AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            1 soat uchun
+      <View style={uiStyles.wrap}>
+        <Chip label="Tasdiqlangan" tone="green" />
+        <Chip
+          label={
+            tutor.reviews
+              ? `★ ${tutor.rating} · ${tutor.reviews} fikr`
+              : "Yangi repetitor"
+          }
+          tone="gold"
+        />
+      </View>
+      <AppText color={C.muted} variant="caption">
+        {tutor.area} · {tutor.experience} yil tajriba ·{" "}
+        {tutor.modes.join(" / ")}
+      </AppText>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <View
+          style={{
+            flexGrow: 1,
+            flexShrink: 1,
+            flexBasis: 170,
+            minWidth: 0,
+            gap: 2,
+          }}
+        >
+          <AppText variant="heading" style={{ flexShrink: 1 }}>
+            {money(tutor.price)}
+          </AppText>
+          <AppText variant="caption" color={C.muted}>
+            bir dars uchun
           </AppText>
         </View>
+        <Button
+          title="Profil"
+          variant="soft"
+          onPress={() => navigation.navigate("Tutor", { id: tutor.id })}
+          style={{ minHeight: 44, flexShrink: 0 }}
+        />
       </View>
+      <Feedback {...action} />
     </Card>
   );
 }
-
 export function TutorsScreen() {
-  const nav = useAppNavigation();
-  const route = useRoute();
-  const { filters, setFilters } = useApp();
-  const [query, setQuery] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [sort, setSort] = useState<"rating" | "price">("rating");
-  const results = useMemo(
-    () =>
-      filterTutors(filters, query)
-        .filter((tutor) => !specialty || tutor.specialty === specialty)
-        .sort((a, b) =>
-          sort === "rating" ? b.rating - a.rating : a.price - b.price,
-        ),
-    [filters, query, specialty, sort],
-  );
+  const { tutors, filters, setFilters, mode } = useApp(),
+    navigation = useAppNavigation();
+  const [query, setQuery] = useState(""),
+    [sort, setSort] = useState("Mosligi");
+  const results = useMemo(() => {
+    const list = filterTutors(tutors, filters, query);
+    return sort === "Arzonroq"
+      ? list.sort((a, b) => a.price - b.price)
+      : sort === "Reyting"
+        ? list.sort((a, b) => b.rating - a.rating)
+        : list;
+  }, [tutors, filters, query, sort]);
   return (
-    <Screen
-      bottom={
-        route.name === "Tutors" ? (
-          <BottomNavigation active="Search" />
-        ) : undefined
-      }
-    >
+    <Screen>
       <Header
-        title="Repetitor qidirish"
+        title="Ustoz toping"
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         right={
           <Pressable
+            style={{ padding: 12 }}
             accessibilityRole="button"
             accessibilityLabel="Filtrlarni ochish"
-            onPress={() => nav.navigate("Filters")}
-            style={styles.headerRound}
+            onPress={() => navigation.navigate("Filters")}
           >
-            <Icon name="sliders" size={20} />
+            <Icon name="sliders" />
           </Pressable>
         }
       />
       <Field
+        accessibilityLabel="Repetitor qidirish"
+        placeholder="Fan, ustoz yoki yo‘nalish"
         icon="search"
-        placeholder="Ingliz tili"
         value={query}
         onChangeText={setQuery}
-        returnKeyType="search"
       />
       <View style={uiStyles.wrap}>
-        <Chip
-          label="IELTS"
-          selected={specialty === "IELTS"}
-          onPress={() => setSpecialty(specialty ? "" : "IELTS")}
-        />
-        <Chip
-          label="Onlayn"
-          selected={filters.mode === "Onlayn"}
-          onPress={() =>
-            setFilters({
-              mode: filters.mode === "Onlayn" ? "Barchasi" : "Onlayn",
-            })
-          }
-        />
-        <Chip
-          label="Toshkent"
-          selected={filters.area === "Toshkent"}
-          onPress={() =>
-            setFilters({
-              area:
-                filters.area === "Toshkent" ? "Barcha tumanlar" : "Toshkent",
-            })
-          }
-        />
+        {["Barchasi", ...SUBJECTS].map((s) => (
+          <Chip
+            key={s}
+            label={s}
+            selected={filters.subject === s}
+            onPress={() => setFilters({ subject: s })}
+          />
+        ))}
       </View>
-      <View style={uiStyles.between}>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
         <AppText variant="label">{results.length} repetitor</AppText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Saralashni o‘zgartirish"
-          onPress={() => setSort(sort === "rating" ? "price" : "rating")}
-        >
-          <AppText variant="caption" color={C.muted}>
-            {sort === "rating" ? "Reyting bo‘yicha ↓" : "Narx bo‘yicha ↑"}
-          </AppText>
-        </Pressable>
+        <View style={uiStyles.wrap}>
+          {["Mosligi", "Arzonroq", "Reyting"].map((s) => (
+            <Chip
+              key={s}
+              label={s}
+              selected={sort === s}
+              onPress={() => setSort(s)}
+            />
+          ))}
+        </View>
       </View>
-      {results.map((tutor) => (
-        <TutorCard key={tutor.id} tutor={tutor} />
+      {results.map((t) => (
+        <TutorCard key={t.id} tutor={t} />
       ))}
       {!results.length ? (
-        <EmptyState
-          title="Repetitor topilmadi"
-          subtitle="Qidiruv so‘zini yoki filtrlarni o‘zgartirib ko‘ring."
-        />
-      ) : null}
-      <DemoLabel />
-    </Screen>
-  );
-}
-
-export function FiltersScreen() {
-  const nav = useAppNavigation();
-  const { filters, setFilters } = useApp();
-  const [draft, setDraft] = useState<Filters>({ ...filters });
-  const [minInput, setMinInput] = useState(String(filters.minPrice));
-  const [maxInput, setMaxInput] = useState(String(filters.maxPrice));
-  const [expanded, setExpanded] = useState<"subject" | "area" | null>(null);
-  const min = Number(minInput),
-    max = Number(maxInput);
-  const validRange =
-    !!minInput &&
-    !!maxInput &&
-    Number.isFinite(min) &&
-    Number.isFinite(max) &&
-    min >= 0 &&
-    max >= min;
-  const count = validRange
-    ? filterTutors({ ...draft, minPrice: min, maxPrice: max }).length
-    : 0;
-  const reset = () => {
-    setDraft({ ...defaultFilters });
-    setMinInput(String(defaultFilters.minPrice));
-    setMaxInput(String(defaultFilters.maxPrice));
-  };
-  const update = (values: Partial<Filters>) =>
-    setDraft((old) => ({ ...old, ...values }));
-  return (
-    <Screen scroll={false} background="#ACB9C9" style={{ padding: 0, gap: 0 }}>
-      <View style={styles.filterPreview}>
-        <AppText variant="title" color={C.navy}>
-          Repetitor qidirish
-        </AppText>
-        <View style={styles.filterGhostField}>
-          <Icon name="search" color="#6B819B" />
-          <AppText color="#6B819B">Ingliz tili</AppText>
-        </View>
-      </View>
-      <View style={styles.filterSheet}>
-        <View style={styles.sheetHandle} />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.filterContent}
-        >
-          <Header
-            title="Filtrlar"
-            right={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Filtrlarni yopish"
-                hitSlop={12}
-                onPress={() => nav.goBack()}
-              >
-                <Icon name="chevron-left" size={25} />
-              </Pressable>
-            }
+        <>
+          <EmptyState
+            title="Repetitor topilmadi"
+            subtitle="Boshqa fan yoki hududni tanlang. Filtrlarni tozalab ham qidirishingiz mumkin."
           />
-          <AppText variant="caption" color={C.muted}>
-            Fan
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Fanni tanlash"
-            onPress={() =>
-              setExpanded(expanded === "subject" ? null : "subject")
-            }
-            style={styles.selectField}
-          >
-            <Icon name="book-open" color={C.muted} />
-            <AppText color={C.muted} style={styles.flex}>
-              {draft.subject}
-            </AppText>
-            <Icon name="chevron-down" color={C.muted} size={16} />
-          </Pressable>
-          {expanded === "subject" ? (
-            <View style={uiStyles.wrap}>
-              {["Barchasi", "Ingliz tili", "Matematika"].map((value) => (
-                <Chip
-                  key={value}
-                  label={value}
-                  selected={draft.subject === value}
-                  onPress={() => {
-                    update({ subject: value });
-                    setExpanded(null);
-                  }}
-                />
-              ))}
-            </View>
-          ) : null}
-          <AppText variant="caption" color={C.muted}>
-            Hudud
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Hududni tanlash"
-            onPress={() => setExpanded(expanded === "area" ? null : "area")}
-            style={styles.selectField}
-          >
-            <Icon name="map-pin" color={C.muted} />
-            <AppText color={C.muted} style={styles.flex}>
-              {draft.area === "Barcha tumanlar"
-                ? "Toshkent · barcha tumanlar"
-                : draft.area}
-            </AppText>
-            <Icon name="chevron-down" color={C.muted} size={16} />
-          </Pressable>
-          {expanded === "area" ? (
-            <View style={uiStyles.wrap}>
-              {[
-                "Barcha tumanlar",
-                "Yunusobod",
-                "Mirzo Ulug‘bek",
-                "Chilonzor",
-              ].map((value) => (
-                <Chip
-                  key={value}
-                  label={value}
-                  selected={draft.area === value}
-                  onPress={() => {
-                    update({ area: value });
-                    setExpanded(null);
-                  }}
-                />
-              ))}
-            </View>
-          ) : null}
-          <AppText variant="label">Narx · 1 soat uchun</AppText>
-          <View style={[uiStyles.row, { alignItems: "flex-start" }]}>
-            <View style={styles.flex}>
-              <Field
-                label="Eng kam (so‘m)"
-                value={minInput}
-                onChangeText={(value) => setMinInput(value.replace(/\D/g, ""))}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.flex}>
-              <Field
-                label="Eng ko‘p (so‘m)"
-                value={maxInput}
-                onChangeText={(value) => setMaxInput(value.replace(/\D/g, ""))}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-          {!validRange ? (
-            <AppText variant="caption" color={C.error}>
-              Narxlarni tekshiring: eng ko‘p narx eng kam narxdan kichik
-              bo‘lmasin.
-            </AppText>
-          ) : null}
-          <AppText variant="label">Dars shakli</AppText>
-          <View style={uiStyles.wrap}>
-            {["Barchasi", "Oflayn", "Onlayn"].map((value) => (
-              <Chip
-                key={value}
-                label={value}
-                selected={draft.mode === value}
-                onPress={() => update({ mode: value })}
-              />
-            ))}
-          </View>
-          <AppText variant="label">Reyting</AppText>
-          <View style={uiStyles.wrap}>
-            {[4.5, 4.8].map((value) => (
-              <Chip
-                key={value}
-                label={`${value} va yuqori`}
-                selected={draft.minRating === value}
-                onPress={() => update({ minRating: value })}
-              />
-            ))}
-          </View>
-        </ScrollView>
-        <View style={styles.filterFooter}>
           <Button
-            title="Tozalash"
+            title="Filtrlarni tozalash"
             variant="soft"
-            onPress={reset}
-            style={{ flex: 0.8 }}
-          />
-          <Button
-            title={`${count} natijani ko‘rish`}
-            disabled={!validRange}
             onPress={() => {
-              setFilters({ ...draft, minPrice: min, maxPrice: max });
-              nav.goBack();
+              setFilters(defaultFilters);
+              setQuery("");
             }}
-            style={{ flex: 1.35 }}
           />
-        </View>
-      </View>
+        </>
+      ) : null}
+      {mode === "demo" ? (
+        <AppText variant="caption" color={C.muted}>
+          Sinov katalogi · profil va dars ma’lumotlari namuna.
+        </AppText>
+      ) : null}
     </Screen>
   );
 }
-
-export function TutorScreen() {
-  const nav = useAppNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, "Tutor">>();
-  const tutor = tutors.find((item) => item.id === route.params.id);
-  const { submitRequest } = useApp();
-  const [date, setDate] = useState(trialDates[0]);
-  const [time, setTime] = useState("18:00");
+export function FiltersScreen() {
+  const navigation = useAppNavigation(),
+    { filters, setFilters, tutors } = useApp();
+  const [draft, setDraft] = useState(filters),
+    [min, setMin] = useState(String(filters.minPrice)),
+    [max, setMax] = useState(String(filters.maxPrice));
+  const action = useAction(),
+    value = { ...draft, minPrice: Number(min), maxPrice: Number(max) };
+  const count = filterTutors(tutors, value).length;
+  return (
+    <Screen
+      bottom={
+        <Button
+          title={`${count} natijani ko‘rish`}
+          onPress={() =>
+            action.run(
+              async () => {
+                if (
+                  !Number.isFinite(value.minPrice) ||
+                  !Number.isFinite(value.maxPrice) ||
+                  value.minPrice < 0 ||
+                  value.minPrice > value.maxPrice
+                )
+                  throw new Error("Eng kam narx eng ko‘p narxdan oshmasin.");
+                setFilters(value);
+              },
+              () => navigation.goBack(),
+            )
+          }
+        />
+      }
+    >
+      <Header title="Filtrlar" onBack={() => navigation.goBack()} />
+      <AppText variant="heading">Fan</AppText>
+      <View style={uiStyles.wrap}>
+        {["Barchasi", ...SUBJECTS].map((v) => (
+          <Chip
+            key={v}
+            label={v}
+            selected={draft.subject === v}
+            onPress={() => setDraft((p) => ({ ...p, subject: v }))}
+          />
+        ))}
+      </View>
+      <Field
+        label="Hudud"
+        value={draft.area === "Barcha hududlar" ? "" : draft.area}
+        placeholder="Barcha hududlar"
+        onChangeText={(area) =>
+          setDraft((p) => ({ ...p, area: area || "Barcha hududlar" }))
+        }
+      />
+      <View style={uiStyles.wrap}>
+        {["Barcha hududlar", ...AREAS.slice(0, 4)].map((v) => (
+          <Chip
+            key={v}
+            label={v}
+            selected={draft.area === v}
+            onPress={() => setDraft((p) => ({ ...p, area: v }))}
+          />
+        ))}
+      </View>
+      <AppText variant="heading">Dars shakli</AppText>
+      <View style={uiStyles.wrap}>
+        {["Barchasi", "Onlayn", "Oflayn"].map((v) => (
+          <Chip
+            key={v}
+            label={v}
+            selected={draft.mode === v}
+            onPress={() => setDraft((p) => ({ ...p, mode: v }))}
+          />
+        ))}
+      </View>
+      <AppText variant="heading">Bir dars narxi</AppText>
+      <View style={uiStyles.row}>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="Eng kam (so‘m)"
+            keyboardType="number-pad"
+            value={min}
+            onChangeText={setMin}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="Eng ko‘p (so‘m)"
+            keyboardType="number-pad"
+            value={max}
+            onChangeText={setMax}
+          />
+        </View>
+      </View>
+      <AppText variant="heading">Reyting</AppText>
+      <View style={uiStyles.wrap}>
+        {[0, 4, 4.5].map((v) => (
+          <Chip
+            key={v}
+            label={v ? `${v}+` : "Barchasi"}
+            selected={draft.minRating === v}
+            onPress={() => setDraft((p) => ({ ...p, minRating: v }))}
+          />
+        ))}
+      </View>
+      <Feedback {...action} />
+      <Button
+        title="Tozalash"
+        variant="outline"
+        onPress={() => {
+          setDraft({ ...defaultFilters });
+          setMin("0");
+          setMax("1000000");
+        }}
+      />
+    </Screen>
+  );
+}
+export function TutorScreen({
+  route,
+}: NativeStackScreenProps<RootStackParamList, "Tutor">) {
+  const navigation = useAppNavigation(),
+    { tutors, groups, market, user, submitRequest, favorites, toggleFavorite } =
+      useApp();
+  const tutor = tutors.find((t) => t.id === route.params.id),
+    profile = market.tutorProfiles.find((p) => p.userId === route.params.id);
+  const dates = useMemo(() => nextDates(), []),
+    [date, setDate] = useState(dates[0]),
+    [time, setTime] = useState(profile?.availability[0] || "18:00");
+  const action = useAction();
+  const [subject, setSubject] = useState(
+    profile?.subjects.find((s) => user.interests.includes(s)) ||
+      profile?.subjects[0] ||
+      "",
+  );
   if (!tutor)
     return (
       <Screen>
-        <Header title="Ustoz haqida" onBack={() => nav.goBack()} />
+        <Header title="Repetitor" onBack={() => navigation.goBack()} />
         <EmptyState
-          title="Ustoz topilmadi"
-          subtitle="Qidiruvga qaytib, boshqa ustozni tanlang."
+          title="Profil mavjud emas"
+          subtitle="Profil tekshiruvda yoki katalogdan olib tashlangan."
         />
       </Screen>
     );
-  const book = () => {
-    const id = submitRequest({
-      kind: "lesson",
-      conversationId: tutor.id,
-      title: `${tutor.name} · sinov darsi`,
-      subtitle: `${tutor.subject} · ${tutor.specialty}`,
-      time: `${date} · ${time} · 30 daqiqa`,
-      price: tutor.price / 2,
-    });
-    nav.navigate("Request", { id });
-  };
+  const ownGroups = groups.filter((g) => g.tutorId === tutor.id),
+    student = user.role === "student";
   return (
     <Screen
-      background={C.white}
-      bottom={<Button title="Sinov darsiga yozilish" onPress={book} />}
-    >
-      <Header
-        title="Ustoz haqida"
-        onBack={() => nav.goBack()}
-        right={<SaveButton id={`tutor:${tutor.id}`} />}
-      />
-      <View style={styles.tutorProfile}>
-        <Avatar initials={tutor.initials} size={88} tone="blue" />
-        <Chip
-          label={tutor.verified ? "Tasdiqlangan" : "Yangi ustoz"}
-          tone="green"
-          style={[styles.smallChip, { alignSelf: "center" }]}
-        />
-        <AppText variant="title">{tutor.name}</AppText>
-        <AppText color={C.muted}>
-          {tutor.subject} · {tutor.specialty}
-          {tutor.id === "dilnoza" ? " · CEFR" : ""}
-        </AppText>
-      </View>
-      <View style={styles.stats}>
-        {[
-          { value: String(tutor.rating), label: `${tutor.reviews} sharh` },
-          { value: `${tutor.experience} yil`, label: "Tajriba" },
-          { value: `${tutor.students}+`, label: "O‘quvchi" },
-        ].map((item) => (
-          <View key={item.label} style={styles.stat}>
-            <AppText variant="heading">{item.value}</AppText>
+      bottom={
+        student ? (
+          <>
             <AppText variant="caption" color={C.muted}>
-              {item.label}
+              Arizangizni ustoz tasdiqlaydi. Individual dars:{" "}
+              {money(tutor.price)}.
             </AppText>
-          </View>
-        ))}
-      </View>
-      <Card style={styles.bioCard}>
-        <AppText variant="heading">Men haqimda</AppText>
-        <AppText color={C.muted}>{tutor.bio}</AppText>
-      </Card>
-      <SectionTitle title="Sinov darsi uchun vaqt" />
-      <DateChoice value={date} onChange={setDate} />
-      <AppText variant="caption" color={C.muted}>
-        30 daqiqa · individual tanishuv darsi
-      </AppText>
-      <View style={uiStyles.wrap}>
-        {["16:00", "18:00", "20:00"].map((value) => (
+            <Button
+              title="Individual darsga ariza"
+              loading={action.busy}
+              onPress={() =>
+                action.run(
+                  () =>
+                    submitRequest({
+                      kind: "lesson",
+                      tutorId: tutor.id,
+                      title: `${tutor.name} · individual dars`,
+                      subtitle: subject,
+                      time: `${dateLabel(date)} · ${time}`,
+                      ...toLessonTime(date, time),
+                      price: tutor.price,
+                    }),
+                  (id) => navigation.navigate("Request", { id }),
+                )
+              }
+            />
+          </>
+        ) : undefined
+      }
+    >
+      <Header title="Repetitor profili" onBack={() => navigation.goBack()} />
+      <Card style={{ alignItems: "center", padding: 24 }}>
+        <UserAvatar userId={tutor.id} initials={tutor.initials} size={88} />
+        <AppText variant="title">{tutor.name}</AppText>
+        <Chip label="Tasdiqlangan repetitor" tone="green" />
+        <AppText color={C.muted}>
+          {(tutor.subjects || [tutor.subject]).join(" · ")} · {tutor.specialty}
+        </AppText>
+        <View style={uiStyles.wrap}>
+          <Chip label={`${tutor.experience} yil tajriba`} />
           <Chip
-            key={value}
-            label={value}
-            selected={time === value}
-            onPress={() => setTime(value)}
+            label={
+              tutor.reviews
+                ? `★ ${tutor.rating} · ${tutor.reviews} fikr`
+                : "Hali fikr yo‘q"
+            }
           />
+        </View>
+      </Card>
+      <AppText variant="heading">Ustoz haqida</AppText>
+      <AppText color={C.muted}>{tutor.bio}</AppText>
+      <Card>
+        <AppText variant="heading">Dars shartlari</AppText>
+        <AppText>{money(tutor.price)} / individual dars</AppText>
+        <AppText color={C.muted}>
+          {tutor.area} · {tutor.modes.join(" / ")}
+        </AppText>
+      </Card>
+      {student ? (
+        <>
+          <Button
+            title="Ustozga yozish"
+            variant="soft"
+            icon="message-circle"
+            onPress={() =>
+              navigation.navigate("Conversation", {
+                id: dmId(user.id, tutor.id),
+              })
+            }
+          />
+          <Button
+            title={
+              favorites.includes(tutor.id)
+                ? "Saqlanganlardan olib tashlash"
+                : "Saqlash"
+            }
+            variant="outline"
+            icon="heart"
+            onPress={() => action.run(() => toggleFavorite(tutor.id))}
+          />
+          <AppText variant="heading">Individual dars fani va vaqti</AppText>
+          <View style={uiStyles.wrap}>
+            {profile?.subjects.map((s) => (
+              <Chip
+                key={s}
+                label={s}
+                selected={subject === s}
+                onPress={() => setSubject(s)}
+              />
+            ))}
+          </View>
+          <View style={uiStyles.wrap}>
+            {dates.map((v) => (
+              <Chip
+                key={v}
+                label={dateLabel(v)}
+                selected={date === v}
+                onPress={() => setDate(v)}
+              />
+            ))}
+          </View>
+          <View style={uiStyles.wrap}>
+            {(profile?.availability || []).map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={time === v}
+                onPress={() => setTime(v)}
+              />
+            ))}
+          </View>
+          <AppText variant="caption" color={C.muted}>
+            Vaqtlar Toshkent vaqti bilan. Ustoz ariza bo‘yicha mavjudligini
+            tekshiradi.
+          </AppText>
+        </>
+      ) : null}
+      <Feedback {...action} />
+      <AppText variant="heading">Ochiq dars va guruhlar</AppText>
+      {ownGroups.map((g) => (
+        <GroupCard key={g.id} group={g} />
+      ))}
+      {!ownGroups.length ? (
+        <AppText color={C.muted}>
+          Hozircha ochiq guruh e’lon qilinmagan.
+        </AppText>
+      ) : null}
+      <AppText variant="heading">O‘quvchilar fikrlari</AppText>
+      {market.reviews
+        .filter((r) => r.tutorId === tutor.id)
+        .map((r) => (
+          <Card key={r.id}>
+            <AppText variant="label">★ {r.rating} / 5</AppText>
+            <AppText>{r.text}</AppText>
+            <AppText variant="caption" color={C.muted}>
+              {dateLabel(r.createdAt)}
+            </AppText>
+          </Card>
         ))}
-      </View>
-      <View style={styles.priceStrip}>
-        <AppText variant="caption">Sinov darsi</AppText>
-        <AppText variant="label">{formatPrice(tutor.price / 2)}</AppText>
-      </View>
-      <DemoLabel />
+      {!tutor.reviews ? (
+        <AppText color={C.muted}>
+          Fikrlar darsda qatnashgandan keyin qoldiriladi.
+        </AppText>
+      ) : null}
     </Screen>
   );
 }
-
-export function GroupCard({ group }: { group: StudyGroup }) {
-  const nav = useAppNavigation();
+export function GroupCard({ group }: { group: Offering }) {
+  const navigation = useAppNavigation();
   return (
     <Card
+      onPress={() => navigation.navigate("Group", { id: group.id })}
       accessibilityLabel={`${group.title} tafsilotlari`}
-      onPress={() => nav.navigate("Group", { id: group.id })}
     >
       <View style={uiStyles.between}>
-        <View style={[uiStyles.row, styles.flex]}>
-          <View style={styles.bookCircle}>
-            <Icon name="book-open" size={22} />
-          </View>
-          <AppText variant="label" style={styles.flex}>
-            {group.title}
-          </AppText>
-        </View>
         <Chip
-          label={`${group.spots} o‘rin`}
-          tone="gold"
-          style={styles.smallChip}
+          label={group.type === "group" ? group.subject : "Individual dars"}
+          tone="purple"
+        />
+        <Chip
+          label={group.spots ? `${group.spots} bo‘sh o‘rin` : "Guruh to‘lgan"}
+          tone={group.spots ? "green" : undefined}
         />
       </View>
+      <AppText variant="heading">{group.title}</AppText>
+      <AppText color={C.muted}>{group.tutor}</AppText>
       <AppText variant="caption" color={C.muted}>
-        {group.tutor} · {group.students}/{group.capacity} o‘quvchi
+        {group.days} · {group.time} · {group.mode}
       </AppText>
-      <View style={styles.cardDivider} />
-      <InfoLine icon="clock">
-        {group.days} / {group.time}
-      </InfoLine>
       <View style={uiStyles.between}>
-        <AppText variant="label">{formatPrice(group.price)} / oy</AppText>
+        <AppText variant="label">{money(group.price)}</AppText>
         <AppText variant="caption" color={C.muted}>
-          {group.mode}
+          {group.area} · {group.students}/{group.capacity}
         </AppText>
       </View>
     </Card>
   );
 }
-
 export function GroupsScreen() {
-  const nav = useAppNavigation();
-  const [query, setQuery] = useState("");
-  const [subject, setSubject] = useState("Barchasi");
-  const results = groups.filter(
-    (group) =>
-      (subject === "Barchasi" ||
-        (subject === "IELTS"
-          ? group.id === "ielts"
-          : group.subject === subject)) &&
-      matches(query, [group.title, group.subject, group.area, group.tutor]),
+  const navigation = useAppNavigation(),
+    { groups } = useApp();
+  const [subject, setSubject] = useState("Barchasi"),
+    [openOnly, setOpenOnly] = useState(true);
+  const list = groups.filter(
+    (g) =>
+      (subject === "Barchasi" || g.subject === subject) &&
+      (!openOnly || g.spots > 0),
   );
   return (
-    <Screen bottom={<BottomNavigation active="Search" />}>
-      <Header
-        title="O‘quv guruhlari"
-        onBack={() => nav.goBack()}
-        right={<Icon name="users" color={C.muted} />}
-      />
-      <AppText color={C.muted}>Birga o‘rganish osonroq.</AppText>
-      <Field
-        icon="search"
-        placeholder="Fan, guruh yoki hudud"
-        value={query}
-        onChangeText={setQuery}
-        returnKeyType="search"
-      />
+    <Screen>
+      <Header title="Ochiq guruhlar" onBack={() => navigation.goBack()} />
+      <AppText color={C.muted}>
+        Maqsadingizga mos guruhni tanlang. Ustoz arizangizni ko‘rib chiqadi.
+      </AppText>
       <View style={uiStyles.wrap}>
-        {["Barchasi", "IELTS", "Matematika"].map((value) => (
+        {["Barchasi", ...SUBJECTS].map((s) => (
           <Chip
-            key={value}
-            label={value}
-            selected={subject === value}
-            onPress={() => setSubject(value)}
+            key={s}
+            label={s}
+            selected={subject === s}
+            onPress={() => setSubject(s)}
           />
         ))}
+        <Chip
+          label="Bo‘sh o‘rin bor"
+          selected={openOnly}
+          onPress={() => setOpenOnly((v) => !v)}
+        />
       </View>
-      <SectionTitle
-        title="Yangi guruhlar"
-        aside={`${results.length} ta guruh`}
-      />
-      {results.map((group) => (
-        <GroupCard key={group.id} group={group} />
+      {list.map((g) => (
+        <GroupCard key={g.id} group={g} />
       ))}
-      {!results.length ? (
+      {!list.length ? (
         <EmptyState
-          title="Guruh topilmadi"
-          subtitle="Boshqa fan yoki hududni qidirib ko‘ring."
+          title="Ochiq guruh topilmadi"
+          subtitle="Boshqa fanni tanlang yoki repetitorga individual dars uchun yozing."
+          icon="users"
         />
       ) : null}
-      <DemoLabel />
     </Screen>
   );
 }
-
-export function GroupScreen() {
-  const nav = useAppNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, "Group">>();
-  const group = groups.find((item) => item.id === route.params.id);
-  const { submitRequest } = useApp();
+export function GroupScreen({
+  route,
+}: NativeStackScreenProps<RootStackParamList, "Group">) {
+  const navigation = useAppNavigation(),
+    { groups, market, user, requests, submitRequest } = useApp();
+  const group =
+    groups.find((g) => g.id === route.params.id) ||
+    market.offerings.find((g) => g.id === route.params.id);
+  const action = useAction();
   if (!group)
     return (
       <Screen>
-        <Header title="Guruh haqida" onBack={() => nav.goBack()} />
+        <Header title="Guruh" onBack={() => navigation.goBack()} />
         <EmptyState
           title="Guruh topilmadi"
-          subtitle="Guruhlar ro‘yxatidan boshqa guruhni tanlang."
+          subtitle="E’lon mavjud emas yoki sizga ochiq emas."
         />
       </Screen>
     );
-  const tutor = tutors.find((item) => item.id === group.tutorId);
-  const join = () => {
-    const id = submitRequest({
-      kind: "group",
-      conversationId: group.id === "ielts" ? "ielts" : `group:${group.id}`,
-      title: group.title,
-      subtitle: group.tutor,
-      time: `${group.days} · ${group.time}`,
-      price: group.price,
-    });
-    nav.navigate("Request", { id });
-  };
+  const member = market.enrollments.some(
+      (e) => e.offeringId === group.id && e.studentId === user.id && e.active,
+    ),
+    pending = requests.find(
+      (r) => r.groupId === group.id && r.status === "pending",
+    );
+  const sessions = market.sessions
+    .filter((s) => s.offeringId === group.id)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   return (
     <Screen
-      background={C.white}
       bottom={
-        <Button title="Guruhga qo‘shilish" variant="gold" onPress={join} />
+        user.role === "student" ? (
+          <Button
+            title={
+              member
+                ? "Darslarimga o‘tish"
+                : pending
+                  ? "Arizani ko‘rish"
+                  : group.spots <= 0
+                    ? "Guruh to‘lgan"
+                    : "Guruhga ariza yuborish"
+            }
+            disabled={!member && !pending && group.spots <= 0}
+            loading={action.busy}
+            onPress={() => {
+              if (member) navigation.popTo("Main", { screen: "Lessons" });
+              else if (pending)
+                navigation.navigate("Request", { id: pending.id });
+              else
+                action.run(
+                  () =>
+                    submitRequest({
+                      kind: group.type === "group" ? "group" : "lesson",
+                      groupId: group.id,
+                      tutorId: group.tutorId,
+                      title: group.title,
+                      subtitle: group.subject,
+                      time: `${group.days} · ${group.time}`,
+                      price: group.price,
+                    }),
+                  (id) => navigation.navigate("Request", { id }),
+                );
+            }}
+          />
+        ) : undefined
       }
     >
-      <Header
-        title="Guruh haqida"
-        onBack={() => nav.goBack()}
-        right={<SaveButton id={`group:${group.id}`} />}
-      />
-      <View style={styles.groupHero}>
-        <View style={uiStyles.between}>
-          <AppText variant="caption" color={C.gold} style={{ fontSize: 10 }}>
-            {group.subject.toUpperCase()}
-          </AppText>
-          <Chip
-            label={`${group.spots} o‘rin`}
-            tone="gold"
-            style={styles.smallChip}
-          />
-        </View>
-        <AppText variant="title" color={C.white} style={{ maxWidth: "82%" }}>
-          {group.id === "ielts" ? "IELTS 6.5+\nkichik guruhi" : group.title}
-        </AppText>
-        <AppText variant="caption" color="#B5C6DA">
-          {group.id === "ielts" ? "Intermediate" : "Amaliy ta’lim"} ·{" "}
-          {group.capacity} kishilik guruh
-        </AppText>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${group.tutor} profili`}
-        onPress={() => nav.navigate("Tutor", { id: group.tutorId })}
-        style={uiStyles.row}
-      >
-        <Avatar initials={tutor?.initials || "AY"} size={46} />
-        <View style={styles.flex}>
-          <AppText variant="label">{group.tutor}</AppText>
-          <AppText variant="caption" color={C.muted}>
-            {group.id === "ielts" ? "IELTS 8.5" : group.subject} ·{" "}
-            {tutor?.experience || 5} yil tajriba
-          </AppText>
-        </View>
-        <Icon name="chevron-right" color={C.muted} />
-      </Pressable>
-      <View style={styles.infoPanel}>
-        <InfoLine icon="calendar">
-          {group.days} / {group.time}
-        </InfoLine>
-        <InfoLine icon="map-pin">
-          {group.area} · {group.location}
-        </InfoLine>
-        <InfoLine icon="users">
-          {group.students}/{group.capacity} o‘quvchi · {group.spots} ta bo‘sh
-          o‘rin
-        </InfoLine>
-      </View>
-      <View style={styles.groupPrice}>
-        <AppText variant="heading">{formatPrice(group.price)} / oy</AppText>
-        <AppText variant="caption" color={C.muted}>
-          {group.lessons} ta dars · har biri {group.duration} daqiqa
-        </AppText>
-      </View>
+      <Header title="Guruh haqida" onBack={() => navigation.goBack()} />
+      <Chip label={group.subject} tone="purple" />
+      <AppText variant="display">{group.title}</AppText>
       <Card>
-        <AppText variant="heading">Nimalarni o‘rganamiz?</AppText>
-        <Benefits items={group.benefits} />
+        <AppText variant="heading">{group.tutor}</AppText>
+        <AppText color={C.muted}>
+          {group.mode} · {group.area}
+        </AppText>
+        <AppText>{group.location}</AppText>
+        <Button
+          title="Repetitor profilini ko‘rish"
+          variant="soft"
+          onPress={() => navigation.navigate("Tutor", { id: group.tutorId })}
+        />
       </Card>
-      <AppText variant="caption" color={C.muted}>
-        Qo‘shilish so‘rovini ustoz tasdiqlaydi.
-      </AppText>
-      <DemoLabel />
-    </Screen>
-  );
-}
-
-export function EventCard({ event }: { event: PracticeEvent }) {
-  const nav = useAppNavigation();
-  return (
-    <Card
-      accessibilityLabel={`${event.title} tafsilotlari`}
-      onPress={() => nav.navigate("Event", { id: event.id })}
-    >
-      <View style={uiStyles.row}>
-        <View style={styles.dateBadge}>
-          <AppText variant="label">{event.day}</AppText>
-          <AppText variant="caption" style={{ fontSize: 11 }}>
-            {event.month}
-          </AppText>
-        </View>
-        <View style={[styles.flex, { gap: 4 }]}>
-          <AppText variant="label">{event.title}</AppText>
-          <AppText
-            variant="caption"
-            color={C.purple}
-            style={{ fontSize: 9, textTransform: "uppercase" }}
-          >
-            {event.category}
-          </AppText>
-        </View>
-      </View>
-      <InfoLine icon="map-pin">
-        {event.area} · {event.time}
-      </InfoLine>
-      <View style={styles.cardDivider} />
       <View style={uiStyles.between}>
-        <AppText variant="label" color={C.green}>
-          {event.price ? formatPrice(event.price) : "Bepul"}
-        </AppText>
-        <AppText variant="caption" color={C.navy}>
-          Qatnashish →
-        </AppText>
-      </View>
-    </Card>
-  );
-}
-
-export function EventsScreen() {
-  const nav = useAppNavigation();
-  const [category, setCategory] = useState("Hammasi");
-  const results = events.filter(
-    (event) =>
-      category === "Hammasi" ||
-      (category === "Masterklass"
-        ? event.category === "Masterklass"
-        : event.category !== "Masterklass"),
-  );
-  return (
-    <Screen bottom={<BottomNavigation active="Home" />}>
-      <Header
-        title="Amaliy tadbirlar"
-        onBack={() => nav.goBack()}
-        right={<Icon name="star" color={C.muted} />}
-      />
-      <AppText color={C.muted}>Bilimingizni amaliyotda sinab ko‘ring.</AppText>
-      <View style={uiStyles.wrap}>
-        {["Hammasi", "Masterklass", "Amaliyot"].map((value) => (
-          <Chip
-            key={value}
-            label={value}
-            selected={category === value}
-            onPress={() => setCategory(value)}
-          />
-        ))}
-      </View>
-      <View style={styles.eventBanner}>
-        <View style={styles.bannerCircle}>
-          <Icon name="star" size={24} />
-        </View>
-        <View style={styles.flex}>
-          <AppText variant="label">Tanishuv. Tajriba. Natija.</AppText>
-          <AppText variant="caption" color={C.muted}>
-            Siz uchun yaqin {results.length} ta tadbir
-          </AppText>
-        </View>
-      </View>
-      {results.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-      <DemoLabel />
-    </Screen>
-  );
-}
-
-export function EventScreen() {
-  const nav = useAppNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, "Event">>();
-  const event = events.find((item) => item.id === route.params.id);
-  const { submitRequest } = useApp();
-  if (!event)
-    return (
-      <Screen>
-        <Header title="Tadbir haqida" onBack={() => nav.goBack()} />
-        <EmptyState
-          title="Tadbir topilmadi"
-          subtitle="Tadbirlar ro‘yxatiga qayting."
-        />
-      </Screen>
-    );
-  const join = () => {
-    const id = submitRequest({
-      kind: "event",
-      conversationId:
-        event.id === "speaking" ? "speaking" : `event:${event.id}`,
-      title: event.title,
-      subtitle: `${event.area} · ${event.location}`,
-      time: `${event.date} · ${event.time}`,
-      price: event.price,
-    });
-    nav.navigate("Request", { id });
-  };
-  return (
-    <Screen
-      background={C.white}
-      bottom={<Button title="Ishtirok etish" variant="gold" onPress={join} />}
-    >
-      <Header
-        title="Tadbir haqida"
-        onBack={() => nav.goBack()}
-        right={<SaveButton id={`event:${event.id}`} />}
-      />
-      <View style={styles.illustrationClip}>
-        <EventIllustration height={180} />
-      </View>
-      <AppText variant="display">
-        {event.id === "speaking" ? "Speaking club:\nerkin suhbat" : event.title}
-      </AppText>
-      <View style={uiStyles.wrap}>
+        <AppText variant="heading">{money(group.price)}</AppText>
         <Chip
-          label={event.price ? formatPrice(event.price) : "Bepul"}
+          label={member ? "Siz qatnashchisiz" : `${group.spots} bo‘sh o‘rin`}
           tone="green"
-          style={styles.smallChip}
-        />
-        <Chip
-          label={`${event.spots} ta bo‘sh o‘rin`}
-          tone="gold"
-          style={styles.smallChip}
         />
       </View>
-      <View style={styles.infoPanel}>
-        <InfoLine icon="calendar">
-          {event.date} · {event.time}
-        </InfoLine>
-        <InfoLine icon="map-pin">
-          {event.area} · {event.location}
-        </InfoLine>
-        <InfoLine icon="user">{event.host} · boshlovchi</InfoLine>
-      </View>
-      <SectionTitle
-        title={
-          event.id === "speaking"
-            ? "Suhbatga qo‘shiling"
-            : "Amaliyotga qo‘shiling"
-        }
-      />
-      <AppText color={C.muted}>{event.description}</AppText>
-      <Benefits items={event.benefits} green />
-      <DemoLabel />
-    </Screen>
-  );
-}
-
-export function RoomCard({ room }: { room: StudyRoom }) {
-  const nav = useAppNavigation();
-  return (
-    <Card
-      accessibilityLabel={`${room.title} tafsilotlari`}
-      onPress={() => nav.navigate("Room", { id: room.id })}
-      style={{ padding: 15, gap: 8 }}
-    >
-      <View style={styles.illustrationClip}>
-        <RoomIllustration height={124} />
-      </View>
-      <AppText variant="label">{room.title}</AppText>
-      <InfoLine icon="map-pin">{room.area} · Toshkent</InfoLine>
-      <View style={uiStyles.between}>
-        <AppText variant="caption" color={C.muted}>
-          {room.capacity} kishi
-        </AppText>
-        <AppText variant="label">{formatPrice(room.price)} / soat</AppText>
-      </View>
-    </Card>
-  );
-}
-
-export function RoomsScreen() {
-  const nav = useAppNavigation();
-  const [query, setQuery] = useState("");
-  const [area, setArea] = useState("");
-  const [projector, setProjector] = useState(false);
-  const [wifi, setWifi] = useState(false);
-  const results = rooms.filter(
-    (room) =>
-      (!area || room.area === area) &&
-      (!projector || room.amenities.includes("Proyektor")) &&
-      (!wifi || room.amenities.includes("Wi-Fi")) &&
-      matches(query, [room.title, room.area, room.location]),
-  );
-  return (
-    <Screen bottom={<BottomNavigation active="Search" />}>
-      <Header
-        title="Dars xonalari"
-        onBack={() => nav.goBack()}
-        right={<Icon name="briefcase" color={C.muted} />}
-      />
-      <AppText color={C.muted}>Qulay muhit. Bir joyda yaxshi dars.</AppText>
-      <Field
-        icon="map-pin"
-        placeholder="Yunusobod"
-        value={query}
-        onChangeText={setQuery}
-      />
-      <View style={uiStyles.wrap}>
-        <Chip
-          label="Yunusobod"
-          selected={area === "Yunusobod"}
-          onPress={() => setArea(area ? "" : "Yunusobod")}
-        />
-        <Chip
-          label="Proyektor"
-          selected={projector}
-          onPress={() => setProjector(!projector)}
-        />
-        <Chip label="Wi-Fi" selected={wifi} onPress={() => setWifi(!wifi)} />
-      </View>
-      <SectionTitle
-        title="Sizga yaqin xonalar"
-        aside={`${results.length} ta xona`}
-      />
-      {results.map((room) => (
-        <RoomCard key={room.id} room={room} />
+      <AppText variant="caption" color={C.muted}>
+        {group.lessons} dars · {group.duration} daqiqa · {group.students}/
+        {group.capacity} qatnashchi
+      </AppText>
+      {group.benefits.map((b, i) => (
+        <View key={`${i}-${b}`} style={uiStyles.row}>
+          <Icon name="check-circle" color={C.green} />
+          <AppText style={{ flex: 1 }}>{b}</AppText>
+        </View>
       ))}
-      {!results.length ? (
-        <EmptyState
-          title="Xona topilmadi"
-          subtitle="Hudud yoki qulayliklar filtrini o‘zgartirib ko‘ring."
+      <AppText variant="heading">Dars jadvali</AppText>
+      {sessions.map((s) => (
+        <Card key={s.id}>
+          <View style={uiStyles.between}>
+            <AppText variant="label">{dateLabel(s.startsAt)}</AppText>
+            <AppText>
+              {timeLabel(s.startsAt)}–{timeLabel(s.endsAt)}
+            </AppText>
+          </View>
+          <AppText color={C.muted} variant="caption">
+            {s.location}
+          </AppText>
+        </Card>
+      ))}
+      {user.role === "student" ? (
+        <Button
+          title="Ustozga yozish"
+          variant="outline"
+          icon="message-circle"
+          onPress={() =>
+            navigation.navigate("Conversation", {
+              id: dmId(user.id, group.tutorId),
+            })
+          }
         />
       ) : null}
-      <DemoLabel />
+      <Feedback {...action} />
     </Screen>
   );
 }
-
-export function RoomScreen() {
-  const nav = useAppNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, "Room">>();
-  const room = rooms.find((item) => item.id === route.params.id);
-  const { submitRequest } = useApp();
-  const [date, setDate] = useState(trialDates[0]);
-  const [time, setTime] = useState("16:00");
-  const [duration, setDuration] = useState(1.5);
-  if (!room)
-    return (
-      <Screen>
-        <Header title="Xona haqida" onBack={() => nav.goBack()} />
-        <EmptyState
-          title="Xona topilmadi"
-          subtitle="Xonalar ro‘yxatiga qayting."
-        />
-      </Screen>
-    );
-  const start = Number(time.split(":")[0]);
-  const endTime = `${String(start + Math.floor(duration)).padStart(2, "0")}:${duration % 1 ? "30" : "00"}`;
-  const price = room.price * duration;
-  const book = () => {
-    const id = submitRequest({
-      kind: "room",
-      conversationId: `room:${room.id}`,
-      title: room.title,
-      subtitle: room.location,
-      time: `${date} · ${time}–${endTime}`,
-      price,
-    });
-    nav.navigate("Request", { id });
-  };
+function FutureScreen({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  const navigation = useAppNavigation();
   return (
-    <Screen
-      background={C.white}
-      bottom={<Button title="Bron so‘rovini yuborish" onPress={book} />}
-    >
-      <Header
-        title="Xona haqida"
-        onBack={() => nav.goBack()}
-        right={<SaveButton id={`room:${room.id}`} />}
-      />
-      <View style={styles.illustrationClip}>
-        <RoomIllustration height={155} />
-      </View>
-      <AppText variant="title">{room.title}</AppText>
-      <InfoLine icon="map-pin">{room.location}</InfoLine>
-      <View style={uiStyles.wrap}>
-        {[`${room.capacity} kishi`, ...room.amenities].map((value) => (
-          <Chip
-            key={value}
-            label={value}
-            style={[styles.smallChip, { backgroundColor: C.blueSoft }]}
-          />
-        ))}
-      </View>
-      <SectionTitle title="Qachon dars o‘tamiz?" />
-      <DateChoice value={date} onChange={setDate} />
-      <View style={uiStyles.wrap}>
-        {["16:00", "18:00", "20:00"].map((value) => (
-          <View
-            key={value}
-            style={value === "18:00" ? { opacity: 0.45 } : undefined}
-          >
-            <Chip
-              label={value === "18:00" ? "18:00 · band" : value}
-              selected={time === value}
-              onPress={value === "18:00" ? undefined : () => setTime(value)}
-            />
-          </View>
-        ))}
-      </View>
-      <AppText variant="caption" color={C.muted}>
-        Davomiyligi
-      </AppText>
-      <View style={uiStyles.wrap}>
-        {[1, 1.5, 2].map((value) => (
-          <Chip
-            key={value}
-            label={`${value} soat`}
-            selected={duration === value}
-            onPress={() => setDuration(value)}
-          />
-        ))}
-      </View>
-      <View style={styles.groupPrice}>
-        <View style={uiStyles.between}>
-          <AppText variant="caption">{formatPrice(room.price)} / soat</AppText>
-          <AppText variant="caption" color={C.muted}>
-            {time}–{endTime}
-          </AppText>
-        </View>
-        <View style={styles.cardDivider} />
-        <View style={uiStyles.between}>
-          <AppText variant="label">Jami</AppText>
-          <AppText variant="heading">{formatPrice(price)}</AppText>
-        </View>
-      </View>
-      <DemoLabel />
+    <Screen>
+      <Header title={title} onBack={() => navigation.goBack()} />
+      <Chip label="KEYINGI VERSIYA" tone="gold" />
+      <EmptyState title={title} subtitle={description} icon="clock" />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  saveButton: {
-    width: 30,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  savedDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: C.gold,
-    position: "absolute",
-    bottom: 1,
-  },
-  headerRound: {
-    width: 42,
-    height: 42,
-    backgroundColor: C.white,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tutorCard: {
-    padding: 16,
-    minHeight: 158,
-    gap: 10,
-    shadowColor: "#173251",
-    shadowOpacity: 0.025,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-  },
-  cardDivider: { height: 1, backgroundColor: C.border, marginVertical: 2 },
-  priceColumn: { alignItems: "flex-end", gap: 0 },
-  demo: { textAlign: "center", fontSize: 10, marginTop: 2 },
-  tutorProfile: { alignItems: "center", gap: 8, paddingVertical: 4 },
-  smallChip: {
-    minHeight: 26,
-    paddingVertical: 3,
-    paddingHorizontal: 11,
-    borderWidth: 0,
-  },
-  stats: {
-    flexDirection: "row",
-    backgroundColor: C.background,
-    paddingVertical: 15,
-    borderRadius: 20,
-  },
-  stat: { flex: 1, alignItems: "center", gap: 2 },
-  bioCard: { backgroundColor: C.blueSoft, borderWidth: 0, padding: 18 },
-  priceStrip: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 18,
-    backgroundColor: C.goldSoft,
-    borderRadius: 16,
-  },
-  selectField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.white,
-    paddingHorizontal: 16,
-    minHeight: 54,
-    borderRadius: 16,
-  },
-  dateOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 12,
-    borderRadius: 10,
-  },
-  filterPreview: {
-    paddingHorizontal: 22,
-    paddingTop: 35,
-    paddingBottom: 20,
-    gap: 16,
-    opacity: 0.75,
-  },
-  filterGhostField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    padding: 15,
-    borderRadius: 16,
-    backgroundColor: "#B9C5D3",
-    borderWidth: 1,
-    borderColor: "#A3B1C3",
-  },
-  filterSheet: {
-    flex: 1,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    backgroundColor: C.white,
-    overflow: "hidden",
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 3,
-    backgroundColor: C.border,
-    alignSelf: "center",
-    marginTop: 18,
-  },
-  filterContent: { padding: 20, paddingTop: 10, gap: 12 },
-  filterFooter: {
-    flexDirection: "row",
-    gap: 10,
-    padding: 20,
-    paddingTop: 12,
-    paddingBottom: 26,
-    backgroundColor: C.white,
-  },
-  bookCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: C.blueSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  groupHero: {
-    backgroundColor: C.navy,
-    borderRadius: 20,
-    padding: 18,
-    gap: 12,
-  },
-  infoPanel: {
-    padding: 16,
-    gap: 10,
-    borderRadius: 18,
-    backgroundColor: C.background,
-  },
-  groupPrice: {
-    backgroundColor: C.goldSoft,
-    padding: 17,
-    gap: 6,
-    borderRadius: 18,
-  },
-  benefits: { gap: 10, paddingVertical: 4, borderRadius: 18 },
-  eventBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-    backgroundColor: C.goldSoft,
-    borderRadius: 18,
-  },
-  bannerCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: C.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dateBadge: {
-    width: 56,
-    height: 58,
-    backgroundColor: C.goldSoft,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 0,
-  },
-  illustrationClip: { overflow: "hidden", borderRadius: 20 },
-});
+export function RoomsScreen() {
+  return (
+    <FutureScreen
+      title="Xona band qilish"
+      description="Repetitorlar uchun xonalar, bo‘sh vaqtlar va band qilish keyingi versiyada qo‘shiladi."
+    />
+  );
+}
+export function RoomScreen() {
+  return <RoomsScreen />;
+}
+export function EventsScreen() {
+  return (
+    <FutureScreen
+      title="O‘quv tadbirlari"
+      description="Hozir ochiq guruhlar va individual darslarga ariza yuborishingiz mumkin. Alohida tadbirlar keyingi bosqichda qo‘shiladi."
+    />
+  );
+}
+export function EventScreen() {
+  return <EventsScreen />;
+}

@@ -1,6 +1,7 @@
 import React, { type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -179,7 +180,7 @@ export function Button({
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityLabel={title}
-      accessibilityState={{ disabled: disabled || loading }}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={({ pressed }) => [
         styles.button,
         {
@@ -279,11 +280,17 @@ export function Avatar({
   initials,
   size = 48,
   tone = "gold",
+  uri,
+  label,
 }: {
   initials: string;
   size?: number;
   tone?: "gold" | "blue" | "green" | "purple";
+  uri?: string;
+  label?: string;
 }) {
+  const [failed, setFailed] = React.useState(false);
+  React.useEffect(() => setFailed(false), [uri]);
   const bg = {
     gold: C.goldSoft,
     blue: C.blueSoft,
@@ -292,7 +299,7 @@ export function Avatar({
   }[tone];
   return (
     <View
-      accessibilityLabel={initials}
+      accessibilityLabel={label || initials}
       style={{
         width: size,
         height: size,
@@ -300,14 +307,26 @@ export function Avatar({
         backgroundColor: bg,
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
+        flexShrink: 0,
       }}
     >
-      <AppText
-        variant={size > 70 ? "display" : "label"}
-        style={{ fontSize: size > 70 ? 28 : Math.max(13, size * 0.28) }}
-      >
-        {initials}
-      </AppText>
+      {uri && !failed ? (
+        <Image
+          source={{ uri }}
+          accessibilityLabel={label || "Profil rasmi"}
+          resizeMode="cover"
+          onError={() => setFailed(true)}
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+        />
+      ) : (
+        <AppText
+          variant={size > 70 ? "display" : "label"}
+          style={{ fontSize: size > 70 ? 28 : Math.max(13, size * 0.28) }}
+        >
+          {initials}
+        </AppText>
+      )}
     </View>
   );
 }
@@ -413,7 +432,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     marginBottom: 2,
   },
-  headerIcon: { width: 28, height: 40, justifyContent: "center" },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: -10,
+  },
   button: {
     minHeight: 52,
     borderRadius: 16,
@@ -437,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     alignSelf: "flex-start",
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: "center",
   },
   fieldWrap: { gap: 8 },
