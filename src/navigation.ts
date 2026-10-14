@@ -7,7 +7,17 @@ export type RootStackParamList = {
   Verify: undefined;
   Setup: undefined;
   Main:
-    | { screen?: "Home" | "Search" | "Lessons" | "Chats" | "Profile" }
+    | {
+        screen?:
+          | "Home"
+          | "Search"
+          | "Lessons"
+          | "Chats"
+          | "Profile"
+          | "Applications"
+          | "Classes"
+          | "Moderation";
+      }
     | undefined;
   Tutors: undefined;
   Filters: undefined;
@@ -21,6 +31,12 @@ export type RootStackParamList = {
   Request: { id: string };
   Conversation: { id: string };
   EditProfile: undefined;
+  TutorProfile: undefined;
+  CreateOffering: undefined;
+  ManageClass: { id: string };
+  ModerateTutor: { id: string };
+  Notifications: undefined;
+  Review: { sessionId: string };
 };
 export const useAppNavigation = () =>
   useNavigation<NativeStackNavigationProp<RootStackParamList>>();

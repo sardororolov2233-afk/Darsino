@@ -179,7 +179,7 @@ export function Button({
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityLabel={title}
-      accessibilityState={{ disabled: disabled || loading }}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={({ pressed }) => [
         styles.button,
         {
@@ -413,7 +413,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     marginBottom: 2,
   },
-  headerIcon: { width: 28, height: 40, justifyContent: "center" },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: -10,
+  },
   button: {
     minHeight: 52,
     borderRadius: 16,
@@ -437,7 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     alignSelf: "flex-start",
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: "center",
   },
   fieldWrap: { gap: 8 },

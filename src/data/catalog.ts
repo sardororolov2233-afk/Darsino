@@ -3,6 +3,7 @@ export interface Tutor {
   name: string;
   initials: string;
   subject: string;
+  subjects?: string[];
   specialty: string;
   rating: number;
   reviews: number;
