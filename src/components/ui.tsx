@@ -269,6 +269,7 @@ export function Chip({
       disabled={!onPress}
       onPress={onPress}
       accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? label : undefined}
       accessibilityState={onPress ? { selected } : undefined}
       style={[
         styles.chip,

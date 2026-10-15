@@ -230,6 +230,8 @@ async function app(saved?: string, photoBrowserStubs = false) {
     await click("Tasdiqlash");
   }
   async function logout() {
+    for (let i = 0; i < 4 && !find("Profil", "tab") && find("Orqaga"); i++)
+      await click("Orqaga");
     await click("Profil", "tab");
     await click("Hisobdan chiqish");
     await click("Chiqishni tasdiqlash");
@@ -273,11 +275,12 @@ test(
       await ui.logout();
       await ui.login("dilnoza@darsino.demo");
       await ui.wait(() => ui.text("Repetitor kabineti"), "tutor home");
-      await ui.click("Arizalar", "tab");
+      await ui.click("Arizalarni ochish");
       await ui.fill("O‘quvchiga izoh", "Xush kelibsiz");
       await ui.click("Tasdiqlash");
       await ui.wait(() => ui.text("Yangi arizalar yo‘q"), "approval saved");
-      await ui.click("Darslar", "tab");
+      await ui.click("Orqaga");
+      await ui.click("Guruhlar", "tab");
       await ui.click("IELTS 6.5+ guruhini boshqarish");
       await ui.wait(() => ui.text("Sardor Test"), "real participant appears");
       await ui.click("Tanlangan dars vaqtini o‘zgartirish");
@@ -312,7 +315,7 @@ test(
       await ui.click("Orqaga");
       await ui.logout();
       await ui.login("dilnoza@darsino.demo");
-      await ui.click("Chat", "tab");
+      await ui.click("Chatni ochish");
       await ui.click("Suhbat: Sardor Test");
       await ui.wait(
         () => ui.text("Darsga tayyorman."),

@@ -13,6 +13,14 @@ async function login(page: Page, email: string) {
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
 }
 async function logout(page: Page) {
+  for (
+    let i = 0;
+    i < 4 &&
+    !(await page.getByRole("tab", { name: "Profil", exact: true }).count()) &&
+    (await page.getByRole("button", { name: "Orqaga", exact: true }).count());
+    i++
+  )
+    await page.getByRole("button", { name: "Orqaga", exact: true }).click();
   await page.getByRole("tab", { name: "Profil", exact: true }).click();
   await page
     .getByRole("button", { name: "Hisobdan chiqish", exact: true })
@@ -54,7 +62,9 @@ test("student application requires tutor approval before My Lessons", async ({
   ).toBeVisible();
   await logout(page);
   await login(page, "dilnoza@darsino.demo");
-  await page.getByRole("tab", { name: "Arizalar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Arizalarni ochish", exact: true })
+    .click();
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await expect(
     page.getByText("Yangi arizalar yo‘q", { exact: true }),

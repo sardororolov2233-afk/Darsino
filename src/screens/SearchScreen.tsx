@@ -24,6 +24,7 @@ import { matchesSearch } from "../state/learning";
 import { clubs, diagnostics, openLessons } from "../data/learning";
 import { SUBJECTS } from "../components/TutorForm";
 import { useAction, Feedback } from "../components/feedback";
+import { isClubOffering } from "../state/teacher";
 import { C } from "../theme";
 export function SearchScreen() {
   const { tutors, groups, filters, setFilters, favorites, user, mode } =
@@ -69,8 +70,15 @@ export function SearchScreen() {
       matchesSubject(c.subject) &&
       matchesSearch(`${c.title} ${c.subject} ${c.description}`, query),
   );
+  const communityGroups = groups.filter(
+    (g) =>
+      isClubOffering(g) &&
+      matchesSubject(g.subject) &&
+      matchesSearch(`${g.title} ${g.subject} ${g.tutor} ${g.area}`, query),
+  );
   const studyGroups = groups.filter(
     (g) =>
+      !isClubOffering(g) &&
       matchesSubject(g.subject) &&
       (filters.area === "Barcha hududlar" || filters.area === g.area) &&
       (filters.mode === "Barchasi" || filters.mode === g.mode) &&
@@ -84,12 +92,13 @@ export function SearchScreen() {
         videos.length +
         tests.length +
         communities.length +
+        communityGroups.length +
         studyGroups.length,
     },
     { label: "Ustozlar", count: results.length },
     { label: "Video darslar", count: videos.length },
     { label: "Radar testlar", count: tests.length },
-    { label: "Klublar", count: communities.length },
+    { label: "Klublar", count: communities.length + communityGroups.length },
     { label: "Guruhlar", count: studyGroups.length },
   ];
   const count = categories.find((c) => c.label === category)!.count;
@@ -279,9 +288,14 @@ export function SearchScreen() {
           ))}
         </>
       ) : null}
-      {section("Klublar") && communities.length ? (
+      {section("Klublar") && communities.length + communityGroups.length ? (
         <>
-          <AppText variant="heading">Klublar · {communities.length}</AppText>
+          <AppText variant="heading">
+            Klublar · {communities.length + communityGroups.length}
+          </AppText>
+          {communityGroups.map((g) => (
+            <GroupCard key={g.id} group={g} />
+          ))}
           {communities.map((c) => (
             <ClubCard key={c.id} club={c} />
           ))}

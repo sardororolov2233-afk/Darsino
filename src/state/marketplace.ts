@@ -181,8 +181,11 @@ export function applyMarketCommand(
           o.capacity >= 1 &&
           o.capacity <= 100 &&
           Number.isFinite(o.price) &&
-          o.price > 0,
-        "O‘rinlar soni 1–100 va narx noldan katta bo‘lsin.",
+          (o.price > 0 ||
+            (o.price === 0 &&
+              o.type === "group" &&
+              o.benefits.includes("O‘qi klubi"))),
+        "O‘rinlar soni 1–100 bo‘lsin. Faqat klub guruhining narxi 0 bo‘lishi mumkin.",
       );
       ensure(
         o.location.trim().length >= 3 &&

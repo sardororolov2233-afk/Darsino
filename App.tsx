@@ -12,6 +12,14 @@ import { Manrope_600SemiBold } from "@expo-google-fonts/manrope/600SemiBold";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
 import { Manrope_800ExtraBold } from "@expo-google-fonts/manrope/800ExtraBold";
 import { AppProvider, useApp } from "./src/state/AppContext";
+import { TeacherProvider } from "./src/state/TeacherContext";
+import {
+  TeacherRoomsScreen,
+  PlanRoomScreen,
+  TeacherClubsScreen,
+  CreateClubScreen,
+  AssignDiagnosticScreen,
+} from "./src/screens/TeacherWorkspaceScreens";
 import { LearningProvider } from "./src/state/LearningContext";
 import { SearchScreen } from "./src/screens/SearchScreen";
 import {
@@ -112,27 +120,27 @@ function MainTabs() {
   const tutorTabs = [
     {
       name: "Home",
-      title: "Kabinet",
-      icon: "home" as const,
+      title: "Tahlil",
+      icon: "bar-chart-2" as const,
       component: TutorHomeScreen,
     },
     {
-      name: "Applications",
-      title: "Arizalar",
-      icon: "inbox" as const,
-      component: ApplicationsScreen,
-    },
-    {
       name: "Classes",
-      title: "Darslar",
-      icon: "book-open" as const,
+      title: "Guruhlar",
+      icon: "users" as const,
       component: TutorClassesScreen,
     },
     {
-      name: "Chats",
-      title: "Chat",
-      icon: "message-circle" as const,
-      component: ChatsScreen,
+      name: "TeacherRooms",
+      title: "Xonalar",
+      icon: "grid" as const,
+      component: TeacherRoomsScreen,
+    },
+    {
+      name: "TeacherClubs",
+      title: "Klublar",
+      icon: "award" as const,
+      component: TeacherClubsScreen,
     },
     {
       name: "Profile",
@@ -201,13 +209,23 @@ function MainTabs() {
                 style={[
                   styles.tabIcon,
                   focused && styles.activeTab,
-                  tab.name === "Radar" && styles.radarTab,
+                  (tab.name === "Radar" || tab.name === "TeacherRooms") &&
+                    styles.radarTab,
+                  tab.name === "TeacherRooms" && { backgroundColor: C.purple },
                 ]}
               >
                 <Icon
                   name={tab.icon}
-                  color={tab.name === "Radar" ? C.white : color}
-                  size={tab.name === "Radar" ? 25 : 21}
+                  color={
+                    tab.name === "Radar" || tab.name === "TeacherRooms"
+                      ? C.white
+                      : color
+                  }
+                  size={
+                    tab.name === "Radar" || tab.name === "TeacherRooms"
+                      ? 25
+                      : 21
+                  }
                 />
               </View>
             ),
@@ -251,6 +269,18 @@ function Navigator() {
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="Tutors" component={SearchScreen} />
             <Stack.Screen name="Chats" component={ChatsScreen} />
+            <Stack.Screen name="Applications" component={ApplicationsScreen} />
+            <Stack.Screen
+              name="AssignDiagnostic"
+              component={AssignDiagnosticScreen}
+              options={{ presentation: "modal" }}
+            />
+            <Stack.Screen
+              name="PlanRoom"
+              component={PlanRoomScreen}
+              options={{ presentation: "modal" }}
+            />
+            <Stack.Screen name="CreateClub" component={CreateClubScreen} />
             <Stack.Screen name="Quiz" component={QuizScreen} />
             <Stack.Screen name="OpenLesson" component={OpenLessonScreen} />
             <Stack.Screen
@@ -305,7 +335,9 @@ export default function App() {
           {fontsLoaded || fontError ? (
             <AppProvider>
               <LearningProvider>
-                <Navigator />
+                <TeacherProvider>
+                  <Navigator />
+                </TeacherProvider>
               </LearningProvider>
             </AppProvider>
           ) : (

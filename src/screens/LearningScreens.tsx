@@ -24,6 +24,10 @@ import { Feedback, useAction } from "../components/feedback";
 import { clubs, diagnostics, openLessons, SKILLS } from "../data/learning";
 import { learningStats, scoreAttempt } from "../state/learning";
 import { useLearning } from "../state/LearningContext";
+import { useApp } from "../state/AppContext";
+import { GroupCard } from "./DiscoveryScreens";
+import { isClubOffering } from "../state/teacher";
+import { encodeAssessment, validInvitation } from "../state/assessments";
 import { C, font } from "../theme";
 
 export function LearningLibrary({
@@ -32,6 +36,8 @@ export function LearningLibrary({
   section: "Video darslar" | "Klublar";
 }) {
   const [subject, setSubject] = useState("Barchasi");
+  const { groups } = useApp();
+  const publicClubs = groups.filter(isClubOffering);
   return (
     <>
       <AppText variant="heading">
@@ -41,9 +47,18 @@ export function LearningLibrary({
       </AppText>
       <AppText variant="caption" color={C.muted}>
         {section === "Klublar"
-          ? "Qiziqishlaringizga mos klublarni kuzating. Bu namuna katalogi; kuzatish tadbirga ro‘yxatdan o‘tish hisoblanmaydi."
+          ? "Ustozlar klublariga ariza yuboring. Qiziqishlar katalogidagi namuna klublarni esa kuzatishingiz mumkin."
           : "Khan Academy va British Council ochiq videolari. Darslar manba saytida ochiladi."}
       </AppText>
+      {section === "Klublar" && publicClubs.length ? (
+        <>
+          <AppText variant="heading">Ustozlar ochgan klublar</AppText>
+          {publicClubs.map((g) => (
+            <GroupCard key={g.id} group={g} />
+          ))}
+          <AppText variant="heading">Qiziqishlar katalogi</AppText>
+        </>
+      ) : null}
       {section === "Video darslar" ? (
         <>
           <View style={uiStyles.wrap}>
@@ -211,6 +226,12 @@ export function QuizScreen({
 }: NativeStackScreenProps<RootStackParamList, "Quiz">) {
   const navigation = useAppNavigation();
   const { finishQuiz, ready } = useLearning();
+  const { market, user, sendMessage } = useApp();
+  const [shared, setShared] = useState(false);
+  const inviteMessage = market.messages.find(
+    (m) => m.id === route.params.invitationMessageId,
+  );
+  const invite = inviteMessage && validInvitation(market, inviteMessage);
   const test = diagnostics.find((t) => t.id === route.params.id);
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -271,6 +292,37 @@ export function QuizScreen({
               natijangizdan hisoblanadi.
             </AppText>
           </Card>
+          {invite &&
+          inviteMessage &&
+          user.role === "student" &&
+          invite.studentId === user.id &&
+          invite.testId === test.id ? (
+            <Button
+              title={
+                shared
+                  ? "Natija ustozga yuborildi"
+                  : "Natijani ustozga yuborish"
+              }
+              disabled={shared}
+              loading={action.busy}
+              icon="send"
+              variant="gold"
+              onPress={() =>
+                action.run(
+                  () =>
+                    sendMessage(
+                      inviteMessage.conversationId,
+                      encodeAssessment({
+                        kind: "result",
+                        invitationId: invite.id,
+                        answers: finalAnswers,
+                      }),
+                    ),
+                  () => setShared(true),
+                )
+              }
+            />
+          ) : null}
           <Button
             title="Radarga qaytish"
             icon="target"
@@ -284,6 +336,7 @@ export function QuizScreen({
               setSelected(null);
               setChecked(false);
               setDone(false);
+              setShared(false);
             }}
           />
         </>

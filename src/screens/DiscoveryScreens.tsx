@@ -31,7 +31,9 @@ import { C } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 export const money = (value: number) =>
-  `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
+  value === 0
+    ? "Bepul"
+    : `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
 export function filterTutors(catalog: Tutor[], filters: Filters, query = "") {
   const q = query.trim().toLocaleLowerCase();
   return catalog.filter(

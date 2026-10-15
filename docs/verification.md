@@ -1,31 +1,32 @@
-# Darsino tekshiruvi
+# O‘qi tekshiruvi
 
-2026-10-14: email / Google / Apple kirishi, profil rasmi va Supabase Table / Storage paketi uchun repo tekshiruvi.
+2026-10-15: o‘quvchi va ustoz prototiplari Expo / React Native ilovasiga moslashtirildi. Yangilangan ekranlar va chegaralar: [O‘qi UI](oqi-ui.md).
 
-| Tekshiruv                         | Natija / chegara                                                                                                                                                                                            |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript                        | `npm run typecheck`                                                                                                                                                                                         |
-| Auth, domain va Postgres RPC      | O‘tdi: 46 ta test (`npm test`): marketplace, moderator, sig‘im, jadval, davomat, fikr, Auth, Storage RLS / RPC, fayl klienti, Realtime cleanup va kesh                                                      |
-| Saqlash                           | V1 profil/favorit/xabar ko‘chishi, buzilgan kesh, Unicode tokenlar, parallel token yangilanishi va yozish xatosida eski sessiya                                                                             |
-| Haqiqiy Expo web bundle           | O‘tdi: 4 ta eksport UI testi (`npm run test:ui`): ikki rol bilan tasdiqlash → «Darslarim», jadval bildirishnomasi, ikki tomonlama chat, qayta ochilgan sessiya va moderator tasdig‘idan keyin dars yaratish |
-| Platforma yig‘ilishi              | O‘tdi: `npm run export:all`: web, Android, iOS                                                                                                                                                              |
-| Chromium piksel / E2E             | Ushbu muhitda ishga tushmadi: Unix socket `Operation not permitted`. Playwright testlari oddiy browser muhitida ishlatish uchun saqlangan.                                                                  |
-| Email / OAuth / deployed Supabase | Loyiha URL, ochiq kalit va SMTP va OAuth provider credential’lari berilmagan; migratsiya va email / OAuth kodi tayyor, live xizmatga qo‘llanmagan.                                                          |
-| Native bildirishnoma              | Ruxsat va OS yetkazilishi real Android/iOS qurilmasida tekshirilmagan.                                                                                                                                      |
+| Tekshiruv                                 | Natija / chegara                                                                                            |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| TypeScript                                | `npm run typecheck` o‘tdi                                                                                   |
+| Auth, domain, Postgres, learning, teacher | `npm test`: 57 ta test o‘tdi                                                                                |
+| Eksport qilingan Expo web bundle          | 4 ta JSDOM UI testi o‘tdi: tasdiqlash, jadval, chat, sessiya, moderator, avatar                             |
+| Chromium E2E                              | 7 ta oqim o‘tdi; 390 va 320 px layout ko‘zdan kechirildi                                                    |
+| Platformalar                              | `npm run export:all`: web, Android va iOS bundle eksportlari o‘tdi; native qurilma / store build testi emas |
+| SQL / format                              | `npm run supabase:check`, `npm run format:check` va `git diff --check` o‘tdi                                |
+| Live xizmatlar                            | Supabase / SMTP / OAuth credential’lari berilmagan; migratsiya live loyihaga qo‘llanmagan                   |
+| Native imkoniyatlar                       | Haqiqiy rasm pickeri, telefon bildirishnomalari va OS yetkazilishi real qurilmada tekshirilmagan            |
 
-Supabase qo‘shimcha tekshiruvlari:
+## Oqimlar
 
-- SQL Editor fayli bo‘sh loyihada, oldingi bazani yangilashda va ikki marta qayta bajarishda tekshirildi. Oldingi profil, xabar va arizalar saqlandi; qisman mavjud sxema ma’lumotga tegmasdan rad etildi. `npm run supabase:check` generatsiya fayli migratsiyalarga aynan mosligini tasdiqladi.
-- 5 ta private bucket: avatar, tasdiqlash hujjati, chat fayli, dars materiali va guruh muqovasi. Begona foydalanuvchi, noto‘g‘ri yo‘l / MIME / hajm, eski rezerv, soxta rol, tasdiqlanmagan email va bloklangan akkaunt tekshirildi.
-- Moderator hujjatni ko‘radi, shaxsiy chat / dars materialini umumiy huquq bilan ko‘rmaydi. Faol a’zolik tugashi, material yashirilishi, muqova e’loni yopilishi va fayl bog‘lanishini o‘zgartirish ruxsatlari tekshirildi.
-- Keng tashqi Storage policy bo‘lsa ham anonim kirish va fayl ustiga yozish yopiq qoladi. O‘chirish rezervi yangi bog‘lanishni to‘sadi; Storage obyekti qolganida metadata’ni o‘chirilgan deb belgilash rad etiladi. Rad etilgan hujjatni o‘chirish mumkin, tasdiqlangan asl nusxa himoyalangan.
-- Fayl xizmatidagi ArrayBuffer / upsert:false, finalize xatosidan keyingi qayta urinish, ruxsatdan keyin signed URL so‘rash va Storage xatosida metadata’ni saqlash tekshirildi. Realtime voqealarini birlashtirish va logout’da unsubscribe alohida stub test bilan tekshirildi.
-- SQL testlarida Auth / Storage jadvallari minimal fixture sifatida yaratiladi. Haqiqiy binary upload / download, signed URL HTTP, email yetkazilishi / OAuth va Realtime WebSocket Supabase loyihasida tekshirilmagan. Avatar pickeri profil va tahrirlash ekranlariga ulangan. Tanlash, oldindan ko‘rish, bekor qilish, saqlash, sessiya qayta ochilganda saqlanish va olib tashlash UI’da tekshirildi. JSDOMdagi rasm dekoderi va Canvas encoder stub qilingan; haqiqiy piksel sifati / native picker yoki Storage HTTP tekshiruvi emas.
+- Marketplace: ariza tasdiqlanmaguncha a’zolik yoki jadval yo‘q. Faqat o‘zining tasdiqlangan ustoz profili qaror qiladi. Sig‘im, jadval to‘qnashuvi, individual dars, davomat va fikr qoldirish tekshirildi. Soxta rol, begona ma’lumotlar va eskirgan akkaunt sessiyasi rad etiladi.
+- O‘quvchi: haqiqiy javoblardan radar, eng yaxshi natijadan XP, takrorlash orqali XP oshirib yubormaslik, Toshkent sanasi, buzilgan kesh, qidiruv / xarita filtrlari va boshqa akkauntdan progress ajratilishi tekshirildi.
+- Ustoz: test topshirig‘i → shaxsiy chat → o‘quvchi testni tugatishi → natijani ixtiyoriy ulashish → ustoz radari → haqiqiy davomat. Soxta yuboruvchi va noto‘g‘ri javoblar radarni o‘zgartirmaydi.
+- Klub: bepul e’lon → qidiruv / klublarda topish → ariza → ustoz tasdig‘i → a’zolik. SQL testi noldan soxta a’zo yaratilmasligini, oddiy darsga nol / manfiy narx qo‘yilmasligini va migratsiya takrorlanganda a’zolik saqlanishini tekshiradi.
+- Xonalar: 320 px xarita filtri natija bo‘lmasa eski belgini qoldirmaydi; reja saqlanadi va qayta ochiladi, boshqa ustozga ko‘rinmaydi. Begona guruh, kichik sig‘im, noto‘g‘ri sana va reja vaqti to‘qnashuvi rad etiladi. Xonalar namuna, saqlash haqiqiy bron emas.
 
-PGlite PostgreSQL testlari serverdagi ruxsat va tranzaksiya oqimini tekshiradi. U bitta ulanishli test dvigateli bo‘lgani uchun ko‘p ulanishli production yuklamasini tasdiqlamaydi. Guruh sig‘imi uchun server kodi offering qatorini qulflaydi va o‘quvchi/guruh uchun unique enrollment cheklovini ishlatadi.
+## Supabase va fayllar
 
-`docs/screenshots/` rasmlari dastlabki repo versiyasiga tegishli; yangilangan UI uchun yangi screenshot sifatida ishlatilmagan.
+SQL Editor bundle bo‘sh loyihada, oldingi bazani yangilashda va qayta bajarishda tekshirildi. Profil, xabar, ariza va a’zolik saqlanadi; qisman mavjud sxema tranzaksiya bilan rad etiladi. Bepul klub uchun `202610150001_free_clubs.sql` yangilanishi qo‘shildi.
 
-Email / OAuth yangilanishi: `004_email_social_auth.sql` telefonni majburiy qilishni olib tashlaydi. Tasdiqlangan email telefon raqamisiz snapshot / Storage RPC’dan foydalandi, tasdiqlanmagan email esa telefon tasdiqlangan bo‘lsa ham rad etildi. Email faqat o‘z akkauntiga qaytadi; Auth metadata orqali moderator roli olinmaydi. PKCE faqat ilovaning callback manzilidagi kodni qabul qiladi va takroriy callback bir marta almashtiriladi. Google/Apple UI testlari ochiq belgilangan demo hisoblari bilan bajarildi, real providerga kirilmadi.
+16 ta jadvaldagi RLS, 5 ta private bucket, fayl rezervi / finalize / o‘chirish, MIME / hajm / egalik, tasdiqlanmagan yoki bloklangan akkaunt, moderator hujjati, faol a’zoga material, private chat, yopiq yordamchi RPC va keng tashqi Storage policy bilan himoya test qilindi. Binary upload o‘rniga test fixture ishlatilgan; haqiqiy Supabase HTTP / signed URL / Realtime WebSocket tekshiruvi emas.
 
-Ustoz kartasining narxi va «Profil» tugmasi wrap qilinadigan alohida ustunlarga ajratildi; narx matni qisqarmaydi va tor ekranda tugma keyingi qatorga tushadi. Qidiruv saralash qatori ham wrap qiladi. Chromium muhit cheklovi sabab haqiqiy piksel / bounding-box testi bajarilmadi.
+Email OTP manzilni normallashtiradi, telefon talab qilmaydi; email faqat o‘z akkauntiga qaytadi. PKCE faqat ruxsat etilgan callback kodini bir marta almashtiradi. Google / Apple sinovida demo akkauntlar ishlatilgan, real provider sessiyasi ochilmagan. Native SecureStore uchun Unicode, parallel yangilash va yozish xatosida eski sessiyani saqlash tekshirildi.
+
+PGlite haqiqiy PostgreSQL funksiyalari va tranzaksiyalarini bitta ulanishda tekshiradi; production yuklama sinovi emas. JSDOM font, rasm dekoderi va Canvas qismlari stub qilingan. Chromium haqiqiy eksport bilan layout va foydalanuvchi oqimlarini tekshiradi.

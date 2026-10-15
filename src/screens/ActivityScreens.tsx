@@ -34,6 +34,13 @@ import { TutorCard, money } from "./DiscoveryScreens";
 import { C } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
 import { AvatarEditor } from "../components/AvatarEditor";
+import {
+  TeacherHeader,
+  TeacherFinance,
+  TeacherProfileSummary,
+} from "../components/TeacherComponents";
+import { assessmentLabel } from "../state/assessments";
+import { AssessmentMessage } from "../components/AssessmentMessage";
 import { OqiHeader } from "../components/OqiHeader";
 import { LearningLibrary } from "./LearningScreens";
 import { useLearning } from "../state/LearningContext";
@@ -133,9 +140,9 @@ export function RequestScreen({
       <Button
         title={isStudent ? "Darslarimni ko‘rish" : "Arizalarimni ko‘rish"}
         onPress={() =>
-          navigation.popTo("Main", {
-            screen: isStudent ? "Lessons" : "Applications",
-          })
+          isStudent
+            ? navigation.popTo("Main", { screen: "Lessons" })
+            : navigation.navigate("Applications")
         }
       />
       {request.conversationId ? (
@@ -444,11 +451,7 @@ export function ChatsScreen() {
     <Screen>
       <Header
         title="Suhbatlar"
-        onBack={
-          user.role === "student" && navigation.canGoBack()
-            ? () => navigation.goBack()
-            : undefined
-        }
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <AppText color={C.muted}>
         {user.role === "tutor"
@@ -475,7 +478,9 @@ export function ChatsScreen() {
               <View style={{ flex: 1, gap: 4 }}>
                 <AppText variant="heading">{name}</AppText>
                 <AppText variant="caption" numberOfLines={1} color={C.muted}>
-                  {last?.text || "Ariza tafsilotlarini kelishing"}
+                  {last
+                    ? assessmentLabel(last.text)
+                    : "Ariza tafsilotlarini kelishing"}
                 </AppText>
               </View>
               <Icon name="chevron-right" />
@@ -562,7 +567,7 @@ export function ConversationScreen({
               backgroundColor: m.mine ? C.navy : C.white,
             }}
           >
-            <AppText color={m.mine ? C.white : C.ink}>{m.text}</AppText>
+            <AssessmentMessage message={m} />
             <AppText
               variant="caption"
               color={m.mine ? "#CBD7E5" : C.muted}
@@ -722,7 +727,15 @@ export function ProfileScreen() {
   const learning = useLearning();
   const stats = learningStats(learning.data);
   return (
-    <Screen top={user.role === "student" ? <OqiHeader /> : undefined}>
+    <Screen
+      top={
+        user.role === "student" ? (
+          <OqiHeader />
+        ) : user.role === "tutor" ? (
+          <TeacherHeader />
+        ) : undefined
+      }
+    >
       <Header
         title="Profil"
         right={
@@ -754,6 +767,7 @@ export function ProfileScreen() {
           {user.city} · {user.area}
         </AppText>
       </Card>
+      {user.role === "tutor" ? <TeacherProfileSummary /> : null}
       {user.role === "student" ? (
         <>
           <View style={uiStyles.row}>
@@ -876,16 +890,7 @@ export function ProfileScreen() {
         variant="outline"
         onPress={() => navigation.navigate("Notifications")}
       />
-      {user.role === "tutor" ? (
-        <Card>
-          <Chip label="KEYINGI VERSIYA" tone="gold" />
-          <AppText variant="heading">Xonalar va to‘lovlar</AppText>
-          <AppText color={C.muted}>
-            Xona band qilish va to‘lovlarni boshqarish keyingi versiyada
-            qo‘shiladi.
-          </AppText>
-        </Card>
-      ) : null}
+      {user.role === "tutor" ? <TeacherFinance /> : null}
       <AppText variant="caption" color={C.muted}>
         {mode === "demo"
           ? "Sinov rejimi · ma’lumotlar shu qurilmada saqlanadi. Boshqa rolni tekshirish uchun hisobdan chiqib, o‘sha akkaunt emaili bilan kiring."
