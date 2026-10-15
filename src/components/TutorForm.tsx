@@ -10,6 +10,7 @@ export const SUBJECTS = [
   "IT",
   "Rus tili",
   "Fizika",
+  "Kimyo",
 ];
 export const AREAS = [
   "Yunusobod",

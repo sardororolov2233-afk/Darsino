@@ -11,6 +11,7 @@ export type RootStackParamList = {
         screen?:
           | "Home"
           | "Search"
+          | "Radar"
           | "Lessons"
           | "Chats"
           | "Profile"
@@ -20,6 +21,9 @@ export type RootStackParamList = {
       }
     | undefined;
   Tutors: undefined;
+  Chats: undefined;
+  Quiz: { id: string };
+  OpenLesson: { id: string };
   Filters: undefined;
   Tutor: { id: string };
   Groups: undefined;

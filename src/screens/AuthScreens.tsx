@@ -121,7 +121,7 @@ export function SignInScreen() {
       <View style={styles.symbol}>
         <Icon name="log-in" size={30} />
       </View>
-      <AppText variant="display">Darsinoga{`\n`}xush kelibsiz.</AppText>
+      <AppText variant="display">O‘qiga{`\n`}xush kelibsiz.</AppText>
       <AppText color={C.muted}>
         Google yoki Apple akkauntingiz bilan davom eting. Email orqali ham tez
         kirishingiz mumkin.
@@ -259,7 +259,7 @@ export function SetupScreen() {
     <Screen
       bottom={
         <Button
-          title={isTutor ? "Profilni tekshiruvga yuborish" : "Darsinoga kirish"}
+          title={isTutor ? "Profilni tekshiruvga yuborish" : "O‘qiga kirish"}
           loading={action.busy}
           onPress={() =>
             action.run(async () => {

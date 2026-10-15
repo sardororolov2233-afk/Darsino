@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Darsino",
-    "slug": "darsino",
+    "name": "O‘qi",
+    "slug": "oqi",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -18,8 +18,8 @@
       "bundler": "metro",
       "favicon": "./assets/icon.png",
       "lang": "uz",
-      "themeColor": "#092B53",
-      "description": "Maqsadingizga mos repetitorni toping, guruhga ariza yuboring va darslaringizni kuzating."
+      "themeColor": "#0F265C",
+      "description": "O‘qi — ustozlar, ochiq darslar va bilim radari. O‘zingizga mos ta’lim yo‘lini toping."
     },
     "plugins": [
       "expo-font",
@@ -29,7 +29,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Profilingizga rasm qo‘yish uchun Darsinoga rasmlaringizdan tanlashga ruxsat bering.",
+          "photosPermission": "Profilingizga rasm qo‘yish uchun O‘qi ilovasiga rasmlaringizdan tanlashga ruxsat bering.",
           "cameraPermission": false,
           "microphonePermission": false
         }

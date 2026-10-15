@@ -30,7 +30,7 @@ test("student application requires tutor approval before My Lessons", async ({
     .getByRole("textbox", { name: "Ism va familiya", exact: true })
     .fill("Sardor Test");
   await page
-    .getByRole("button", { name: "Darsinoga kirish", exact: true })
+    .getByRole("button", { name: "O‘qiga kirish", exact: true })
     .click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await page
@@ -81,7 +81,7 @@ test("email validation and empty tutor search have actionable errors", async ({
     .getByRole("button", { name: "Emailga kod yuborish", exact: true })
     .click();
   await expect(
-    page.getByText("Email manzilingizni 9 ta raqam bilan kiriting.", {
+    page.getByText("To‘g‘ri email manzilini kiriting.", {
       exact: true,
     }),
   ).toBeVisible();
@@ -106,7 +106,7 @@ test("email validation and empty tutor search have actionable errors", async ({
     .getByRole("textbox", { name: "Ism va familiya", exact: true })
     .fill("Sardor Test");
   await page
-    .getByRole("button", { name: "Darsinoga kirish", exact: true })
+    .getByRole("button", { name: "O‘qiga kirish", exact: true })
     .click();
   await page.getByRole("tab", { name: "Qidirish", exact: true }).click();
   await page
@@ -119,6 +119,9 @@ test("email validation and empty tutor search have actionable errors", async ({
     .getByRole("button", { name: "Filtrlarni tozalash", exact: true })
     .click();
   await expect(
-    page.getByText("Dilnoza Karimova", { exact: true }),
+    page
+      .getByText("Dilnoza Karimova", { exact: true })
+      .filter({ visible: true })
+      .first(),
   ).toBeVisible();
 });

@@ -258,7 +258,7 @@ test(
       await ui.login("sardor@example.com");
       await ui.fill("Ism va familiya", "Sardor Test");
       await ui.click("Universitetga kirish");
-      await ui.click("Darsinoga kirish");
+      await ui.click("O‘qiga kirish");
       await ui.wait(() => ui.text("Bugun nimani"), "student home");
       await ui.click("Guruhlar");
       await ui.click("IELTS 6.5+ guruhi tafsilotlari");
@@ -333,7 +333,7 @@ test(
       ui.dom.window.close();
       ui = await app(saved);
       await ui.wait(() => ui.text("Bugun nimani"), "session restored");
-      await ui.click("Chat", "tab");
+      await ui.click("Chatni ochish");
       await ui.click("Suhbat: Dilnoza Karimova");
       await ui.wait(
         () => ui.text("Jadvalni tekshirib ko‘ring."),
@@ -381,7 +381,7 @@ test(
             ui.find(
               provider === "Apple"
                 ? "Profilni tekshiruvga yuborish"
-                : "Darsinoga kirish",
+                : "O‘qiga kirish",
             ),
           "provider onboarding",
         );

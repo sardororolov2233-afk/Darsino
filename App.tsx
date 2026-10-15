@@ -12,6 +12,13 @@ import { Manrope_600SemiBold } from "@expo-google-fonts/manrope/600SemiBold";
 import { Manrope_700Bold } from "@expo-google-fonts/manrope/700Bold";
 import { Manrope_800ExtraBold } from "@expo-google-fonts/manrope/800ExtraBold";
 import { AppProvider, useApp } from "./src/state/AppContext";
+import { LearningProvider } from "./src/state/LearningContext";
+import { SearchScreen } from "./src/screens/SearchScreen";
+import {
+  RadarScreen,
+  QuizScreen,
+  OpenLessonScreen,
+} from "./src/screens/LearningScreens";
 import { C, font } from "./src/theme";
 import { Icon } from "./src/components/ui";
 import { Brand } from "./src/components/Brand";
@@ -25,7 +32,6 @@ import {
 } from "./src/screens/AuthScreens";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import {
-  TutorsScreen,
   FiltersScreen,
   TutorScreen,
   GroupsScreen,
@@ -82,19 +88,19 @@ function MainTabs() {
       name: "Search",
       title: "Qidirish",
       icon: "search" as const,
-      component: TutorsScreen,
+      component: SearchScreen,
+    },
+    {
+      name: "Radar",
+      title: "Radar",
+      icon: "target" as const,
+      component: RadarScreen,
     },
     {
       name: "Lessons",
       title: "Darslarim",
-      icon: "book-open" as const,
+      icon: "video" as const,
       component: LessonsScreen,
-    },
-    {
-      name: "Chats",
-      title: "Chat",
-      icon: "message-circle" as const,
-      component: ChatsScreen,
     },
     {
       name: "Profile",
@@ -170,6 +176,8 @@ function MainTabs() {
           paddingTop: 8,
           paddingBottom: Platform.OS === "ios" ? undefined : 12,
           borderTopColor: C.border,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
         },
         tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color }) => <Icon name="home" color={color} />,
@@ -189,8 +197,18 @@ function MainTabs() {
                 ? requests.filter((r) => r.status === "pending").length
                 : undefined,
             tabBarIcon: ({ focused, color }) => (
-              <View style={[styles.tabIcon, focused && styles.activeTab]}>
-                <Icon name={tab.icon} color={color} size={21} />
+              <View
+                style={[
+                  styles.tabIcon,
+                  focused && styles.activeTab,
+                  tab.name === "Radar" && styles.radarTab,
+                ]}
+              >
+                <Icon
+                  name={tab.icon}
+                  color={tab.name === "Radar" ? C.white : color}
+                  size={tab.name === "Radar" ? 25 : 21}
+                />
               </View>
             ),
           }}
@@ -231,7 +249,10 @@ function Navigator() {
         ) : (
           <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
             <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen name="Tutors" component={TutorsScreen} />
+            <Stack.Screen name="Tutors" component={SearchScreen} />
+            <Stack.Screen name="Chats" component={ChatsScreen} />
+            <Stack.Screen name="Quiz" component={QuizScreen} />
+            <Stack.Screen name="OpenLesson" component={OpenLessonScreen} />
             <Stack.Screen
               name="Filters"
               component={FiltersScreen}
@@ -283,7 +304,9 @@ export default function App() {
           <StatusBar style="dark" />
           {fontsLoaded || fontError ? (
             <AppProvider>
-              <Navigator />
+              <LearningProvider>
+                <Navigator />
+              </LearningProvider>
             </AppProvider>
           ) : (
             <View style={styles.loading}>
@@ -298,13 +321,13 @@ export default function App() {
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-    backgroundColor: Platform.OS === "web" ? "#E9EDF3" : C.background,
+    backgroundColor: Platform.OS === "web" ? "#0B1222" : C.background,
     alignItems: "center",
   },
   app: {
     flex: 1,
     width: "100%",
-    maxWidth: Platform.OS === "web" ? 460 : undefined,
+    maxWidth: Platform.OS === "web" ? 440 : undefined,
     boxShadow: Platform.OS === "web" ? "0 0 60px rgba(9,43,83,0.1)" : undefined,
   },
   loading: {
@@ -322,4 +345,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   activeTab: { backgroundColor: C.goldSoft },
+  radarTab: {
+    width: 50,
+    height: 50,
+    marginTop: -20,
+    borderRadius: 25,
+    borderWidth: 4,
+    borderColor: C.white,
+    backgroundColor: C.accent,
+    boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
+  },
 });

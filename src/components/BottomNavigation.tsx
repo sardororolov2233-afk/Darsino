@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { AppText, Icon } from "./ui";
 import { C } from "../theme";
 import { useAppNavigation } from "../navigation";
-type TabName = "Home" | "Search" | "Lessons" | "Chats" | "Profile";
+type TabName = "Home" | "Search" | "Radar" | "Lessons" | "Profile";
 export function BottomNavigation({ active }: { active: TabName }) {
   const navigation = useAppNavigation();
   return (
@@ -11,15 +11,11 @@ export function BottomNavigation({ active }: { active: TabName }) {
       {[
         { name: "Home" as const, title: "Bosh", icon: "home" as const },
         { name: "Search" as const, title: "Qidirish", icon: "search" as const },
+        { name: "Radar" as const, title: "Radar", icon: "target" as const },
         {
           name: "Lessons" as const,
           title: "Darslarim",
           icon: "book-open" as const,
-        },
-        {
-          name: "Chats" as const,
-          title: "Chat",
-          icon: "message-circle" as const,
         },
         { name: "Profile" as const, title: "Profil", icon: "user" as const },
       ].map((tab) => (

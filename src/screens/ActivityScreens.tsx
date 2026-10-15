@@ -34,6 +34,11 @@ import { TutorCard, money } from "./DiscoveryScreens";
 import { C } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
 import { AvatarEditor } from "../components/AvatarEditor";
+import { OqiHeader } from "../components/OqiHeader";
+import { LearningLibrary } from "./LearningScreens";
+import { useLearning } from "../state/LearningContext";
+import { learningStats } from "../state/learning";
+import { clubs } from "../data/learning";
 
 export function RequestCard({ request }: { request: BookingRequest }) {
   const navigation = useAppNavigation();
@@ -256,6 +261,29 @@ function StudentLessonCard({ session }: { session: LessonSession }) {
   );
 }
 export function LessonsScreen() {
+  const [section, setSection] = useState("Darslarim");
+  return (
+    <Screen top={<OqiHeader />}>
+      <Header title="Darslar va klublar" />
+      <View style={uiStyles.wrap}>
+        {["Darslarim", "Video darslar", "Klublar"].map((s) => (
+          <Chip
+            key={s}
+            label={s}
+            selected={section === s}
+            onPress={() => setSection(s)}
+          />
+        ))}
+      </View>
+      {section === "Darslarim" ? (
+        <ScheduleContent />
+      ) : (
+        <LearningLibrary section={section as "Video darslar" | "Klublar"} />
+      )}
+    </Screen>
+  );
+}
+function ScheduleContent() {
   const { user, market, requests } = useApp(),
     navigation = useAppNavigation();
   const [tab, setTab] = useState("Jadval"),
@@ -279,7 +307,7 @@ export function LessonsScreen() {
     pending = ownRequests.filter((r) => r.status === "pending").length;
   const dates = useMemo(() => [localDate(new Date()), ...nextDates(6)], []);
   return (
-    <Screen>
+    <>
       <Header title="Darslarim" />
       <AppText color={C.muted}>
         Tasdiqlangan darslar, jadval va ariza holatlari.
@@ -389,7 +417,7 @@ export function LessonsScreen() {
           ) : null}
         </>
       )}
-    </Screen>
+    </>
   );
 }
 function conversationName(
@@ -414,7 +442,14 @@ export function ChatsScreen() {
   ];
   return (
     <Screen>
-      <Header title="Suhbatlar" />
+      <Header
+        title="Suhbatlar"
+        onBack={
+          user.role === "student" && navigation.canGoBack()
+            ? () => navigation.goBack()
+            : undefined
+        }
+      />
       <AppText color={C.muted}>
         {user.role === "tutor"
           ? "O‘quvchilar bilan dars vaqtini va tayyorgarlikni kelishing."
@@ -684,8 +719,10 @@ export function ProfileScreen() {
   const [saved, setSaved] = useState(false),
     [logout, setLogout] = useState(false);
   const tutor = market.tutorProfiles.find((p) => p.userId === user.id);
+  const learning = useLearning();
+  const stats = learningStats(learning.data);
   return (
-    <Screen>
+    <Screen top={user.role === "student" ? <OqiHeader /> : undefined}>
       <Header
         title="Profil"
         right={
@@ -719,6 +756,78 @@ export function ProfileScreen() {
       </Card>
       {user.role === "student" ? (
         <>
+          <View style={uiStyles.row}>
+            {[
+              { title: "XP ball", value: stats.xp },
+              { title: "Bosqich", value: stats.level },
+              { title: "Faol kun", value: stats.streak },
+            ].map((item) => (
+              <Card
+                key={item.title}
+                style={{ flex: 1, paddingHorizontal: 5, alignItems: "center" }}
+              >
+                <AppText variant="title" color={C.green}>
+                  {item.value}
+                </AppText>
+                <AppText variant="caption" color={C.muted}>
+                  {item.title}
+                </AppText>
+              </Card>
+            ))}
+          </View>
+          <Card>
+            <AppText variant="heading">Yutuqlarim</AppText>
+            <View style={uiStyles.wrap}>
+              <Chip
+                icon={stats.completedTests ? "target" : "lock"}
+                label="Ilk diagnostika"
+                tone={stats.completedTests ? "green" : undefined}
+              />
+              <Chip
+                icon={
+                  Object.keys(learning.data.completedLessons).length
+                    ? "book-open"
+                    : "lock"
+                }
+                label="Ilk dars"
+                tone={
+                  Object.keys(learning.data.completedLessons).length
+                    ? "green"
+                    : undefined
+                }
+              />
+              <Chip
+                icon={stats.streak >= 3 ? "trending-up" : "lock"}
+                label="3 kun ketma-ket"
+                tone={stats.streak >= 3 ? "green" : undefined}
+              />
+            </View>
+            <Button
+              title="Bilim radarim"
+              variant="soft"
+              icon="target"
+              onPress={() => navigation.navigate("Main", { screen: "Radar" })}
+            />
+          </Card>
+          <Button
+            title="Suhbatlarim"
+            icon="message-circle"
+            variant="outline"
+            onPress={() => navigation.navigate("Chats")}
+          />
+          {learning.data.followedClubs.length ? (
+            <Card>
+              <AppText variant="heading">Kuzatayotgan klublarim</AppText>
+              {clubs
+                .filter((c) => learning.data.followedClubs.includes(c.id))
+                .map((c) => (
+                  <View key={c.id} style={uiStyles.row}>
+                    <Icon name={c.icon} size={16} color={c.color} />
+                    <AppText variant="caption">{c.title}</AppText>
+                  </View>
+                ))}
+            </Card>
+          ) : null}
           <Card>
             <AppText variant="heading">O‘qish maqsadi</AppText>
             <AppText>{user.goal}</AppText>
