@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   AppText,
@@ -33,80 +33,127 @@ import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
 import { C } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
+import {
+  TeacherHeader,
+  TeacherMetric,
+  TeacherRadar,
+  TeacherGroupCard,
+} from "../components/TeacherComponents";
+import { useTeacher } from "../state/TeacherContext";
+import { assessmentSummary } from "../state/assessments";
+import { teacherOverview, isClubOffering } from "../state/teacher";
+import { diagnostics } from "../data/learning";
+import { matchesSearch } from "../state/learning";
+import { formatPrice } from "../data/catalog";
 
 export function TutorHomeScreen() {
-  const { user, market, requests, notifications } = useApp(),
-    navigation = useAppNavigation();
-  const profile = market.tutorProfiles.find((p) => p.userId === user.id),
-    approved = profile?.verification === "approved";
-  const classes = market.offerings.filter((o) => o.tutorId === user.id),
-    classIds = new Set(classes.map((o) => o.id)),
-    pending = requests.filter((r) => r.status === "pending").length;
-  const students = new Set(
-    market.enrollments
-      .filter((e) => classIds.has(e.offeringId) && e.active)
-      .map((e) => e.studentId),
-  ).size;
-  const next = market.sessions
-    .filter(
-      (s) =>
-        classIds.has(s.offeringId) && new Date(s.endsAt).getTime() > Date.now(),
-    )
+  const { user, market, syncError } = useApp();
+  const { data, error } = useTeacher();
+  const navigation = useAppNavigation();
+  const [selectedGroup, setSelectedGroup] = useState("all");
+  const profile = market.tutorProfiles.find((p) => p.userId === user.id);
+  const approved = profile?.verification === "approved";
+  const overview = teacherOverview(market, user.id, selectedGroup);
+  const all = teacherOverview(market, user.id);
+  const radar = assessmentSummary(market, user.id, selectedGroup);
+  const cost = data.roomPlans.reduce((n, p) => n + p.estimatedCost, 0);
+  const next = overview.sessions
+    .filter((s) => Date.parse(s.endsAt) > Date.now())
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
+  const attention = [...overview.studentIds]
+    .map((id) => {
+      const absent = overview.attendance.filter(
+        (a) => a.studentId === id && a.status === "absent",
+      ).length;
+      const results = radar.results.filter((r) => r.studentId === id);
+      let correct = 0,
+        total = 0;
+      results.forEach((r) => {
+        const test = diagnostics.find((t) => t.id === r.testId)!;
+        total += test.questions.length;
+        correct += test.questions.filter(
+          (q, i) => q.correct === r.answers[i],
+        ).length;
+      });
+      return {
+        id,
+        absent,
+        score: total ? Math.round((correct / total) * 100) : null,
+        name: market.users.find((u) => u.id === id)?.name || "O‘quvchi",
+      };
+    })
+    .filter((s) => s.absent > 0 || (s.score !== null && s.score < 60))
+    .slice(0, 3);
   return (
-    <Screen>
-      <Header
-        title="Repetitor kabineti"
-        right={
-          <Button
-            title={`Xabarlar · ${notifications.filter((n) => !n.read).length}`}
-            icon="bell"
-            variant="soft"
-            onPress={() => navigation.navigate("Notifications")}
-            style={{ minHeight: 44 }}
-          />
-        }
-      />
-      <AppText variant="display">Salom, {user.name.split(" ")[0]}.</AppText>
-      <AppText color={C.muted}>
-        Darslaringiz, arizalar va qatnashchilar bir joyda.
-      </AppText>
-      <Card style={{ backgroundColor: approved ? C.greenSoft : C.goldSoft }}>
+    <Screen top={<TeacherHeader />}>
+      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
+        <View>
+          <AppText variant="caption" color={C.muted}>
+            Repetitor kabineti
+          </AppText>
+          <AppText variant="title">Tahlil va natijalar</AppText>
+        </View>
         <Chip
           label={verificationLabel[profile?.verification || "draft"]}
           tone={approved ? "green" : "gold"}
         />
-        <AppText>
-          {approved
-            ? "O‘quvchilarni qabul qilish va darslarni e’lon qilish mumkin."
-            : "Moderator mutaxassislik va tasdiqlash ma’lumotlarini tekshiradi. Javob bildirishnomalarda ko‘rinadi."}
-        </AppText>
-        {profile?.moderationNote ? (
-          <AppText variant="label">{profile.moderationNote}</AppText>
-        ) : null}
-        <Button
-          title="Repetitor profilini tahrirlash"
-          variant="outline"
-          onPress={() => navigation.navigate("TutorProfile")}
-        />
-      </Card>
-      <View style={uiStyles.row}>
-        {[
-          { n: pending, label: "Arizalar" },
-          { n: classes.length, label: "Dars / guruh" },
-          { n: students, label: "O‘quvchilar" },
-        ].map((s) => (
-          <Card
-            key={s.label}
-            style={{ flex: 1, alignItems: "center", padding: 12 }}
-          >
-            <AppText variant="title">{s.n}</AppText>
-            <AppText variant="caption" color={C.muted}>
-              {s.label}
-            </AppText>
-          </Card>
-        ))}
       </View>
+      {!approved ? (
+        <Card style={{ backgroundColor: C.goldSoft }}>
+          <AppText>
+            {profile?.moderationNote ||
+              "Moderator profilingizni tekshiradi. Tasdiqlangach guruh va klublarni e’lon qilasiz."}
+          </AppText>
+          <Button
+            title="Repetitor profilini tahrirlash"
+            variant="outline"
+            onPress={() => navigation.navigate("TutorProfile")}
+          />
+        </Card>
+      ) : null}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+        <TeacherMetric
+          title="Jami o‘quvchilarim"
+          value={`${all.studentIds.size} nafar`}
+          subtitle={`${all.classes.length} ta dars va guruhda`}
+          icon="users"
+          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        />
+        <TeacherMetric
+          title="O‘zlashtirish radari"
+          value={radar.score === null ? "—" : `${radar.score}%`}
+          subtitle={`${radar.results.length} ta ulashilgan natija`}
+          icon="trending-up"
+        />
+        <TeacherMetric
+          title="Yangi arizalar"
+          value={all.pending}
+          subtitle="Ustoz tasdig‘ini kutmoqda"
+          icon="inbox"
+          onPress={() => navigation.navigate("Applications")}
+        />
+        <TeacherMetric
+          title="Xona xarajati rejasi"
+          value={formatPrice(cost)}
+          subtitle={`${data.roomPlans.length} ta reja · to‘lov emas`}
+          icon="credit-card"
+          dark
+          onPress={() =>
+            navigation.navigate("Main", { screen: "TeacherRooms" })
+          }
+        />
+      </View>
+      {all.reserved ? (
+        <AppText variant="caption" color={C.muted}>
+          {all.reserved} ta avvaldan band o‘rin ro‘yxatdagi akkauntlardan
+          alohida hisoblanadi.
+        </AppText>
+      ) : null}
+      <TeacherRadar
+        offeringId={selectedGroup}
+        onSelect={setSelectedGroup}
+        compact
+      />
       <Button
         title="Yangi dars yoki guruh"
         icon="plus"
@@ -114,11 +161,38 @@ export function TutorHomeScreen() {
         disabled={!approved}
         onPress={() => navigation.navigate("CreateOffering")}
       />
-      <Button
-        title={`Kelgan arizalar · ${pending}`}
-        variant="outline"
-        onPress={() => navigation.navigate("Main", { screen: "Applications" })}
-      />
+      <AppText variant="heading">E’tibor talab qiladigan o‘quvchilar</AppText>
+      {attention.map((s) => (
+        <Card key={s.id}>
+          <View style={uiStyles.row}>
+            <UserAvatar userId={s.id} initials={initials(s.name)} size={42} />
+            <View style={{ flex: 1 }}>
+              <AppText variant="label">{s.name}</AppText>
+              <AppText variant="caption" color={C.muted}>
+                {s.absent
+                  ? `${s.absent} ta belgilangan darsda qatnashmagan`
+                  : `Ulashilgan test natijasi: ${s.score}%`}
+              </AppText>
+            </View>
+          </View>
+          <Button
+            title="O‘quvchiga yozish"
+            icon="message-circle"
+            variant="soft"
+            onPress={() =>
+              navigation.navigate("Conversation", { id: dmId(s.id, user.id) })
+            }
+          />
+        </Card>
+      ))}
+      {!attention.length ? (
+        <Card>
+          <AppText variant="caption" color={C.muted}>
+            Hozircha davomat yoki ulashilgan testlar bo‘yicha alohida e’tibor
+            talab qiladigan holat aniqlanmagan.
+          </AppText>
+        </Card>
+      ) : null}
       <AppText variant="heading">Yaqin dars</AppText>
       {next ? (
         <Card
@@ -127,20 +201,33 @@ export function TutorHomeScreen() {
           }
           accessibilityLabel="Yaqin darsni boshqarish"
         >
+          <Chip label={dateLabel(next.startsAt)} tone="green" />
           <AppText variant="heading">{next.title}</AppText>
-          <AppText>
-            {dateLabel(next.startsAt)} · {timeLabel(next.startsAt)}–
-            {timeLabel(next.endsAt)}
+          <AppText variant="caption" color={C.muted}>
+            {timeLabel(next.startsAt)}–{timeLabel(next.endsAt)} ·{" "}
+            {next.location}
           </AppText>
-          <AppText color={C.muted}>{next.location}</AppText>
         </Card>
       ) : (
         <EmptyState
           title="Jadval hali bo‘sh"
-          subtitle="Tasdiqlangan profildan dars yoki guruh yaratib, jadvalni belgilang."
+          subtitle="Yangi guruh yaratib dars jadvalini belgilang."
           icon="calendar"
         />
       )}
+      <View style={uiStyles.between}>
+        <AppText variant="heading">Guruhlarim</AppText>
+        <Button
+          title="Barcha guruhlar"
+          variant="soft"
+          style={{ minHeight: 44 }}
+          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        />
+      </View>
+      {all.classes.slice(0, 2).map((g) => (
+        <TeacherGroupCard key={g.id} group={g} />
+      ))}
+      <Feedback error={syncError || error} />
     </Screen>
   );
 }
@@ -237,19 +324,24 @@ function ApplicationDecisionCard({ request }: { request: BookingRequest }) {
     </Card>
   );
 }
-export function ApplicationsScreen() {
+export function ApplicationsScreen({
+  route,
+}: NativeStackScreenProps<RootStackParamList, "Applications">) {
+  const navigation = useAppNavigation();
   const { requests, user, refresh } = useApp(),
     action = useAction();
   const [archive, setArchive] = useState(false);
   const list = requests.filter(
     (r) =>
       r.tutorId === user.id &&
+      (!route.params?.offeringId || r.groupId === route.params.offeringId) &&
       (archive ? r.status !== "pending" : r.status === "pending"),
   );
   return (
-    <Screen>
+    <Screen top={<TeacherHeader />}>
       <Header
         title="O‘quvchilar arizalari"
+        onBack={() => navigation.goBack()}
         right={
           <Button
             title="Yangilash"
@@ -328,14 +420,24 @@ export function TutorProfileScreen() {
   );
 }
 export function TutorClassesScreen() {
-  const { market, user } = useApp(),
-    navigation = useAppNavigation();
-  const classes = market.offerings.filter((o) => o.tutorId === user.id),
-    approved = market.tutorProfiles.some(
-      (p) => p.userId === user.id && p.verification === "approved",
-    );
+  const { market, user } = useApp();
+  const navigation = useAppNavigation();
+  const [query, setQuery] = useState(""),
+    [type, setType] = useState("Barchasi");
+  const classes = market.offerings.filter(
+    (g) =>
+      g.tutorId === user.id &&
+      matchesSearch(`${g.title} ${g.subject} ${g.location}`, query) &&
+      (type === "Barchasi" ||
+        (type === "Ochiq" && g.published) ||
+        (type === "Klublar" && isClubOffering(g)) ||
+        (type === "Yopiq" && !g.published)),
+  );
+  const approved = market.tutorProfiles.some(
+    (p) => p.userId === user.id && p.verification === "approved",
+  );
   return (
-    <Screen>
+    <Screen top={<TeacherHeader />}>
       <Header title="Darslar va guruhlar" />
       <Button
         title="Yangi dars yoki guruh"
@@ -344,46 +446,30 @@ export function TutorClassesScreen() {
         disabled={!approved}
         onPress={() => navigation.navigate("CreateOffering")}
       />
-      {classes.map((g) => {
-        const students = market.enrollments.filter(
-          (e) => e.offeringId === g.id && e.active,
-        ).length;
-        return (
-          <Card
-            key={g.id}
-            accessibilityLabel={`${g.title}ni boshqarish`}
-            onPress={() => navigation.navigate("ManageClass", { id: g.id })}
-          >
-            <View style={uiStyles.between}>
-              <Chip
-                label={g.type === "group" ? "Guruh" : "Individual"}
-                tone="purple"
-              />
-              <Chip
-                label={g.published ? "Ochiq e’lon" : "Yopiq"}
-                tone={g.published ? "green" : undefined}
-              />
-            </View>
-            <AppText variant="heading">{g.title}</AppText>
-            <AppText color={C.muted}>
-              {g.subject} · {g.mode}
-            </AppText>
-            <AppText>
-              {g.days} · {g.time}
-            </AppText>
-            <View style={uiStyles.between}>
-              <AppText variant="caption" color={C.muted}>
-                {students + g.reservedSeats}/{g.capacity} qatnashchi
-              </AppText>
-              <Icon name="chevron-right" />
-            </View>
-          </Card>
-        );
-      })}
+      <Field
+        accessibilityLabel="Guruhlarimni qidirish"
+        placeholder="Guruh, fan yoki manzil"
+        icon="search"
+        value={query}
+        onChangeText={setQuery}
+      />
+      <View style={uiStyles.wrap}>
+        {["Barchasi", "Ochiq", "Yopiq", "Klublar"].map((t) => (
+          <Chip
+            key={t}
+            label={t}
+            selected={type === t}
+            onPress={() => setType(t)}
+          />
+        ))}
+      </View>
+      {classes.map((g) => (
+        <TeacherGroupCard key={g.id} group={g} />
+      ))}
       {!classes.length ? (
         <EmptyState
           title="Darslar hali yaratilmagan"
-          subtitle="Guruh yoki individual dars yarating, so‘ng kelgan arizalarni qabul qiling."
+          subtitle="Yangi guruh yarating yoki qidiruv filtrini o‘zgartiring."
           icon="book-open"
         />
       ) : null}
@@ -613,7 +699,7 @@ export function ManageClassScreen({
     started = session && new Date(session.startsAt).getTime() <= Date.now();
   if (!group)
     return (
-      <Screen>
+      <Screen top={<TeacherHeader />}>
         <Header title="Guruhni boshqarish" onBack={() => navigation.goBack()} />
         <EmptyState
           title="Guruh topilmadi"
@@ -622,7 +708,7 @@ export function ManageClassScreen({
       </Screen>
     );
   return (
-    <Screen>
+    <Screen top={<TeacherHeader />}>
       <Header title="Guruhni boshqarish" onBack={() => navigation.goBack()} />
       <AppText variant="title">{group.title}</AppText>
       <View style={uiStyles.wrap}>
@@ -647,6 +733,7 @@ export function ManageClassScreen({
           )
         }
       />
+      <TeacherRadar offeringId={group.id} compact />
       <AppText variant="heading">Jadval va davomat</AppText>
       <View style={uiStyles.wrap}>
         {sessions.map((s) => (

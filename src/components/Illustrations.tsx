@@ -5,36 +5,46 @@ import { C } from "../theme";
 export function WelcomeIllustration({ height = 224 }: { height?: number }) {
   return (
     <View
-      style={{
-        borderRadius: 24,
-        overflow: "hidden",
-        backgroundColor: C.blueSoft,
-      }}
+      style={{ borderRadius: 28, overflow: "hidden", backgroundColor: C.navy }}
     >
       <Svg viewBox="0 0 350 224" width="100%" height={height}>
-        <Rect width="350" height="224" fill="#EAF1FA" />
-        <Circle cx="54" cy="179" r="70" fill="#F0EBFA" />
-        <Circle cx="311" cy="167" r="55" fill="#FFF4D8" />
-        <Path
-          d="M104 205V86a71 71 0 0 1 142 0v119h-28V87a43 43 0 0 0-86 0v118z"
-          fill={C.navy}
-        />
-        <Path d="M133 61l47 23v110l-47-9z" fill={C.gold} />
-        <Path
-          d="M180 84l-47-23v124l-18 1c-51 0-84 18-90 38h45c8-11 27-16 56-16l54-14z"
-          fill={C.gold}
-        />
-        <Circle cx="61" cy="69" r="27" fill="white" />
-        <Path d="M61 50l4 14 14 5-14 5-4 15-5-15-14-5 14-5z" fill={C.gold} />
-        <Rect x="251" y="32" width="66" height="67" rx="17" fill="white" />
-        <Path
-          d="M266 49q12-5 19 0q10-5 18 0v30q-11-5-18 0q-10-5-19 0zM285 49v30"
-          stroke={C.navy}
-          strokeWidth="1.5"
+        <Rect width="350" height="224" fill={C.navy} />
+        <Circle cx="310" cy="25" r="100" fill="#17357A" />
+        <Circle cx="25" cy="220" r="85" fill="#17357A" />
+        <Circle
+          cx="180"
+          cy="111"
+          r="83"
           fill="none"
+          stroke="#34D39950"
+          strokeDasharray="5 5"
         />
-        <Circle cx="59" cy="146" r="5" fill={C.navy} />
-        <Circle cx="298" cy="131" r="5" fill={C.gold} />
+        <Circle cx="180" cy="111" r="64" fill="none" stroke="#34D39980" />
+        <Rect x="122" y="40" width="112" height="156" rx="24" fill="white" />
+        <Rect x="131" y="52" width="94" height="62" rx="14" fill="#EEF2FF" />
+        <Path
+          d="M148 66q14-5 30 3q14-8 30-3v31q-14-4-30 3q-15-7-30-3z M178 69v31"
+          fill="none"
+          stroke={C.navy}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <Rect x="140" y="128" width="76" height="7" rx="3" fill="#D9E1F1" />
+        <Rect x="140" y="143" width="53" height="7" rx="3" fill="#D9E1F1" />
+        <Rect x="140" y="164" width="76" height="16" rx="8" fill={C.mint} />
+        <Circle cx="74" cy="80" r="27" fill={C.mint} />
+        <Path
+          d="m61 80 9 9 17-20"
+          fill="none"
+          stroke={C.navy}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <Rect x="259" y="131" width="49" height="49" rx="16" fill="#8B7AF3" />
+        <Path d="m283 142 3 9 10 3-10 4-3 10-3-10-10-4 10-3z" fill="white" />
+        <Circle cx="265" cy="54" r="5" fill={C.mint} />
+        <Circle cx="93" cy="170" r="4" fill="#A89CF4" />
       </Svg>
     </View>
   );

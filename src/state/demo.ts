@@ -43,7 +43,7 @@ export function demoMarketplace(): Marketplace {
   m.users.push({
     ...blankUser,
     id: "demo-moderator",
-    name: "Darsino moderatori",
+    name: "O‘qi moderatori",
     phone: DEMO_MODERATOR_PHONE,
     email: DEMO_MODERATOR_EMAIL,
     role: "moderator",

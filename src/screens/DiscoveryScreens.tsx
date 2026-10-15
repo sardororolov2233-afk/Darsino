@@ -31,7 +31,9 @@ import { C } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 export const money = (value: number) =>
-  `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
+  value === 0
+    ? "Bepul"
+    : `${new Intl.NumberFormat("uz-UZ").format(value)} so‘m`;
 export function filterTutors(catalog: Tutor[], filters: Filters, query = "") {
   const q = query.trim().toLocaleLowerCase();
   return catalog.filter(
@@ -49,70 +51,86 @@ export function filterTutors(catalog: Tutor[], filters: Filters, query = "") {
   );
 }
 export function TutorCard({ tutor }: { tutor: Tutor }) {
-  const navigation = useAppNavigation(),
-    { favorites, toggleFavorite, user } = useApp();
+  const navigation = useAppNavigation();
+  const { favorites, toggleFavorite, user } = useApp();
   const action = useAction();
+  const saved = favorites.includes(tutor.id);
   return (
-    <Card>
+    <Card style={{ gap: 12 }}>
       <View style={uiStyles.row}>
         <UserAvatar userId={tutor.id} initials={tutor.initials} size={56} />
-        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <AppText variant="heading">{tutor.name}</AppText>
-          <AppText variant="caption" color={C.muted}>
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+          <View style={[uiStyles.row, { gap: 5 }]}>
+            <AppText variant="label" style={{ flexShrink: 1, fontSize: 15 }}>
+              {tutor.name}
+            </AppText>
+            {tutor.verified ? (
+              <Icon name="check-circle" color={C.accent} size={15} />
+            ) : null}
+          </View>
+          <AppText variant="caption" color={C.purple}>
             {tutor.subject} · {tutor.specialty}
+          </AppText>
+          <AppText variant="caption" color={C.muted}>
+            {tutor.reviews
+              ? `★ ${tutor.rating} · ${tutor.reviews} fikr`
+              : "Yangi repetitor"}{" "}
+            · {tutor.experience} yil tajriba
           </AppText>
         </View>
         {user.role === "student" ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
-              favorites.includes(tutor.id)
+              saved
                 ? `${tutor.name}ni saqlanganlardan olib tashlash`
                 : `${tutor.name}ni saqlash`
             }
             onPress={() => action.run(() => toggleFavorite(tutor.id))}
-            style={{ padding: 12 }}
+            style={{
+              padding: 10,
+              borderRadius: 13,
+              backgroundColor: saved ? C.errorSoft : C.background,
+            }}
           >
-            <Icon
-              name="heart"
-              color={favorites.includes(tutor.id) ? C.error : C.muted}
-            />
+            <Icon name="heart" color={saved ? C.error : C.muted} size={18} />
           </Pressable>
         ) : null}
       </View>
+      <View style={[uiStyles.row, { gap: 5 }]}>
+        <Icon name="map-pin" size={13} color={C.muted} />
+        <AppText color={C.muted} variant="caption" style={{ flex: 1 }}>
+          {tutor.area} · {tutor.modes.join(" / ")}
+        </AppText>
+      </View>
       <View style={uiStyles.wrap}>
-        <Chip label="Tasdiqlangan" tone="green" />
+        {tutor.verified ? <Chip label="✓ Tasdiqlangan" tone="green" /> : null}
         <Chip
-          label={
-            tutor.reviews
-              ? `★ ${tutor.rating} · ${tutor.reviews} fikr`
-              : "Yangi repetitor"
-          }
-          tone="gold"
+          label={`#${tutor.specialty.replace(/\s+/g, "_")}`}
+          tone="purple"
         />
       </View>
-      <AppText color={C.muted} variant="caption">
-        {tutor.area} · {tutor.experience} yil tajriba ·{" "}
-        {tutor.modes.join(" / ")}
-      </AppText>
       <View
         style={{
           flexDirection: "row",
           flexWrap: "wrap",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
+          borderTopWidth: 1,
+          borderColor: C.border,
+          paddingTop: 12,
         }}
       >
         <View
           style={{
             flexGrow: 1,
             flexShrink: 1,
-            flexBasis: 170,
+            flexBasis: 150,
             minWidth: 0,
-            gap: 2,
+            gap: 1,
           }}
         >
-          <AppText variant="heading" style={{ flexShrink: 1 }}>
+          <AppText variant="heading" color={C.navy} style={{ flexShrink: 1 }}>
             {money(tutor.price)}
           </AppText>
           <AppText variant="caption" color={C.muted}>
@@ -121,7 +139,8 @@ export function TutorCard({ tutor }: { tutor: Tutor }) {
         </View>
         <Button
           title="Profil"
-          variant="soft"
+          icon="arrow-up-right"
+          variant="gold"
           onPress={() => navigation.navigate("Tutor", { id: tutor.id })}
           style={{ minHeight: 44, flexShrink: 0 }}
         />
@@ -318,7 +337,7 @@ export function FiltersScreen() {
       </View>
       <AppText variant="heading">Reyting</AppText>
       <View style={uiStyles.wrap}>
-        {[0, 4, 4.5].map((v) => (
+        {[0, 4, 4.5, 4.9].map((v) => (
           <Chip
             key={v}
             label={v ? `${v}+` : "Barchasi"}

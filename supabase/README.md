@@ -25,7 +25,9 @@ SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti
 6. [admin/02_healthcheck.sql](admin/02_healthcheck.sql) ni bajaring: 16 ta Darsino jadvalida RLS, 5 ta private bucket, 7 ta Storage policy, Auth trigger va Realtime’dagi 3 ta jadval ko‘rinadi. `*_core` hamda `owned_file` funksiyalarida `authenticated_allowed=false` bo‘lishi kerak.
 7. Haqiqiy ikki akkaunt bilan tekshiring: repetitor ro‘yxatdan o‘tadi → moderator tasdiqlaydi → repetitor dars yaratadi → o‘quvchi ariza yuboradi → ustoz tasdiqlaydi → «Darslarim»da guruh paydo bo‘ladi. Live bazaga demo ustozlar yoki soxta Auth akkauntlari kiritilmaydi.
 
-SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` to‘rtta migratsiyani tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
+SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` beshta migratsiyani tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
+
+001–004 oldin bajarilgan bazaga [202610150001_free_clubs.sql](migrations/202610150001_free_clubs.sql) faylini SQL Editor’da qo‘llang yoki yangilangan umumiy setup faylini qayta bajaring. Migratsiya faqat `O‘qi klubi` belgili guruhga nol narxga ruxsat beradi; oddiy dars narxi, ustoz tekshiruvi va ariza tasdig‘i saqlanadi. Qayta bajarish va mavjud a’zolikni saqlash test qilingan. Bu migratsiya live loyihaga hali qo‘llanmagan.
 
 ## Google, Apple va email sozlamalari
 
@@ -140,7 +142,8 @@ Signed URL maxfiy havola sifatida ko‘riladi: uni DB, log yoki doimiy keshga yo
 | `migrations/202610140002_storage.sql`           | Dastlabki Auth trigger, faol akkaunt nazorati, 4 fayl jadvali, private bucketlar, Storage RLS, upload / delete RPC |
 | `migrations/202610140003_api_realtime.sql`      | Fayl bog‘lash, snapshot, katalog, moderator hujjat qarori va Realtime                                              |
 | `migrations/202610140004_email_social_auth.sql` | Email/Google/Apple kirishi, telefon talabini olib tashlash va email maxfiyligi                                     |
-| `Darsino_Supabase_setup.sql`                    | To‘rtta migratsiyadan generatsiya qilinadigan SQL Editor fayli                                                     |
+| `migrations/202610150001_free_clubs.sql`        | Tasdiqlangan ustozning belgilangan guruh klubini bepul e’lon qilishi; mavjud qabul va ruxsat qoidalari saqlanadi   |
+| `Darsino_Supabase_setup.sql`                    | Beshta migratsiyadan generatsiya qilinadigan SQL Editor fayli                                                      |
 | `admin/01_assign_moderator.sql`                 | Aniq tasdiqlangan akkauntga moderator berish                                                                       |
 | `admin/02_healthcheck.sql`                      | Faqat o‘qiydigan sozlama va qolib ketgan rezerv diagnostikasi                                                      |
 

@@ -230,6 +230,8 @@ async function app(saved?: string, photoBrowserStubs = false) {
     await click("Tasdiqlash");
   }
   async function logout() {
+    for (let i = 0; i < 4 && !find("Profil", "tab") && find("Orqaga"); i++)
+      await click("Orqaga");
     await click("Profil", "tab");
     await click("Hisobdan chiqish");
     await click("Chiqishni tasdiqlash");
@@ -258,7 +260,7 @@ test(
       await ui.login("sardor@example.com");
       await ui.fill("Ism va familiya", "Sardor Test");
       await ui.click("Universitetga kirish");
-      await ui.click("Darsinoga kirish");
+      await ui.click("O‘qiga kirish");
       await ui.wait(() => ui.text("Bugun nimani"), "student home");
       await ui.click("Guruhlar");
       await ui.click("IELTS 6.5+ guruhi tafsilotlari");
@@ -273,11 +275,12 @@ test(
       await ui.logout();
       await ui.login("dilnoza@darsino.demo");
       await ui.wait(() => ui.text("Repetitor kabineti"), "tutor home");
-      await ui.click("Arizalar", "tab");
+      await ui.click("Arizalarni ochish");
       await ui.fill("O‘quvchiga izoh", "Xush kelibsiz");
       await ui.click("Tasdiqlash");
       await ui.wait(() => ui.text("Yangi arizalar yo‘q"), "approval saved");
-      await ui.click("Darslar", "tab");
+      await ui.click("Orqaga");
+      await ui.click("Guruhlar", "tab");
       await ui.click("IELTS 6.5+ guruhini boshqarish");
       await ui.wait(() => ui.text("Sardor Test"), "real participant appears");
       await ui.click("Tanlangan dars vaqtini o‘zgartirish");
@@ -312,7 +315,7 @@ test(
       await ui.click("Orqaga");
       await ui.logout();
       await ui.login("dilnoza@darsino.demo");
-      await ui.click("Chat", "tab");
+      await ui.click("Chatni ochish");
       await ui.click("Suhbat: Sardor Test");
       await ui.wait(
         () => ui.text("Darsga tayyorman."),
@@ -333,7 +336,7 @@ test(
       ui.dom.window.close();
       ui = await app(saved);
       await ui.wait(() => ui.text("Bugun nimani"), "session restored");
-      await ui.click("Chat", "tab");
+      await ui.click("Chatni ochish");
       await ui.click("Suhbat: Dilnoza Karimova");
       await ui.wait(
         () => ui.text("Jadvalni tekshirib ko‘ring."),
@@ -381,7 +384,7 @@ test(
             ui.find(
               provider === "Apple"
                 ? "Profilni tekshiruvga yuborish"
-                : "Darsinoga kirish",
+                : "O‘qiga kirish",
             ),
           "provider onboarding",
         );

@@ -1,8 +1,23 @@
-# Darsino
+# O‘qi
 
 Expo / React Native ilovasi: o‘quvchilar repetitor topadi, ochiq guruh yoki individual darsga ariza yuboradi; repetitor tasdiqlagach guruh va jadval «Darslarim»da ko‘rinadi. Repetitor profili moderator tomonidan tekshiriladi.
 
-Darsino logotipi, ko‘k-sariq ranglar va Manrope shrifti saqlangan. Rollarga mos kabinetlar, tushunarli holatlar, bo‘sh natijalar, xato izohlari va kamida 44 px bosiladigan boshqaruvlar qo‘shilgan.
+O‘qi interfeysi taqdim etilgan interaktiv prototip asosida Expo / React Native uchun qayta ishlangan: to‘q ko‘k (`#0F265C`), yashil (`#34D399`) ranglar, Manrope shrifti, yumaloq kartalar va markazda ajratilgan bilim radari.
+
+## O‘qi interfeysi va yangi imkoniyatlar
+
+- **Bosh:** haqiqiy faoliyatdan hisoblangan kunlik maqsad, fanlar katalogi, bilim radari, mos ustozlar va keyingi dars.
+- **Qidirish:** ustozlar, video manbalar, diagnostika, klublar va guruhlar. Bir nechta so‘z, o‘zbekcha apostrof va teglar bilan qidirish; so‘nggi qidiruvlar; narx, fan, hudud, reyting va shakl filtrlari. Hududimda, onlayn va saqlangan ustozlar tezkor tanlovlari ishlaydi.
+- **Xarita:** Toshkent hududlari bo‘yicha interaktiv sxema. Aniq GPS nuqtalari va masofa berilmagan, shuning uchun sxema aniq manzil yoki 3 km ichida ekanlikni da’vo qilmaydi. Belgilar va tanlangan profil filtrlar bilan birga yangilanadi.
+- **Radar:** matematika, ingliz tili va fizikadan 5 savolli original qisqa testlar; har javobga izoh, haqiqiy natija va besh ko‘nikma tahlili. Radar oxirgi urinishdan, XP esa har bir testdagi eng yaxshi natijadan hisoblanadi. Bular sertifikat, AI baholash yoki IELTS prognozi emas.
+- **Darslarim:** mavjud tasdiqlangan jadval, guruhlar va arizalar; yonida video darslar va klublar katalogi.
+- **Video darslar:** Khan Academy va British Council manbalarida ochiladi. Manbani ochgandan keyin foydalanuvchi «O‘rgandim» deb belgilaydi; avtomatik video kuzatuvi yo‘q.
+- **Klublar:** ustoz e’lon qilgan klublarga ariza va ustoz tasdig‘i bilan a’zolik; yonida alohida belgilangan namuna katalogini kuzatish. Namuna klubini kuzatish a’zolik yaratmaydi.
+- **Profil:** rasm yuklash, XP, erishilgan yutuqlar, kuzatilgan klublar, saqlangan ustozlar va suhbatlar. Chatga yuqoridagi xabar belgisi orqali ham kiriladi.
+
+Radar, dars progressi, klub kuzatuvlari va qidiruv tarixi `@oqi/learning-v1:<account>` ostida akkaunt uchun alohida **shu qurilmada** saqlanadi; hali Supabase bilan sinxronlanmaydi. Mavjud Supabase marketplace, Auth va private Storage oqimlari davom etadi. Avvalgi ma’lumotlarni saqlash uchun `@darsino/*` kesh kalitlari, `darsino_*` RPC/jadvallar, native `uz.darsino.app` identifikatori va OAuth `darsino://` qaytish sxemasi o‘zgartirilmagan. Ilovaning ko‘rinadigan nomi, ikonasi va Expo slugi O‘qi/oqi bo‘ldi.
+
+Tekshiruv va ekranlar: [O‘qi UI](docs/oqi-ui.md).
 
 ## Ishga tushirish
 
@@ -36,8 +51,11 @@ npm run ios
 5. O‘z darslariga kelgan arizalarni izoh bilan tasdiqlash yoki rad etish.
 6. Qatnashchilarni ko‘rish, ularga yozish, boshlangan dars uchun davomat belgilash va zarur bo‘lsa guruhdan chiqarish.
 7. Kelgusi dars vaqtini o‘zgartirish yoki ochiq e’lonni yopish / ochish. Jadval o‘zgarsa qatnashchilarga bildirishnoma keladi.
+8. **Tahlil → Guruhlar → Xonalar → Klublar → Profil** kabinetida faol o‘quvchilar, arizalar, belgilangan davomat va ulashilgan diagnostika natijalarini ko‘rish. Chat va arizalar yuqoridagi tugmalardan ochiladi.
+9. Guruhning faol a’zolariga diagnostika testini shaxsiy chat orqali yuborish. O‘quvchi testni tugatib «Natijani ustozga yuborish»ni bosgach, javoblardan guruh radari hisoblanadi. O‘quvchining boshqa shaxsiy progressi ustozga ochilmaydi.
+10. Bepul yoki pullik klub / tadbir e’lon qilish. Qatnashchilar soni noldan boshlanadi va ariza tasdiqlangach yangilanadi. Bepul klub uchun mavjud Supabase loyihasiga [yangi migratsiya](supabase/migrations/202610150001_free_clubs.sql) qo‘llanadi.
 
-**Xona band qilish va to‘lovlar keyingi versiyaga qoldirilgan.** Avvalgi tadbir / xona namuna bronlari amaldagi buyurtma sifatida yuborilmaydi.
+**Xonalar:** hudud / sig‘im filtrlari, interaktiv sxema va oflayn guruh uchun sana, vaqt, davomiylik va taxminiy xarajat rejasi. Rejalar `@oqi/teacher-v1:<account>` ostida shu qurilmada, ustoz akkauntiga alohida saqlanadi; sig‘im va o‘z rejalaridagi vaqt to‘qnashuvi tekshiriladi. Katalogdagi xonalar va narxlar namuna. Saqlash xonani band qilmaydi; mavjudlik, yakuniy narx va band qilish xona egasi bilan alohida tasdiqlanadi. To‘lov, balans va pul yechish xizmati ulanmagan.
 
 ## Sinov rejimi
 

@@ -11,15 +11,25 @@ export type RootStackParamList = {
         screen?:
           | "Home"
           | "Search"
+          | "Radar"
           | "Lessons"
           | "Chats"
           | "Profile"
           | "Applications"
           | "Classes"
+          | "TeacherRooms"
+          | "TeacherClubs"
           | "Moderation";
       }
     | undefined;
   Tutors: undefined;
+  Chats: undefined;
+  Quiz: { id: string; invitationMessageId?: string };
+  Applications: { offeringId?: string } | undefined;
+  AssignDiagnostic: { offeringId?: string } | undefined;
+  PlanRoom: { roomId: string };
+  CreateClub: undefined;
+  OpenLesson: { id: string };
   Filters: undefined;
   Tutor: { id: string };
   Groups: undefined;

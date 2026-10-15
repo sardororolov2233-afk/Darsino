@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
+import { StatusBar } from "expo-status-bar";
 import { C, font } from "../theme";
 
 type IconName = React.ComponentProps<typeof Feather>["name"];
@@ -85,22 +86,26 @@ export function Screen({
   background = C.background,
   bottom,
   style,
+  top,
 }: {
   children: ReactNode;
   scroll?: boolean;
   background?: string;
   bottom?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  top?: ReactNode;
 }) {
   return (
     <SafeAreaView
-      style={[styles.screen, { backgroundColor: background }]}
+      style={[styles.screen, { backgroundColor: top ? C.navy : background }]}
       edges={["top", "left", "right"]}
     >
+      <StatusBar style={top ? "light" : "dark"} />
       <KeyboardAvoidingView
-        style={styles.fill}
+        style={[styles.fill, { backgroundColor: background }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        {top}
         {scroll ? (
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -158,6 +163,7 @@ export function Button({
   loading = false,
   style,
   icon,
+  accessibilityLabel,
 }: {
   title: string;
   onPress: () => void;
@@ -166,6 +172,7 @@ export function Button({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
   icon?: IconName;
+  accessibilityLabel?: string;
 }) {
   const bg = {
     primary: C.navy,
@@ -179,7 +186,7 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel || title}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={({ pressed }) => [
         styles.button,
@@ -239,12 +246,14 @@ export function Chip({
   onPress,
   tone,
   style,
+  icon,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   tone?: "gold" | "green" | "purple";
   style?: StyleProp<ViewStyle>;
+  icon?: IconName;
 }) {
   const bg = selected
     ? C.navy
@@ -260,6 +269,7 @@ export function Chip({
       disabled={!onPress}
       onPress={onPress}
       accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? label : undefined}
       accessibilityState={onPress ? { selected } : undefined}
       style={[
         styles.chip,
@@ -267,6 +277,13 @@ export function Chip({
         style,
       ]}
     >
+      {icon ? (
+        <Icon
+          name={icon}
+          size={14}
+          color={selected ? C.white : tone === "green" ? C.green : C.muted}
+        />
+      ) : null}
       <AppText
         variant="caption"
         color={selected ? C.white : tone === "green" ? C.green : C.muted}
@@ -413,10 +430,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   fill: { flex: 1 },
   content: {
-    paddingHorizontal: 22,
+    paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 24,
-    gap: 16,
+    gap: 14,
     flexGrow: 1,
   },
   footer: {
@@ -450,16 +467,19 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: C.white,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
     borderColor: C.border,
     gap: 10,
   },
   chip: {
-    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
     alignSelf: "flex-start",
     minHeight: 44,
