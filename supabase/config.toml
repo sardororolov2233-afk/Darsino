@@ -1,0 +1,4 @@
+[functions.oqi-assistant]
+# Signature/account validation is performed with auth.getUser inside the handler,
+# including projects using the current asymmetric JWT signing keys.
+verify_jwt = false

@@ -1,5 +1,7 @@
 # Darsino — Supabase bazasi va Storage
 
+2026-10-16: O‘qi uchun ustoz koordinatalari, GPS yaqinlik qidiruvi, MP4/WebM materiallari va shaxsiy AI chat qo‘shildi. [Yangi backend sozlamalari](../docs/backend.md) SQL va Edge Function’ni ishga tushirish tartibini beradi.
+
 Bu paket repodagi Expo ilovasiga mos: email kodi, Google yoki Apple orqali kirish, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
 
 **Asosiy fayl: [Darsino_Supabase_setup.sql](Darsino_Supabase_setup.sql).** Uni Supabase SQL Editor’da bir marta ishga tushiring. Fayl bo‘sh loyiha uchun bazani yaratadi; oldingi Darsino migratsiyasi qo‘llangan bo‘lsa, ma’lumotlarni saqlagan holda yangilaydi. Qayta ishga tushirish ham test qilingan. Begona yoki qisman yaratilgan Darsino sxemasini aniqlasa, tranzaksiya xato bilan to‘xtaydi.

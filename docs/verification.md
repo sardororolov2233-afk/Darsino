@@ -1,5 +1,23 @@
 # O‘qi tekshiruvi
 
+## 2026-10-16 — backend va AI yordamchi
+
+| Tekshiruv           | Dalil / chegara                                                                                                                                                                                                                                                |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript va Deno  | Expo `typecheck` hamda `oqi-assistant/index.ts` uchun Deno check o‘tdi                                                                                                                                                                                         |
+| Node / PostgreSQL   | 64 ta test o‘tdi; yangi testlar koordinata egaligi, Haversine radiusi, private video, chiqarilgan a’zo, shaxsiy AI tarixi, bir vaqtda 1 ta / daqiqasiga 5 ta / 24 soatda 30 ta so‘rov limiti, eski so‘rovni bo‘shatish va yo‘qolgan finalize javobini qamraydi |
+| Eksport qilingan UI | 4 ta mavjud JSDOM oqimi o‘tdi                                                                                                                                                                                                                                  |
+| Chromium            | 4 ta tegishli oqim alohida jarayonlarda tekshirildi: diagnostika, qidiruv/xarita, suriladigan yordamchi, ustoz manzili/material oynasi. 320 px va ekran o‘lchami almashishi tekshirildi                                                                        |
+| Native sozlamalar   | Expo config introspection: foreground GPS izohi bor; kamera, mikrofon, keng tashqi storage ruxsatlari manifest merge’da olib tashlanadi; background location yoqilmagan                                                                                        |
+| Platform eksporti   | Yangilangan web, Android va iOS bundle eksportlari o‘tdi; native qurilmada bajarilgan test emas                                                                                                                                                                |
+| Jonli xizmatlar     | Supabase URL/kalit va AI credential’lari mavjud emas; yangi SQL, Edge deploy, haqiqiy binary upload / signed URL va pullik model chaqiruvi tekshirilmagan                                                                                                      |
+
+Yordamchi drag qilinganda chatni tasodifan ochmaydi; joyi qayta yuklashda saqlanadi, kichik ekran chegarasiga moslanadi, Enter bilan chat ochiladi va hisobdan chiqishda yo‘qoladi. Ustoz rolida o‘quvchi yordamchisi ko‘rinmaydi. Demo rejimi real AI, koordinata masofasi yoki fayl yuklash deb ko‘rsatilmaydi.
+
+Sinov muhitidagi serverless Chromium uchun shrift yo‘llari sozlandi va har bir oqim yangi brauzer jarayonida bajarildi; oddiy ilova kirish kodiga o‘zgartirish kiritilmadi. OpenStreetMap tashqi tile xizmati, Google/Apple native map SDK, real OS dialogi va native kodek mosligi real qurilmada alohida tekshirilishi kerak.
+
+Sozlash: [backend.md](backend.md). Ko‘rinishlar: [AI chat](screenshots/assistant-chat-320.png), [suriladigan belgi](screenshots/assistant-floating-320.png), [ruxsatlar](screenshots/permissions-320.png), [ustoz manzili](screenshots/teacher-location-320.png).
+
 2026-10-15: o‘quvchi va ustoz prototiplari Expo / React Native ilovasiga moslashtirildi. Yangilangan ekranlar va chegaralar: [O‘qi UI](oqi-ui.md).
 
 | Tekshiruv                                 | Natija / chegara                                                                                            |

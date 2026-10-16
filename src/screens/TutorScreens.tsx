@@ -32,6 +32,7 @@ import {
 import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
 import { C } from "../theme";
+import { LessonMaterials } from "../components/LessonMaterials";
 import { UserAvatar } from "../components/UserAvatar";
 import {
   TeacherHeader,
@@ -734,6 +735,7 @@ export function ManageClassScreen({
         }
       />
       <TeacherRadar offeringId={group.id} compact />
+      <LessonMaterials offeringId={group.id} />
       <AppText variant="heading">Jadval va davomat</AppText>
       <View style={uiStyles.wrap}>
         {sessions.map((s) => (

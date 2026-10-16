@@ -47,6 +47,10 @@ export type RootStackParamList = {
   ModerateTutor: { id: string };
   Notifications: undefined;
   Review: { sessionId: string };
+  Permissions: undefined;
+  TutorLocation: undefined;
+  MaterialViewer: { fileId: string; title: string };
+  Materials: { offeringId: string; sessionId?: string };
 };
 export const useAppNavigation = () =>
   useNavigation<NativeStackNavigationProp<RootStackParamList>>();

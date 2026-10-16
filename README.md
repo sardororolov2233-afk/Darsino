@@ -1,5 +1,7 @@
 # O‘qi
 
+Backend kengaytmasi: GPS ruxsatlari, ustoz koordinatalari, yaqin manzillar qidiruvi, yopiq video/materiallar va suriladigan AI chat. Ishga tushirish: [Backend sozlamalari](docs/backend.md).
+
 Expo / React Native ilovasi: o‘quvchilar repetitor topadi, ochiq guruh yoki individual darsga ariza yuboradi; repetitor tasdiqlagach guruh va jadval «Darslarim»da ko‘rinadi. Repetitor profili moderator tomonidan tekshiriladi.
 
 O‘qi interfeysi taqdim etilgan interaktiv prototip asosida Expo / React Native uchun qayta ishlangan: to‘q ko‘k (`#0F265C`), yashil (`#34D399`) ranglar, Manrope shrifti, yumaloq kartalar va markazda ajratilgan bilim radari.

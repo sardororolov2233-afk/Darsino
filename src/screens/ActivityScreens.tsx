@@ -249,6 +249,17 @@ function StudentLessonCard({ session }: { session: LessonSession }) {
           }
         />
       ) : null}
+      <Button
+        title="Dars materiallari"
+        icon="folder"
+        variant="soft"
+        onPress={() =>
+          navigation.navigate("Materials", {
+            offeringId: session.offeringId,
+            sessionId: session.id,
+          })
+        }
+      />
       {ended && attendance?.status === "present" && !reviewed ? (
         <Button
           title="Fikr qoldirish"
@@ -767,7 +778,23 @@ export function ProfileScreen() {
           {user.city} · {user.area}
         </AppText>
       </Card>
-      {user.role === "tutor" ? <TeacherProfileSummary /> : null}
+      <Button
+        title="Ruxsatlar va xotira"
+        icon="shield"
+        variant="soft"
+        onPress={() => navigation.navigate("Permissions")}
+      />
+      {user.role === "tutor" ? (
+        <>
+          <Button
+            title="Dars manzilini belgilash"
+            icon="map-pin"
+            variant="soft"
+            onPress={() => navigation.navigate("TutorLocation")}
+          />
+          <TeacherProfileSummary />
+        </>
+      ) : null}
       {user.role === "student" ? (
         <>
           <View style={uiStyles.row}>

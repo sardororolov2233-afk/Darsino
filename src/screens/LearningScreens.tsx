@@ -29,6 +29,7 @@ import { GroupCard } from "./DiscoveryScreens";
 import { isClubOffering } from "../state/teacher";
 import { encodeAssessment, validInvitation } from "../state/assessments";
 import { C, font } from "../theme";
+import { LessonMaterials } from "../components/LessonMaterials";
 
 export function LearningLibrary({
   section,
@@ -61,6 +62,8 @@ export function LearningLibrary({
       ) : null}
       {section === "Video darslar" ? (
         <>
+          <LessonMaterials videosOnly />
+          <AppText variant="heading">Ochiq manbalar</AppText>
           <View style={uiStyles.wrap}>
             {["Barchasi", ...new Set(openLessons.map((l) => l.subject))].map(
               (s) => (
