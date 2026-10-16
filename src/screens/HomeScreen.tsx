@@ -53,67 +53,59 @@ export function HomeScreen() {
         b.rating - a.rating,
     )
     .slice(0, 2);
-  const activities = Math.min(stats.todayActivities, 3);
   return (
     <Screen top={<OqiHeader />}>
-      <View style={uiStyles.between}>
-        <View style={{ flex: 1 }}>
-          <AppText variant="caption" color={C.muted}>
-            Salom, {user.name.split(" ")[0]}
-          </AppText>
-          <AppText variant="title">Bugun nimani o‘rganamiz?</AppText>
-        </View>
-        <Chip icon="trending-up" label={`${stats.streak} kun`} tone="gold" />
+      <View style={{ gap: 4 }}>
+        <AppText variant="caption" color={C.muted}>
+          Salom, {user.name.split(" ")[0]}
+        </AppText>
+        <AppText variant="title">Maqsadingiz sari bir qadam</AppText>
       </View>
       <Card
-        style={{
-          backgroundColor: C.navy,
-          borderColor: C.navy,
-          padding: 20,
-          overflow: "hidden",
-        }}
+        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 22 }}
       >
         <View style={uiStyles.between}>
           <View style={uiStyles.row}>
-            <Icon name="target" color={C.mint} size={17} />
+            <Icon name="target" color={C.mint} size={20} />
             <AppText variant="caption" color="#C6D5F1">
-              KUNLIK MAQSAD
+              MENING MAQSADIM
             </AppText>
           </View>
-          <AppText variant="label" color={C.mint}>
-            {activities}/3
-          </AppText>
+          <Icon name="bookmark" color={C.mint} size={18} />
         </View>
-        <AppText variant="heading" color="white">
-          Kichik qadam. Katta imkoniyat.
+        <AppText variant="display" color="white">
+          {user.goal || "Maqsadingizni belgilang"}
         </AppText>
+        <AppText color="#C6D5F1">{user.interests.join(" · ")}</AppText>
+        {user.studyMode || user.studySupport ? (
+          <AppText variant="caption" color={C.mint}>
+            {[user.studyMode, user.studySupport].filter(Boolean).join(" · ")}
+          </AppText>
+        ) : null}
         <AppText variant="caption" color="#C6D5F1">
-          Bugun 3 ta dars yoki testni yakunlang.
+          {user.city}, {user.area}
         </AppText>
-        <View
-          style={{ height: 7, backgroundColor: "#304673", borderRadius: 4 }}
-        >
-          <View
-            style={{
-              height: 7,
-              borderRadius: 4,
-              width: `${(activities / 3) * 100}%`,
-              backgroundColor: C.mint,
-            }}
-          />
-        </View>
-        <View style={uiStyles.between}>
-          <AppText variant="caption" color="#D7E5FA">
-            {stats.xp} XP · {stats.level}-bosqich
-          </AppText>
-          <Button
-            title="Davom etish"
-            icon="arrow-right"
-            variant="gold"
-            style={{ minHeight: 44 }}
-            onPress={() => navigation.navigate("Main", { screen: "Radar" })}
-          />
-        </View>
+        <Button
+          title={
+            user.studySupport === "Mustaqil"
+              ? "Darslar va materiallarni ko‘rish"
+              : "Maqsadimga mos ustoz topish"
+          }
+          icon="arrow-right"
+          variant="gold"
+          onPress={() => {
+            if (user.studySupport === "Mustaqil")
+              navigation.navigate("Main", { screen: "Lessons" });
+            else {
+              setFilters({
+                subject: user.interests[0] || "Barchasi",
+                mode: user.studyMode || "Barchasi",
+                area: "Barcha hududlar",
+              });
+              navigation.navigate("Main", { screen: "Search" });
+            }
+          }}
+        />
       </Card>
       <View style={uiStyles.between}>
         <AppText variant="heading">Fanlar olami</AppText>

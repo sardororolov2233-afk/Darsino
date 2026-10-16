@@ -1,5 +1,7 @@
 # O‘qi tekshiruvi
 
+2026-10-16: yangi bosqichli kirish va maqsad kartasi — [oqim, saqlash va testlar](onboarding.md).
+
 ## 2026-10-16 — backend va AI yordamchi
 
 | Tekshiruv           | Dalil / chegara                                                                                                                                                                                                                                                |

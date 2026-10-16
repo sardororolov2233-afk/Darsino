@@ -14,6 +14,8 @@ export type User = {
   interests: string[];
   goal: string;
   onboarded: boolean;
+  studyMode?: "Onlayn" | "Oflayn";
+  studySupport?: "Mustaqil" | "Ustoz bilan";
   avatarFileId?: string | null;
   demoAvatarUri?: string;
 };
@@ -168,7 +170,7 @@ export type Filters = {
 };
 export type ProfileInput = Pick<
   User,
-  "name" | "city" | "area" | "goal" | "interests"
+  "name" | "city" | "area" | "goal" | "interests" | "studyMode" | "studySupport"
 >;
 export type TutorInput = Omit<
   TutorProfile,

@@ -1,7 +1,11 @@
+import { completeStudentSetup } from "./onboardingHelpers";
 import { test, expect, type Page } from "@playwright/test";
 import { demoMarketplace } from "../src/state/demo";
 async function login(page: Page) {
-  await page.getByRole("button", { name: "Boshlash", exact: true }).click();
+  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Email orqali davom etish", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "Email manzilingiz", exact: true })
     .pressSequentially("assistant@example.com");
@@ -12,12 +16,7 @@ async function login(page: Page) {
     .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .pressSequentially("421806");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Ism va familiya", exact: true })
-    .pressSequentially("AI Sinov");
-  await page
-    .getByRole("button", { name: "O‘qiga kirish", exact: true })
-    .click();
+  await completeStudentSetup(page, "AI Sinov");
 }
 test("student assistant drags, restores its position, supports keyboard chat and stays private after logout", async ({
   page,

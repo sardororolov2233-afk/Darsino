@@ -222,12 +222,35 @@ async function app(saved?: string, photoBrowserStubs = false) {
     field.dispatchEvent(new w.Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 20));
   }
-  async function login(email: string) {
-    await click("Boshlash");
+  async function login(email: string, role = "O‘quvchi") {
+    await click(role);
+    await click("Email orqali davom etish");
     await fill("Email manzilingiz", email);
     await click("Emailga kod yuborish");
     await fill("Email tasdiqlash kodi", "421806");
     await click("Tasdiqlash");
+  }
+  async function setup(first: string, last: string, tutor = false) {
+    await click("IELTS olish");
+    if (tutor) await click("Ingliz tili");
+    await click("Davom etish");
+    await click("Onlayn");
+    if (!tutor) await click("Ustoz bilan");
+    await click("Viloyat");
+    await click("Toshkent shahri");
+    await click("Tuman / shahar");
+    await click("Yunusobod tumani");
+    await click("Davom etish");
+    if (tutor) {
+      await fill("Yo‘nalish", "IELTS");
+      await fill("Tajriba (yil)", "3");
+      await fill("Tasdiqlash ma’lumoti", "Diplom D123456");
+      await fill("Darslaringiz haqida", "IELTS uchun amaliy darslar o‘taman.");
+      await click("Davom etish");
+    }
+    await fill("Ism", first);
+    await fill("Familiya", last);
+    await click("Saqlash");
   }
   async function logout() {
     for (let i = 0; i < 4 && !find("Profil", "tab") && find("Orqaga"); i++)
@@ -235,7 +258,7 @@ async function app(saved?: string, photoBrowserStubs = false) {
     await click("Profil", "tab");
     await click("Hisobdan chiqish");
     await click("Chiqishni tasdiqlash");
-    await wait(() => find("Boshlash"), "signed out");
+    await wait(() => find("O‘quvchi"), "signed out");
   }
   return {
     dom,
@@ -245,6 +268,7 @@ async function app(saved?: string, photoBrowserStubs = false) {
     click,
     fill,
     login,
+    setup,
     logout,
     find,
     cache: () => w.localStorage.getItem(cacheKey)!,
@@ -258,10 +282,8 @@ test(
     let ui = await app();
     try {
       await ui.login("sardor@example.com");
-      await ui.fill("Ism va familiya", "Sardor Test");
-      await ui.click("Universitetga kirish");
-      await ui.click("O‘qiga kirish");
-      await ui.wait(() => ui.text("Bugun nimani"), "student home");
+      await ui.setup("Sardor", "Test");
+      await ui.wait(() => ui.text("Maqsadingiz sari"), "student home");
       await ui.click("Guruhlar");
       await ui.click("IELTS 6.5+ guruhi tafsilotlari");
       await ui.click("Guruhga ariza yuborish");
@@ -291,7 +313,7 @@ test(
       await ui.logout();
       await ui.login("sardor@example.com");
       await ui.wait(
-        () => ui.text("Bugun nimani"),
+        () => ui.text("Maqsadingiz sari"),
         "returning student skips onboarding",
       );
       await ui.click("Darslarim", "tab");
@@ -326,7 +348,7 @@ test(
       await ui.click("Orqaga");
       await ui.logout();
       await ui.login("sardor@example.com");
-      await ui.wait(() => ui.text("Bugun nimani"), "student return");
+      await ui.wait(() => ui.text("Maqsadingiz sari"), "student return");
       await ui.wait(
         () => JSON.parse(ui.cache()).actorId === "email-sardor@example.com",
         "cache saved",
@@ -335,7 +357,7 @@ test(
       assert.deepEqual(ui.errors, []);
       ui.dom.window.close();
       ui = await app(saved);
-      await ui.wait(() => ui.text("Bugun nimani"), "session restored");
+      await ui.wait(() => ui.text("Maqsadingiz sari"), "session restored");
       await ui.click("Chatni ochish");
       await ui.click("Suhbat: Dilnoza Karimova");
       await ui.wait(
@@ -362,8 +384,8 @@ test(
     for (const provider of ["Google", "Apple"]) {
       const ui = await app();
       try {
-        if (provider === "Apple") await ui.click("Repetitor");
-        await ui.click("Boshlash");
+        await ui.click(provider === "Apple" ? "O‘qituvchi" : "O‘quvchi");
+        await ui.click("Email orqali davom etish");
         await ui.wait(
           () =>
             ui.find("Google orqali davom etish") &&
@@ -379,15 +401,7 @@ test(
         // Allow RN Web to flush its disabled-state passive effect after validation.
         await new Promise((r) => setTimeout(r, 500));
         await ui.click(`${provider} orqali davom etish`);
-        await ui.wait(
-          () =>
-            ui.find(
-              provider === "Apple"
-                ? "Profilni tekshiruvga yuborish"
-                : "O‘qiga kirish",
-            ),
-          "provider onboarding",
-        );
+        await ui.wait(() => ui.find("IELTS olish"), "provider onboarding");
         await ui.wait(
           () =>
             !!ui.cache() &&
@@ -487,17 +501,8 @@ test(
   async () => {
     const ui = await app();
     try {
-      await ui.click("Repetitor");
-      await ui.login("yangi@example.com");
-      await ui.fill("Ism va familiya", "Yangi Repetitor");
-      await ui.fill("Yo‘nalish", "IELTS");
-      await ui.fill("Tajriba (yil)", "3");
-      await ui.fill("Tasdiqlash ma’lumoti", "Diplom D123456");
-      await ui.fill(
-        "Darslaringiz haqida",
-        "IELTS uchun amaliy darslar o‘taman.",
-      );
-      await ui.click("Profilni tekshiruvga yuborish");
+      await ui.login("yangi@example.com", "O‘qituvchi");
+      await ui.setup("Yangi", "Repetitor", true);
       await ui.wait(() => ui.text("Moderator tekshiruvida"), "pending tutor");
       assert.equal(
         ui.find("Yangi dars yoki guruh")!.getAttribute("aria-disabled"),

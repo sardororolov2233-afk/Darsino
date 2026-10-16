@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { AppText, Chip, Field, uiStyles } from "./ui";
 import type { TutorInput } from "../state/domain";
 import { C } from "../theme";
+import { ONBOARDING_GOALS } from "../state/onboarding";
 export const SUBJECTS = [
   "Ingliz tili",
   "Matematika",
@@ -19,13 +20,7 @@ export const AREAS = [
   "Samarqand",
   "Boshqa hudud",
 ];
-export const GOALS = [
-  "IELTS / CEFR",
-  "Universitetga kirish",
-  "Maktab fanlari",
-  "Kasbiy rivojlanish",
-  "Erkin muloqot",
-];
+export const GOALS = ONBOARDING_GOALS.map((goal) => goal.title);
 export const initialTutor: TutorInput = {
   subjects: ["Ingliz tili"],
   specialty: "",

@@ -37,7 +37,6 @@ import { TutorLocationScreen } from "./src/screens/TutorLocationScreen";
 import { MaterialViewerScreen } from "./src/screens/MaterialViewerScreen";
 import { MaterialsScreen } from "./src/screens/MaterialsScreen";
 import {
-  SplashScreen,
   WelcomeScreen,
   SignInScreen,
   VerifyEmailScreen,
@@ -260,7 +259,6 @@ function Navigator() {
       >
         {!signedIn && !authenticated ? (
           <Stack.Group navigationKey="auth">
-            <Stack.Screen name="Splash" component={SplashScreen} />
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />

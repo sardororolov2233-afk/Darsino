@@ -1,5 +1,7 @@
 # O‘qi
 
+Yangi kirish oqimi va bosh sahifadagi maqsad kartasi: [onboarding](docs/onboarding.md).
+
 Backend kengaytmasi: GPS ruxsatlari, ustoz koordinatalari, yaqin manzillar qidiruvi, yopiq video/materiallar va suriladigan AI chat. Ishga tushirish: [Backend sozlamalari](docs/backend.md).
 
 Expo / React Native ilovasi: o‘quvchilar repetitor topadi, ochiq guruh yoki individual darsga ariza yuboradi; repetitor tasdiqlagach guruh va jadval «Darslarim»da ko‘rinadi. Repetitor profili moderator tomonidan tekshiriladi.

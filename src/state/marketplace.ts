@@ -97,6 +97,12 @@ export function applyMarketCommand(
         !c.role || ["student", "tutor"].includes(c.role),
         "Rol noto‘g‘ri.",
       );
+      if (p.studyMode !== undefined || p.studySupport !== undefined)
+        ensure(
+          ["Onlayn", "Oflayn"].includes(p.studyMode || "") &&
+            ["Mustaqil", "Ustoz bilan"].includes(p.studySupport || ""),
+          "Ta’lim shakli va tayyorgarlik usulini tanlang.",
+        );
       if (c.role && !actor.onboarded) actor.role = c.role;
       ensure(
         actor.onboarded || actor.role !== "tutor" || c.tutor,
