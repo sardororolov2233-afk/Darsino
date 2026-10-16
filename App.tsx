@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Image, Platform, StyleSheet, View } from "react-native";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -106,7 +106,7 @@ function MainTabs() {
     },
     {
       name: "Lessons",
-      title: "Darslarim",
+      title: "Dars & Klub",
       icon: "video" as const,
       component: LessonsScreen,
     },
@@ -144,7 +144,7 @@ function MainTabs() {
     },
     {
       name: "Profile",
-      title: "Profil",
+      title: "Kabinet",
       icon: "user" as const,
       component: ProfileScreen,
     },
@@ -240,8 +240,11 @@ function Navigator() {
   if (!ready)
     return (
       <View style={styles.loading}>
-        <Brand width={220} />
-        <ActivityIndicator color={C.gold} />
+        <Image
+          source={require("./assets/oqi_loading.gif")}
+          style={styles.loadingGif}
+          resizeMode="cover"
+        />
       </View>
     );
   return (
@@ -342,7 +345,11 @@ export default function App() {
             </AppProvider>
           ) : (
             <View style={styles.loading}>
-              <ActivityIndicator color={C.navy} />
+              <Image
+                source={require("./assets/oqi_loading.gif")}
+                style={styles.loadingGif}
+                resizeMode="cover"
+              />
             </View>
           )}
         </SafeAreaProvider>
@@ -366,8 +373,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 24,
-    backgroundColor: C.white,
+    backgroundColor: C.navy,
+  },
+  loadingGif: {
+    width: "100%",
+    height: "100%",
   },
   tabIcon: {
     width: 44,

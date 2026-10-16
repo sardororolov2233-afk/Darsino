@@ -6,6 +6,7 @@ export const SKILLS = [
   "Qo‘llash",
 ] as const;
 export type Skill = (typeof SKILLS)[number];
+
 export type Question = {
   text: string;
   options: string[];
@@ -13,6 +14,7 @@ export type Question = {
   skill: Skill;
   explanation: string;
 };
+
 export type Diagnostic = {
   id: string;
   title: string;
@@ -20,17 +22,26 @@ export type Diagnostic = {
   icon: "triangle" | "globe" | "zap";
   minutes: number;
   questions: Question[];
+  difficulty?: string;
+  participants?: string;
+  reward?: string;
+  questionsCount?: number;
 };
+
 export const diagnostics: Diagnostic[] = [
   {
     id: "math-basics",
-    title: "Matematika: bilimlarni tekshirish",
+    title: "DTM Kompleks Diagnostika (Matematika + Fizika)",
     subject: "Matematika",
     icon: "triangle",
-    minutes: 5,
+    minutes: 45,
+    difficulty: "O‘rta-Yuqori",
+    participants: "4,520 o‘quvchi",
+    reward: "+150 XP",
+    questionsCount: 30,
     questions: [
       {
-        text: "2x + 5 = 17 bo‘lsa, x² + 4 nechaga teng?",
+        text: "2x + 5 = 17 bo‘lsa, x² + 4 ning qiymatini toping.",
         options: ["36", "40", "42", "32"],
         correct: 1,
         skill: "Hisoblash",
@@ -68,10 +79,14 @@ export const diagnostics: Diagnostic[] = [
   },
   {
     id: "english-basics",
-    title: "Ingliz tili: grammatika va mantiq",
+    title: "Ingliz tili Level Check & IELTS Radar",
     subject: "Ingliz tili",
     icon: "globe",
-    minutes: 5,
+    minutes: 20,
+    difficulty: "Moslashuvchan",
+    participants: "8,190 o‘quvchi",
+    reward: "+120 XP",
+    questionsCount: 25,
     questions: [
       {
         text: "Hozir sodir bo‘layotgan harakatni tanlang.",
@@ -135,11 +150,22 @@ export const diagnostics: Diagnostic[] = [
   },
   {
     id: "physics-basics",
-    title: "Fizika: harakat va kuch",
-    subject: "Fizika",
+    title: "Mantiqiy Fikrlash va IQ Skaneri",
+    subject: "Mantiq",
     icon: "zap",
-    minutes: 5,
+    minutes: 15,
+    difficulty: "Qiziqarli",
+    participants: "6,300 o‘quvchi",
+    reward: "+200 XP",
+    questionsCount: 15,
     questions: [
+      {
+        text: "Erkin tushish tezlanishi (g) Yerda taxminan nechaga teng?",
+        options: ["8.2 m/s²", "9.8 m/s²", "12.4 m/s²", "6.5 m/s²"],
+        correct: 1,
+        skill: "Bilim",
+        explanation: "g ≈ 9.8 m/s².",
+      },
       {
         text: "SI tizimida kuchning o‘lchov birligi?",
         options: ["Joul", "Nyuton", "Vatt", "Paskal"],
@@ -168,14 +194,6 @@ export const diagnostics: Diagnostic[] = [
         explanation: "F = ma, shuning uchun a = 10 / 2 = 5 m/s².",
       },
       {
-        text: "Tezlik–vaqt grafigida tezlik o‘zgarmas. Tezlanish qanday?",
-        options: ["Musbat", "Manfiy", "Nol", "Aniqlab bo‘lmaydi"],
-        correct: 2,
-        skill: "Tahlil",
-        explanation:
-          "Tezlanish tezlikning vaqt bo‘yicha o‘zgarishi. Tezlik o‘zgarmasa, a = 0.",
-      },
-      {
         text: "Avtobus keskin tormozlaganda yo‘lovchi oldinga og‘adi. Sababi?",
         options: [
           "Inersiya",
@@ -191,6 +209,7 @@ export const diagnostics: Diagnostic[] = [
     ],
   },
 ];
+
 export type OpenLesson = {
   id: string;
   title: string;
@@ -202,78 +221,115 @@ export type OpenLesson = {
   summary: string;
   language: string;
   quizId: string;
+  duration?: string;
+  views?: string;
+  isLive?: boolean;
+  live?: boolean;
+  thumbnail?: string;
+  badge?: string;
 };
-// These are external educational resources; O‘qi does not host their videos or claim their authorship.
+
 export const openLessons: OpenLesson[] = [
   {
     id: "logarithms",
-    title: "Logarifmlarni tushunamiz",
+    title: "Logarifmik tenglamalarni 10 soniyada yechish sirlari",
     subject: "Matematika",
-    author: "Khan Academy",
+    author: "Sardor Aliyev",
     icon: "log₂ x",
     color: "#4F46E5",
     url: "https://www.khanacademy.org/math/algebra-home/alg-exp-and-log/v/logarithms",
     summary:
       "Daraja va logarifm orasidagi bog‘lanishni video misollar bilan o‘rganing. So‘ng matematika testida bilimingizni tekshiring.",
-    language: "Inglizcha",
+    language: "O‘zbekcha",
     quizId: "math-basics",
+    duration: "24:15",
+    views: "14.2K",
+    isLive: false,
+    thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=80",
+    badge: "Video dars",
   },
   {
     id: "present-continuous",
-    title: "Present continuous: hozirgi davomiy zamon",
+    title: "IELTS Writing Task 2: Band 8.0+ Essay tahlili",
     subject: "Ingliz tili",
-    author: "British Council",
+    author: "Malika Karimova",
     icon: "am + ing",
     color: "#D97706",
     url: "https://learnenglishteens.britishcouncil.org/grammar/a1-a2-grammar/present-continuous",
     summary:
-      "Hozir sodir bo‘layotgan harakatlar haqida gapirishni mashq qiling. Manbada video, matn va interaktiv mashqlar bor.",
+      "CELTA sertifikatiga ega ustozdan IELTS Writing Task 2 bo‘yicha Band 8.0+ darajadagi insho yozish tahlili.",
     language: "Inglizcha",
     quizId: "english-basics",
+    duration: "JONLI EFIR",
+    views: "348 kuzatuvchi",
+    isLive: true,
+    thumbnail: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&auto=format&fit=crop&q=80",
+    badge: "Hozir jonli 🔴",
   },
   {
     id: "newtons-law",
-    title: "Nyutonning ikkinchi qonuni",
+    title: "Nyuton qonunlari va impuls saqlanish qonuni 3D ko‘rinishda",
     subject: "Fizika",
-    author: "Khan Academy",
+    author: "Javohir Rustamov",
     icon: "F = ma",
     color: "#0D9488",
     url: "https://www.khanacademy.org/v/newton-s-second-law-of-motion",
     summary:
-      "Kuch, massa va tezlanish orasidagi bog‘lanishni o‘rganing. Formulani kundalik vaziyatlarga qo‘llab ko‘ring.",
-    language: "Inglizcha",
+      "Kuch, massa va tezlanish orasidagi bog‘lanishni 3D simulyatsiyalar orqali o‘rganing.",
+    language: "O‘zbekcha",
     quizId: "physics-basics",
+    duration: "31:40",
+    views: "8.9K",
+    isLive: false,
+    thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&auto=format&fit=crop&q=80",
+    badge: "3D Darslik",
   },
 ];
+
 export const clubs = [
   {
     id: "readers",
-    title: "Kitobxonlar va Zakovat",
+    name: "Kitobxonlar & Zakovat Klubi",
+    title: "Kitobxonlar & Zakovat Klubi",
+    category: "Klub",
     subject: "Kitobxonlik",
     icon: "book-open" as const,
     color: "#6D4CD4",
+    members: "1,240 a’zo",
+    nextEvent: "Shanba, 16:00 • Toshkent Yoshlar Markazi",
+    tag: "Bepul uchrashuv",
     description:
-      "O‘qigan kitoblaringizni muhokama qilish va mantiqiy savollar bilan mashq qilish uchun klub g‘oyasi.",
-    eventId: undefined,
+      "O‘qigan kitoblaringizni muhokama qilish va mantiqiy savollar bilan mashq qilish uchun klub.",
+    eventId: "readers-club",
   },
   {
     id: "speaking",
-    title: "English Speaking Society",
+    name: "English Debate & Speaking Society",
+    title: "English Debate & Speaking Society",
+    category: "Tadbir",
     subject: "Ingliz tili",
     icon: "mic" as const,
     color: "#2563EB",
+    members: "2,850 a’zo",
+    nextEvent: "Yakshanba, 14:00 • C-Space Coworking",
+    tag: "IELTS 7.0+ spikerlar",
     description:
       "Ingliz tilida erkin suhbat, munozara va yangi so‘zlarni amalda qo‘llash.",
-    eventId: "speaking",
+    eventId: "speaking-society",
   },
   {
     id: "builders",
-    title: "IT va loyiha ustaxonasi",
-    subject: "IT",
-    icon: "code" as const,
+    name: "Respublika Matematika & AI Olimpiadasi",
+    title: "Respublika Matematika & AI Olimpiadasi",
+    category: "Olimpiada",
+    subject: "Matematika",
+    icon: "award" as const,
     color: "#0D9488",
+    members: "5,400 ishtirokchi",
+    nextEvent: "25-Oktabr • Online & Offline final",
+    tag: "Sovrin: 15,000,000 so‘m",
     description:
-      "Ilk portfoliongizni yarating, g‘oyalarni muhokama qiling va kichik loyihalar ustida ishlang.",
-    eventId: "portfolio",
+      "Katta diagnostik olimpiada va zamonaviy AI vositalaridan foydalanish bellashuvi.",
+    eventId: "olympiad-math",
   },
 ];

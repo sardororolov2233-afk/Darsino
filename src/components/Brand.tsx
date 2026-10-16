@@ -14,7 +14,12 @@ export function Brand({
   height?: number;
   light?: boolean;
 }) {
-  const size = height || (wordmark ? width * 0.32 : width);
+  const iconSize = height || (wordmark ? Math.round(width * 0.32) : width);
+  const fontSize = Math.round(iconSize * 0.84);
+  const containerHeight = wordmark
+    ? Math.max(height || 0, Math.round(iconSize * 1.25), 36)
+    : height || iconSize;
+
   return (
     <View
       accessible
@@ -22,13 +27,14 @@ export function Brand({
       accessibilityLabel="O‘qi"
       style={{
         width,
-        height: size,
+        minHeight: containerHeight,
         flexDirection: "row",
         alignItems: "center",
-        gap: size * 0.2,
+        gap: Math.max(6, Math.round(iconSize * 0.2)),
+        overflow: "visible",
       }}
     >
-      <Svg width={size} height={size} viewBox="0 0 64 64">
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 64 64">
         <Rect
           width="64"
           height="64"
@@ -50,8 +56,12 @@ export function Brand({
           style={{
             color: light ? C.white : C.navy,
             fontFamily: font.extra,
-            fontSize: size * 0.82,
-            letterSpacing: -1.5,
+            fontSize,
+            lineHeight: Math.round(fontSize * 1.3),
+            letterSpacing: -1,
+            includeFontPadding: false,
+            paddingBottom: 2,
+            overflow: "visible",
           }}
         >
           O‘qi

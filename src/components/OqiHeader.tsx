@@ -37,6 +37,7 @@ export function OqiHeader({
           accessibilityRole="button"
           accessibilityLabel="O‘qi bosh sahifa"
           onPress={() => navigation.popTo("Main", { screen: "Home" })}
+          style={styles.brandButton}
         >
           <Brand width={96} light />
         </Pressable>
@@ -159,6 +160,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
   },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  brandButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "visible",
+  },
   location: {
     flex: 1,
     minWidth: 0,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import {
   AppText,
   Button,
@@ -34,14 +34,22 @@ import { ProviderButtons } from "../components/ProviderButtons";
 export function SplashScreen() {
   const navigation = useAppNavigation();
   useEffect(() => {
-    const timeout = setTimeout(() => navigation.replace("Welcome"), 500);
+    const timeout = setTimeout(() => navigation.replace("Welcome"), 2400);
     return () => clearTimeout(timeout);
   }, [navigation]);
   return (
-    <Screen scroll={false} background={C.white} style={styles.center}>
-      <Brand width={260} />
-      <AppText color={C.muted}>Bilim sari ochiq yo‘l</AppText>
-    </Screen>
+    <Pressable
+      style={styles.splash}
+      onPress={() => navigation.replace("Welcome")}
+      accessibilityRole="image"
+      accessibilityLabel="O‘qi yuklanmoqda"
+    >
+      <Image
+        source={require("../../assets/oqi_loading.gif")}
+        style={styles.splashGif}
+        resizeMode="cover"
+      />
+    </Pressable>
   );
 }
 export function WelcomeScreen() {
@@ -358,6 +366,16 @@ export function SetupScreen() {
 }
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center", gap: 24 },
+  splash: {
+    flex: 1,
+    backgroundColor: C.navy,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  splashGif: {
+    width: "100%",
+    height: "100%",
+  },
   symbol: {
     width: 70,
     height: 70,

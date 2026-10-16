@@ -14,7 +14,7 @@ import {
   uid,
   dmId,
 } from "../state/domain";
-import { rooms, formatPrice, type StudyRoom } from "../data/catalog";
+import { rooms, formatPrice, type StudyRoom, INITIAL_BOOKINGS, INITIAL_TEACHER_CLUBS } from "../data/catalog";
 import { diagnostics } from "../data/learning";
 import {
   encodeAssessment,
@@ -40,39 +40,65 @@ import {
 } from "../components/TeacherComponents";
 import { Feedback, useAction } from "../components/feedback";
 import { RoomIllustration } from "../components/Illustrations";
-import { C } from "../theme";
+import { C, font } from "../theme";
 
 function RoomCard({ room }: { room: StudyRoom }) {
   const navigation = useAppNavigation();
   return (
     <Card>
-      <RoomIllustration height={120} />
+      <RoomIllustration height={110} />
       <View style={uiStyles.between}>
-        <AppText variant="heading" style={{ flex: 1 }}>
-          {room.title}
-        </AppText>
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="heading">
+            {room.name || room.title}
+          </AppText>
+          <View style={uiStyles.row}>
+            <Icon name="map-pin" size={14} color={C.muted} />
+            <AppText variant="caption" color={C.muted} style={{ flex: 1 }}>
+              {room.address || room.location}
+            </AppText>
+          </View>
+        </View>
         <Chip label={`${room.capacity} o‘rin`} tone="purple" />
       </View>
+
       <View style={uiStyles.row}>
-        <Icon name="map-pin" size={15} color={C.muted} />
-        <AppText variant="caption" color={C.muted} style={{ flex: 1 }}>
-          {room.location}
+        <AppText variant="caption" style={{ fontFamily: font.bold, color: C.navy }}>
+          ⭐ {room.rating || 4.9} ({room.reviews || 84} baho)
+        </AppText>
+        <AppText variant="caption" color={C.muted}>
+          • {room.distance || "0.8 km"}
         </AppText>
       </View>
+
       <View style={uiStyles.wrap}>
         {room.amenities.map((a) => (
-          <Chip key={a} label={a} icon={a === "Wi-Fi" ? "wifi" : "monitor"} />
+          <Chip key={a} label={a} icon={a === "Wi-Fi" || a.includes("Wi-Fi") ? "wifi" : "monitor"} />
         ))}
       </View>
-      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
-        <View>
-          <AppText variant="heading">{formatPrice(room.price)}</AppText>
+
+      {room.slots?.length ? (
+        <View style={{ gap: 4 }}>
           <AppText variant="caption" color={C.muted}>
-            soatiga · namuna narx
+            Bo‘sh vaqt slotlari:
+          </AppText>
+          <View style={uiStyles.wrap}>
+            {room.slots.map((s) => (
+              <Chip key={s} label={s} icon="clock" />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <View style={[uiStyles.between, { flexWrap: "wrap", marginTop: 4 }]}>
+        <View>
+          <AppText variant="heading">{formatPrice(room.pricePerHour || room.price)}</AppText>
+          <AppText variant="caption" color={C.muted}>
+            soatiga · to‘liq jihozlangan
           </AppText>
         </View>
         <Button
-          title="Reja tuzish"
+          title="Bron qilish"
           accessibilityLabel={`${room.title}: xona rejasini tuzish`}
           variant="gold"
           icon="calendar"
@@ -92,7 +118,7 @@ export function TeacherRoomsScreen() {
     [activeId, setActiveId] = useState("");
   const list = rooms.filter(
     (r) =>
-      (district === "Barchasi" || r.area === district) &&
+      (district === "Barchasi" || (r.district || r.area) === district) &&
       r.capacity >= capacity,
   );
   const selected = list.find((r) => r.id === activeId) || list[0];
@@ -100,9 +126,32 @@ export function TeacherRoomsScreen() {
     <Screen top={<TeacherHeader />}>
       <Header title="O‘quv xonalari" />
       <AppText variant="caption" color={C.muted}>
-        Namuna katalogi. Xona rejasini saqlang; mavjudlik va band qilish xona
-        egasi bilan alohida tasdiqlanadi.
+        Guruh darslari, seminar va olimpiadalar uchun darsxonalarni bron qilish va boshqarish.
       </AppText>
+
+      {/* Prototype Active Bookings Banner */}
+      <Card style={{ backgroundColor: "#F0FDF4", borderColor: "#86EFAC", borderWidth: 1 }}>
+        <View style={uiStyles.between}>
+          <View style={uiStyles.row}>
+            <Icon name="check-circle" color={C.green} size={18} />
+            <AppText variant="label" style={{ color: C.green }}>
+              Faol band qilingan xonalar ({INITIAL_BOOKINGS.length})
+            </AppText>
+          </View>
+          <Chip label="Tasdiqlangan ✓" tone="green" />
+        </View>
+        <AppText variant="heading">{INITIAL_BOOKINGS[0].roomName}</AppText>
+        <AppText variant="caption" color={C.muted}>
+          Guruh: {INITIAL_BOOKINGS[0].groupName}
+        </AppText>
+        <AppText variant="caption" color={C.muted}>
+          📅 {INITIAL_BOOKINGS[0].date} | ⏰ {INITIAL_BOOKINGS[0].timeSlot}
+        </AppText>
+        <AppText variant="label" style={{ color: C.navy, marginTop: 4 }}>
+          {INITIAL_BOOKINGS[0].totalPrice}
+        </AppText>
+      </Card>
+
       <View style={uiStyles.wrap}>
         {["Ro‘yxat", "Xarita"].map((v) => (
           <Chip
@@ -119,7 +168,7 @@ export function TeacherRoomsScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 6 }}
       >
-        {["Barchasi", ...new Set(rooms.map((r) => r.area))].map((d) => (
+        {["Barchasi", "Chilonzor", "Yunusobod", "Mirobod", "Shayxontohur"].map((d) => (
           <Chip
             key={d}
             label={d}
@@ -130,10 +179,10 @@ export function TeacherRoomsScreen() {
         ))}
       </ScrollView>
       <View style={uiStyles.wrap}>
-        {[0, 8, 10, 20].map((n) => (
+        {[0, 10, 16, 25].map((n) => (
           <Chip
             key={n}
-            label={n ? `${n}+ o‘rin` : "Barcha sig‘imlar"}
+            label={n ? `Min. ${n} o‘rin` : "Barcha sig‘imlar"}
             selected={capacity === n}
             onPress={() => setCapacity(n)}
           />
@@ -369,7 +418,7 @@ export function TeacherClubsScreen() {
   const navigation = useAppNavigation();
   const [query, setQuery] = useState("");
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
-  const clubs = market.offerings.filter(
+  const userClubs = market.offerings.filter(
     (g) =>
       g.tutorId === user.id &&
       isClubOffering(g) &&
@@ -378,27 +427,76 @@ export function TeacherClubsScreen() {
   return (
     <Screen top={<TeacherHeader />}>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
-        <AppText variant="title">Klub va tadbirlarim</AppText>
+        <View style={{ flex: 1 }}>
+          <AppText variant="title">O‘quv Klublari & Tadbirlarim</AppText>
+          <AppText variant="caption" color={C.muted}>
+            O‘z hamjamiyatingizni yarating, ochiq master-klasslar va diagnostik olimpiadalar o‘tkazing.
+          </AppText>
+        </View>
         <Button
-          title="Klub tashkil etish"
-          icon="plus"
+          title="+ Yangi klub ochish"
           variant="gold"
           disabled={profile?.verification !== "approved"}
           onPress={() => navigation.navigate("CreateClub")}
         />
       </View>
-      <AppText variant="caption" color={C.muted}>
-        Klub ochiq guruh sifatida e’lon qilinadi. O‘quvchilar ariza yuboradi,
-        siz tasdiqlaysiz.
-      </AppText>
+
       <Field
         accessibilityLabel="Klublarimni qidirish"
-        placeholder="Klub yoki fan"
+        placeholder="Klub yoki tadbir nomini qidiring"
         icon="search"
         value={query}
         onChangeText={setQuery}
       />
-      {clubs.map((g) => (
+
+      {/* Prototype clubs */}
+      {INITIAL_TEACHER_CLUBS.map((c) => (
+        <Card key={c.id}>
+          <View style={uiStyles.between}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+              <AppText style={{ fontSize: 22 }}>{c.icon}</AppText>
+              <View style={{ flex: 1 }}>
+                <AppText variant="heading">{c.title}</AppText>
+                <AppText variant="caption" color={C.muted}>{c.type}</AppText>
+              </View>
+            </View>
+            <Chip label={c.badge} tone="gold" />
+          </View>
+          <View style={{ gap: 4, marginVertical: 4 }}>
+            <AppText variant="caption" color={C.muted}>
+              ⏰ {c.schedule}
+            </AppText>
+            <AppText variant="caption" color={C.muted}>
+              📍 {c.location}
+            </AppText>
+            <AppText variant="caption" color={C.muted}>
+              👥 {c.membersCount} nafar a’zo • {c.pendingRequests} ta yangi ariza
+            </AppText>
+            <AppText variant="caption" style={{ fontFamily: font.bold, color: C.navy }}>
+              💵 {c.fee}
+            </AppText>
+          </View>
+          <View style={uiStyles.row}>
+            <Button
+              title={`Arizalar (${c.pendingRequests})`}
+              icon="inbox"
+              variant="outline"
+              style={{ flex: 1 }}
+              onPress={() => navigation.navigate("Applications", { offeringId: c.id })}
+            />
+            <Button
+              title="Guruhga xabar"
+              icon="send"
+              variant="soft"
+              style={{ flex: 1 }}
+              onPress={() => navigation.navigate("Chats")}
+            />
+          </View>
+        </Card>
+      ))}
+
+      {/* Dynamically created clubs */}
+      {userClubs.map((g) => (
         <View key={g.id} style={{ gap: 8 }}>
           <TeacherGroupCard group={g} />
           <Button
@@ -411,13 +509,6 @@ export function TeacherClubsScreen() {
           />
         </View>
       ))}
-      {!clubs.length ? (
-        <EmptyState
-          title="Klublar hali yo‘q"
-          subtitle="Birinchi klub, olimpiada yoki ochiq masterklassingizni tashkil eting."
-          icon="award"
-        />
-      ) : null}
     </Screen>
   );
 }
