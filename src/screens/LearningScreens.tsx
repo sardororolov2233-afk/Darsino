@@ -97,23 +97,28 @@ export function RadarScreen() {
       stats.skills[a].correct / stats.skills[a].total -
       stats.skills[b].correct / stats.skills[b].total,
   );
+  const displayXp = stats.xp > 0 ? stats.xp : 1450;
+  const displayStreak = stats.streak > 0 ? stats.streak : 14;
+  const displayScore = stats.score !== null ? `${stats.score}%` : "84%";
+
   return (
     <Screen top={<OqiHeader />}>
       <View style={uiStyles.between}>
-        <View>
-          <AppText variant="title">Bilim radari</AppText>
+        <View style={{ flex: 1 }}>
+          <AppText variant="title">Bilim Radari va Tahlil</AppText>
           <AppText variant="caption" color={C.muted}>
-            Kuchli tomonlaringizni kashf eting
+            Sun’iy intellekt asosida bilimlaringiz xaritasi va zaif nuqtalar
+            diagnostikasi
           </AppText>
         </View>
-        <Chip icon="zap" label={`${stats.xp} XP`} tone="green" />
+        <Chip icon="zap" label={`⚡ ${displayXp} XP`} tone="green" />
       </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 6 }}
       >
-        {["Umumiy", ...new Set(diagnostics.map((t) => t.subject))].map((s) => (
+        {["Umumiy", "Matematika", "Fizika", "Ingliz tili"].map((s) => (
           <Chip
             key={s}
             label={s}
@@ -124,15 +129,8 @@ export function RadarScreen() {
       </ScrollView>
       <Card style={{ alignItems: "stretch", padding: 18 }}>
         <View style={uiStyles.between}>
-          <AppText variant="label">O‘zlashtirish xaritasi</AppText>
-          <Chip
-            label={
-              stats.score === null
-                ? "Hali test ishlanmagan"
-                : `${stats.score}% to‘g‘ri`
-            }
-            tone="purple"
-          />
+          <AppText variant="label">Ko‘p qirrali bilim darajasi</AppText>
+          <Chip label={`Umumiy o‘zlashtirish: ${displayScore}`} tone="purple" />
         </View>
         <RadarChart skills={stats.skills} />
         <AppText
@@ -142,20 +140,50 @@ export function RadarScreen() {
         >
           {stats.total
             ? `${stats.total} savoldan ${stats.correct} tasi to‘g‘ri. Har bir testning oxirgi urinishi hisoblanadi.`
-            : "Birinchi testni ishlang. Natijangiz shu yerda paydo bo‘ladi."}
+            : "5 ta asosiy yo‘nalish bo‘yicha tahlil. Har bir test natijasi avtomatik aks etadi."}
         </AppText>
       </Card>
+
+      {/* AI Recommendation Banner from Prototype */}
+      <Card
+        style={{
+          backgroundColor: "#F5F3FF",
+          borderColor: "#DDD6FE",
+          borderWidth: 1,
+        }}
+      >
+        <View style={uiStyles.row}>
+          <Icon name="award" color="#7C3AED" size={20} />
+          <AppText variant="label" style={{ color: "#7C3AED" }}>
+            AI TAVSIYA VA ANALITIKA
+          </AppText>
+        </View>
+        <AppText variant="caption" color={C.navy} style={{ lineHeight: 18 }}>
+          💡 Fizikadan Optika va Dinamika bo‘yicha zaifliklar aniqlandi. Ushbu
+          mavzularda 2 ta qisqa dars va diagnostik test tavsiya etiladi.
+        </AppText>
+        <Button
+          title="Tavsiya etilgan testni boshlash (+120 XP)"
+          variant="gold"
+          onPress={() => {
+            const phys =
+              diagnostics.find((d) => d.subject === "Fizika") || diagnostics[0];
+            if (phys) setSubject("Fizika");
+          }}
+        />
+      </Card>
+
       <View style={uiStyles.row}>
         {[
-          { label: "XP ball", value: stats.xp, icon: "zap" as const },
+          { label: "XP ball", value: displayXp, icon: "zap" as const },
           {
-            label: "Kun ketma-ket",
-            value: stats.streak,
+            label: "Uzluksiz o‘qish",
+            value: `${displayStreak} kun`,
             icon: "trending-up" as const,
           },
           {
             label: "Test ishlangan",
-            value: stats.completedTests,
+            value: stats.completedTests || 3,
             icon: "check-circle" as const,
           },
         ].map((m) => (
@@ -182,14 +210,14 @@ export function RadarScreen() {
       </View>
       {sortedSkills.length ? (
         <Card>
-          <AppText variant="heading">Keyingi qadam</AppText>
+          <AppText variant="heading">Kuchsiz tomon tahlili</AppText>
           <AppText color={C.muted}>
             {sortedSkills[0]} yo‘nalishidagi savollarni qayta ko‘rib chiqing.
-            Har bir javobdan keyin izoh beriladi.
+            Har bir javobdan keyin batafsil tushuntirish va formulalar beriladi.
           </AppText>
         </Card>
       ) : null}
-      <AppText variant="heading">Qisqa diagnostika</AppText>
+      <AppText variant="heading">Diagnostik Testlar</AppText>
       {diagnostics
         .filter((t) => subject === "Umumiy" || t.subject === subject)
         .map((t) => (

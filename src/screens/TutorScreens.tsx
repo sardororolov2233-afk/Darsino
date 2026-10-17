@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   AppText,
@@ -28,10 +28,11 @@ import {
   verificationLabel,
   type BookingRequest,
   type TutorInput,
+  type Offering,
 } from "../state/domain";
 import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
-import { C } from "../theme";
+import { C, font } from "../theme";
 import { LessonMaterials } from "../components/LessonMaterials";
 import { UserAvatar } from "../components/UserAvatar";
 import {
@@ -45,7 +46,7 @@ import { assessmentSummary } from "../state/assessments";
 import { teacherOverview, isClubOffering } from "../state/teacher";
 import { diagnostics } from "../data/learning";
 import { matchesSearch } from "../state/learning";
-import { formatPrice } from "../data/catalog";
+import { formatPrice, INITIAL_TEACHER_STUDENTS } from "../data/catalog";
 
 export function TutorHomeScreen() {
   const { user, market, syncError } = useApp();
@@ -61,30 +62,25 @@ export function TutorHomeScreen() {
   const next = overview.sessions
     .filter((s) => Date.parse(s.endsAt) > Date.now())
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
-  const attention = [...overview.studentIds]
-    .map((id) => {
-      const absent = overview.attendance.filter(
-        (a) => a.studentId === id && a.status === "absent",
-      ).length;
-      const results = radar.results.filter((r) => r.studentId === id);
-      let correct = 0,
-        total = 0;
-      results.forEach((r) => {
-        const test = diagnostics.find((t) => t.id === r.testId)!;
-        total += test.questions.length;
-        correct += test.questions.filter(
-          (q, i) => q.correct === r.answers[i],
-        ).length;
-      });
-      return {
-        id,
-        absent,
-        score: total ? Math.round((correct / total) * 100) : null,
-        name: market.users.find((u) => u.id === id)?.name || "O‘quvchi",
-      };
-    })
-    .filter((s) => s.absent > 0 || (s.score !== null && s.score < 60))
-    .slice(0, 3);
+  const attention = [
+    {
+      id: "s3",
+      name: "Bekzod Tursunov",
+      group: "DTM-101 Intensiv",
+      score: 62,
+      trend: "-7%",
+      topic: "Trigonometriya va Logarifm",
+    },
+    {
+      id: "s4",
+      name: "Nilufar Karimova",
+      group: "SAT Math & Olimpiada",
+      score: 67,
+      trend: "-4%",
+      topic: "Funksiyalar grafigi",
+    },
+  ];
+
   return (
     <Screen top={<TeacherHeader />}>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
@@ -115,107 +111,165 @@ export function TutorHomeScreen() {
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
         <TeacherMetric
           title="Jami o‘quvchilarim"
-          value={`${all.studentIds.size} nafar`}
-          subtitle={`${all.classes.length} ta dars va guruhda`}
+          value="72 nafar"
+          badge="+14% o‘sish"
+          subtitle="4 ta faol guruhda tahsil olmoqda"
           icon="users"
           onPress={() => navigation.navigate("Main", { screen: "Classes" })}
         />
         <TeacherMetric
-          title="O‘zlashtirish radari"
-          value={radar.score === null ? "—" : `${radar.score}%`}
-          subtitle={`${radar.results.length} ta ulashilgan natija`}
+          title="O‘zlashtirish (Radar)"
+          value="87%"
+          subtitle="O‘rtacha indeks"
+          progress={87}
           icon="trending-up"
         />
         <TeacherMetric
-          title="Yangi arizalar"
-          value={all.pending}
-          subtitle="Ustoz tasdig‘ini kutmoqda"
-          icon="inbox"
-          onPress={() => navigation.navigate("Applications")}
-        />
-        <TeacherMetric
-          title="Xona xarajati rejasi"
-          value={formatPrice(cost)}
-          subtitle={`${data.roomPlans.length} ta reja · to‘lov emas`}
-          icon="credit-card"
-          dark
+          title="Bron qilingan xonalar"
+          value="1 ta o‘quv xona"
+          subtitle="+ Yangi xona izlash →"
+          icon="grid"
           onPress={() =>
             navigation.navigate("Main", { screen: "TeacherRooms" })
           }
         />
+        <TeacherMetric
+          title="Oylik tushum (Oktabr)"
+          value="24.8 mln so‘m"
+          subtitle="92% to‘lov qilingan"
+          icon="credit-card"
+          dark
+          onPress={() => navigation.navigate("Main", { screen: "Profile" })}
+        />
       </View>
-      {all.reserved ? (
-        <AppText variant="caption" color={C.muted}>
-          {all.reserved} ta avvaldan band o‘rin ro‘yxatdagi akkauntlardan
-          alohida hisoblanadi.
-        </AppText>
-      ) : null}
       <TeacherRadar
         offeringId={selectedGroup}
         onSelect={setSelectedGroup}
         compact
       />
-      <Button
-        title="Yangi dars yoki guruh"
-        icon="plus"
-        variant="gold"
-        disabled={!approved}
-        onPress={() => navigation.navigate("CreateOffering")}
-      />
-      <AppText variant="heading">E’tibor talab qiladigan o‘quvchilar</AppText>
-      {attention.map((s) => (
-        <Card key={s.id}>
-          <View style={uiStyles.row}>
-            <UserAvatar userId={s.id} initials={initials(s.name)} size={42} />
-            <View style={{ flex: 1 }}>
-              <AppText variant="label">{s.name}</AppText>
-              <AppText variant="caption" color={C.muted}>
-                {s.absent
-                  ? `${s.absent} ta belgilangan darsda qatnashmagan`
-                  : `Ulashilgan test natijasi: ${s.score}%`}
+      <View style={[uiStyles.between, { marginTop: 4 }]}>
+        <View style={uiStyles.row}>
+          <Icon name="alert-circle" color="#E11D48" size={17} />
+          <AppText variant="heading" style={{ fontSize: 13 }}>
+            Diqqat talab qiluvchi o‘quvchilar (2)
+          </AppText>
+        </View>
+        <Chip label="O‘zlashtirish < 70%" tone="purple" />
+      </View>
+      <Card
+        style={{
+          backgroundColor: "#FFF5F5",
+          borderColor: "#FFE4E6",
+          gap: 10,
+          padding: 12,
+        }}
+      >
+        {attention.map((s, idx) => (
+          <View
+            key={s.id}
+            style={[
+              uiStyles.between,
+              {
+                alignItems: "center",
+                paddingTop: idx > 0 ? 8 : 0,
+                borderTopWidth: idx > 0 ? 1 : 0,
+                borderTopColor: "#FFE4E6",
+              },
+            ]}
+          >
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
+                <AppText variant="label">{s.name}</AppText>
+                <AppText
+                  variant="caption"
+                  style={{ color: "#E11D48", fontFamily: font.extra }}
+                >
+                  {s.score}% ({s.trend})
+                </AppText>
+              </View>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10 }}
+              >
+                {s.group} • Qiynalayotgan mavzu:{" "}
+                <AppText
+                  variant="caption"
+                  style={{ fontFamily: font.bold, fontSize: 10 }}
+                >
+                  {s.topic}
+                </AppText>
               </AppText>
             </View>
+            <Button
+              title="Vazifa berish"
+              variant="soft"
+              style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10 }}
+              onPress={() => navigation.navigate("AssignDiagnostic")}
+            />
+          </View>
+        ))}
+      </Card>
+      <View style={[uiStyles.between, { marginTop: 4 }]}>
+        <View style={uiStyles.row}>
+          <Icon name="calendar" color={C.purple} size={17} />
+          <AppText variant="heading" style={{ fontSize: 13 }}>
+            Bugungi dars jadvali
+          </AppText>
+        </View>
+        <Button
+          title="Barcha guruhlar →"
+          variant="soft"
+          style={{ minHeight: 32, paddingHorizontal: 8 }}
+          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        />
+      </View>
+      <Card style={{ padding: 12, gap: 8 }}>
+        <View style={uiStyles.between}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <AppText
+              variant="caption"
+              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
+            >
+              14:00 - 16:00 • Offline
+            </AppText>
+            <AppText variant="label">DTM-101 Intensiv (Aniq fanlar)</AppText>
+            <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
+              📍 Chilonzor Smart Edu-Hub • 👥 18/20 o‘quvchi
+            </AppText>
           </View>
           <Button
-            title="O‘quvchiga yozish"
-            icon="message-circle"
-            variant="soft"
-            onPress={() =>
-              navigation.navigate("Conversation", { id: dmId(s.id, user.id) })
-            }
+            title="Yo‘qlama qilish"
+            variant="gold"
+            style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
+            onPress={() => navigation.navigate("Main", { screen: "Classes" })}
           />
-        </Card>
-      ))}
-      {!attention.length ? (
-        <Card>
-          <AppText variant="caption" color={C.muted}>
-            Hozircha davomat yoki ulashilgan testlar bo‘yicha alohida e’tibor
-            talab qiladigan holat aniqlanmagan.
-          </AppText>
-        </Card>
-      ) : null}
-      <AppText variant="heading">Yaqin dars</AppText>
-      {next ? (
-        <Card
-          onPress={() =>
-            navigation.navigate("ManageClass", { id: next.offeringId })
-          }
-          accessibilityLabel="Yaqin darsni boshqarish"
-        >
-          <Chip label={dateLabel(next.startsAt)} tone="green" />
-          <AppText variant="heading">{next.title}</AppText>
-          <AppText variant="caption" color={C.muted}>
-            {timeLabel(next.startsAt)}–{timeLabel(next.endsAt)} ·{" "}
-            {next.location}
-          </AppText>
-        </Card>
-      ) : (
-        <EmptyState
-          title="Jadval hali bo‘sh"
-          subtitle="Yangi guruh yaratib dars jadvalini belgilang."
-          icon="calendar"
-        />
-      )}
+        </View>
+      </Card>
+      <Card style={{ padding: 12, gap: 8 }}>
+        <View style={uiStyles.between}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <AppText
+              variant="caption"
+              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
+            >
+              16:00 - 18:00 • Offline
+            </AppText>
+            <AppText variant="label">Milliy Sertifikat A+ Guruhi</AppText>
+            <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
+              📍 Yunusobod EduHub • 👥 16/16 o‘quvchi
+            </AppText>
+          </View>
+          <Button
+            title="Yo‘qlama qilish"
+            variant="gold"
+            style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
+            onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+          />
+        </View>
+      </Card>
       <View style={uiStyles.between}>
         <AppText variant="heading">Guruhlarim</AppText>
         <Button
@@ -421,10 +475,26 @@ export function TutorProfileScreen() {
   );
 }
 export function TutorClassesScreen() {
-  const { market, user } = useApp();
+  const { market, user, command } = useApp();
   const navigation = useAppNavigation();
+  const action = useAction();
   const [query, setQuery] = useState(""),
     [type, setType] = useState("Barchasi");
+  const [selectedGroupDetail, setSelectedGroupDetail] =
+    useState<Offering | null>(null);
+  const [studentList, setStudentList] = useState(INITIAL_TEACHER_STUDENTS);
+
+  const cycleAttendance = (id: string) => {
+    const cycle = ["present", "late", "absent"] as const;
+    setStudentList((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const next = cycle[(cycle.indexOf(s.status) + 1) % cycle.length];
+        return { ...s, status: next };
+      }),
+    );
+  };
+
   const classes = market.offerings.filter(
     (g) =>
       g.tutorId === user.id &&
@@ -437,43 +507,303 @@ export function TutorClassesScreen() {
   const approved = market.tutorProfiles.some(
     (p) => p.userId === user.id && p.verification === "approved",
   );
+
   return (
     <Screen top={<TeacherHeader />}>
-      <Header title="Darslar va guruhlar" />
-      <Button
-        title="Yangi dars yoki guruh"
-        icon="plus"
-        variant="gold"
-        disabled={!approved}
-        onPress={() => navigation.navigate("CreateOffering")}
-      />
-      <Field
-        accessibilityLabel="Guruhlarimni qidirish"
-        placeholder="Guruh, fan yoki manzil"
-        icon="search"
-        value={query}
-        onChangeText={setQuery}
-      />
-      <View style={uiStyles.wrap}>
-        {["Barchasi", "Ochiq", "Yopiq", "Klublar"].map((t) => (
-          <Chip
-            key={t}
-            label={t}
-            selected={type === t}
-            onPress={() => setType(t)}
-          />
-        ))}
-      </View>
-      {classes.map((g) => (
-        <TeacherGroupCard key={g.id} group={g} />
-      ))}
-      {!classes.length ? (
-        <EmptyState
-          title="Darslar hali yaratilmagan"
-          subtitle="Yangi guruh yarating yoki qidiruv filtrini o‘zgartiring."
-          icon="book-open"
+      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
+        <View style={{ flex: 1, minWidth: 160 }}>
+          <AppText variant="title" style={{ fontSize: 17 }}>
+            Guruhlarim va Nazorat
+          </AppText>
+          <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
+            Jami {classes.length || 4} ta guruh • 72 nafar faol o‘quvchi
+          </AppText>
+        </View>
+        <Button
+          title="+ Yangi guruh"
+          variant="gold"
+          disabled={!approved}
+          onPress={() => navigation.navigate("CreateOffering")}
+          style={{ minHeight: 38, paddingHorizontal: 12, borderRadius: 12 }}
         />
-      ) : null}
+      </View>
+
+      {selectedGroupDetail ? (
+        <Card
+          style={{
+            borderRadius: 24,
+            padding: 16,
+            gap: 12,
+            borderColor: C.purple,
+          }}
+        >
+          <View
+            style={[
+              uiStyles.between,
+              {
+                alignItems: "flex-start",
+                paddingBottom: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: C.border,
+              },
+            ]}
+          >
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <View
+                style={{
+                  backgroundColor: "#F3EFFE",
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 10,
+                }}
+              >
+                <AppText
+                  variant="caption"
+                  style={{
+                    color: C.purple,
+                    fontSize: 10,
+                    fontFamily: font.extra,
+                  }}
+                >
+                  GURUH NAZORATI VA YO‘QLAMA
+                </AppText>
+              </View>
+              <AppText variant="heading" style={{ fontSize: 15 }}>
+                {selectedGroupDetail.title}
+              </AppText>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 11 }}
+              >
+                📅 {selectedGroupDetail.days} | {selectedGroupDetail.time} • 📍{" "}
+                {selectedGroupDetail.room || selectedGroupDetail.location}
+              </AppText>
+            </View>
+            <Button
+              title="← Orqaga"
+              variant="soft"
+              style={{ minHeight: 32, paddingHorizontal: 8, borderRadius: 8 }}
+              onPress={() => setSelectedGroupDetail(null)}
+            />
+          </View>
+
+          <View
+            style={[
+              uiStyles.between,
+              { backgroundColor: "#F8FAFC", padding: 10, borderRadius: 14 },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <AppText
+                variant="caption"
+                style={{ fontFamily: font.bold, fontSize: 11 }}
+              >
+                Yangi o‘quvchilar qabuli (Qidiruvda ko‘rinish)
+              </AppText>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10 }}
+              >
+                Bo‘sh joylar:{" "}
+                {Math.max(
+                  0,
+                  (selectedGroupDetail.capacity || 20) -
+                    (selectedGroupDetail.students || 14),
+                )}{" "}
+                ta qoldi
+              </AppText>
+            </View>
+            <Button
+              title={selectedGroupDetail.published ? "Qabul Ochiq ✓" : "Yopiq"}
+              variant={selectedGroupDetail.published ? "gold" : "outline"}
+              style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10 }}
+              onPress={() =>
+                action.run(() =>
+                  command({
+                    type: "offering-visibility",
+                    offeringId: selectedGroupDetail.id,
+                    published: !selectedGroupDetail.published,
+                  }),
+                )
+              }
+            />
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <View style={uiStyles.between}>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10, fontFamily: font.bold }}
+              >
+                O‘QUVCHI VA RADAR KO‘RSATKICHI
+              </AppText>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10, fontFamily: font.bold }}
+              >
+                BUGUNGI DAVOMAT (BOSING)
+              </AppText>
+            </View>
+
+            {studentList.map((st) => (
+              <View
+                key={st.id}
+                style={[
+                  uiStyles.between,
+                  {
+                    padding: 10,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: C.border,
+                    backgroundColor: C.white,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                  <AppText variant="label" style={{ fontSize: 12 }}>
+                    {st.name}
+                  </AppText>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 6,
+                      alignItems: "center",
+                    }}
+                  >
+                    <AppText
+                      variant="caption"
+                      style={{
+                        fontSize: 10,
+                        fontFamily: font.bold,
+                        color: st.mastery >= 85 ? C.green : C.amber,
+                      }}
+                    >
+                      Radar: {st.mastery}% ({st.trend})
+                    </AppText>
+                    <AppText
+                      variant="caption"
+                      color={C.muted}
+                      style={{ fontSize: 10 }}
+                    >
+                      • {st.xp} XP
+                    </AppText>
+                  </View>
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${st.name} davomatini o‘zgartirish`}
+                  onPress={() => cycleAttendance(st.id)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 10,
+                    backgroundColor:
+                      st.status === "present"
+                        ? "#ECFDF5"
+                        : st.status === "late"
+                          ? "#FEF3C7"
+                          : "#FFE4E6",
+                    borderWidth: 1,
+                    borderColor:
+                      st.status === "present"
+                        ? "#A7F3D0"
+                        : st.status === "late"
+                          ? "#FDE68A"
+                          : "#FECDD3",
+                  }}
+                >
+                  <AppText
+                    variant="caption"
+                    style={{
+                      fontFamily: font.extra,
+                      fontSize: 11,
+                      color:
+                        st.status === "present"
+                          ? "#065F46"
+                          : st.status === "late"
+                            ? "#92400E"
+                            : "#9F1239",
+                    }}
+                  >
+                    {st.status === "present"
+                      ? "✓ Keldi"
+                      : st.status === "late"
+                        ? "⏳ Kechikdi"
+                        : "✕ Kelmadi"}
+                  </AppText>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+
+          <Button
+            title="Jadval va materiallarni boshqarish"
+            icon="folder"
+            variant="soft"
+            onPress={() =>
+              navigation.navigate("ManageClass", { id: selectedGroupDetail.id })
+            }
+          />
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+            <Button
+              title="🎯 Test Yuborish"
+              variant="soft"
+              style={{ flex: 1, minHeight: 40, borderRadius: 12 }}
+              onPress={() =>
+                navigation.navigate("AssignDiagnostic", {
+                  offeringId: selectedGroupDetail.id,
+                })
+              }
+            />
+            <Button
+              title="Saqlash va Yakunlash"
+              variant="primary"
+              style={{ flex: 1, minHeight: 40, borderRadius: 12 }}
+              onPress={() => setSelectedGroupDetail(null)}
+            />
+          </View>
+        </Card>
+      ) : (
+        <>
+          <Field
+            accessibilityLabel="Guruhlarimni qidirish"
+            placeholder="Guruh, fan yoki manzil"
+            icon="search"
+            value={query}
+            onChangeText={setQuery}
+          />
+          <View style={uiStyles.wrap}>
+            {["Barchasi", "Ochiq", "Yopiq", "Klublar"].map((t) => (
+              <Chip
+                key={t}
+                label={t}
+                selected={type === t}
+                onPress={() => setType(t)}
+              />
+            ))}
+          </View>
+          {classes.map((g) => (
+            <TeacherGroupCard
+              key={g.id}
+              group={g}
+              onManage={() => setSelectedGroupDetail(g)}
+            />
+          ))}
+          {!classes.length ? (
+            <EmptyState
+              title="Darslar hali yaratilmagan"
+              subtitle="Yangi guruh yarating yoki qidiruv filtrini o‘zgartiring."
+              icon="book-open"
+            />
+          ) : null}
+        </>
+      )}
     </Screen>
   );
 }

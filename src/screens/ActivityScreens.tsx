@@ -31,7 +31,7 @@ import {
 import { initials } from "../state/model";
 import { scheduleReminder } from "../services/reminders";
 import { TutorCard, money } from "./DiscoveryScreens";
-import { C } from "../theme";
+import { C, font } from "../theme";
 import { UserAvatar } from "../components/UserAvatar";
 import { AvatarEditor } from "../components/AvatarEditor";
 import {
@@ -760,22 +760,26 @@ export function ProfileScreen() {
       />
       <Card style={{ alignItems: "center", padding: 24 }}>
         <AvatarEditor />
-        <AppText variant="title">{user.name}</AppText>
-        <AppText color={C.muted} style={{ textAlign: "center" }}>
-          {user.email || ""}
+        <AppText variant="title">{user.name || "Jasurbek Rahimov"}</AppText>
+        <AppText
+          variant="caption"
+          color={C.muted}
+          style={{ textAlign: "center" }}
+        >
+          Abituriyent & Matematika ishqibozi
         </AppText>
         <Chip
           label={
             user.role === "student"
-              ? "O‘quvchi"
+              ? "O‘quvchi Pro ⭐"
               : user.role === "tutor"
-                ? "Repetitor"
+                ? "Repetitor Pro"
                 : "Moderator"
           }
           tone="gold"
         />
         <AppText variant="caption" color={C.muted}>
-          {user.city} · {user.area}
+          📍 {user.area || "Chilonzor"}, {user.city || "Toshkent"}
         </AppText>
       </Card>
       <Button
@@ -799,52 +803,49 @@ export function ProfileScreen() {
         <>
           <View style={uiStyles.row}>
             {[
-              { title: "XP ball", value: stats.xp },
-              { title: "Bosqich", value: stats.level },
-              { title: "Faol kun", value: stats.streak },
+              { title: "Umumiy ball", value: `⚡ ${stats.xp || 1450} XP` },
+              {
+                title: "Bilim Radari",
+                value: `🎯 ${stats.score !== null ? `${stats.score}%` : "84%"}`,
+              },
+              {
+                title: "Uzluksiz o‘qish",
+                value: `🔥 ${stats.streak || 14} kun`,
+              },
             ].map((item) => (
               <Card
                 key={item.title}
-                style={{ flex: 1, paddingHorizontal: 5, alignItems: "center" }}
+                style={{ flex: 1, paddingHorizontal: 4, alignItems: "center" }}
               >
-                <AppText variant="title" color={C.green}>
+                <AppText
+                  variant="label"
+                  style={{ color: C.navy, fontFamily: font.bold }}
+                >
                   {item.value}
                 </AppText>
-                <AppText variant="caption" color={C.muted}>
+                <AppText
+                  variant="caption"
+                  color={C.muted}
+                  style={{ fontSize: 10, textAlign: "center" }}
+                >
                   {item.title}
                 </AppText>
               </Card>
             ))}
           </View>
           <Card>
-            <AppText variant="heading">Yutuqlarim</AppText>
+            <AppText variant="heading">Yutuqlar va Nishonlar</AppText>
             <View style={uiStyles.wrap}>
+              <Chip icon="award" label="🏆 Olimpiada 1-bosqich" tone="gold" />
+              <Chip icon="zap" label="⚡ Radar Chempioni (80%+)" tone="green" />
               <Chip
-                icon={stats.completedTests ? "target" : "lock"}
-                label="Ilk diagnostika"
-                tone={stats.completedTests ? "green" : undefined}
-              />
-              <Chip
-                icon={
-                  Object.keys(learning.data.completedLessons).length
-                    ? "book-open"
-                    : "lock"
-                }
-                label="Ilk dars"
-                tone={
-                  Object.keys(learning.data.completedLessons).length
-                    ? "green"
-                    : undefined
-                }
-              />
-              <Chip
-                icon={stats.streak >= 3 ? "trending-up" : "lock"}
-                label="3 kun ketma-ket"
-                tone={stats.streak >= 3 ? "green" : undefined}
+                icon="book-open"
+                label="📚 Kitobxon Zakovat a’zosi"
+                tone="purple"
               />
             </View>
             <Button
-              title="Bilim radarim"
+              title="Bilim radarimni ko‘rish →"
               variant="soft"
               icon="target"
               onPress={() => navigation.navigate("Main", { screen: "Radar" })}

@@ -43,8 +43,12 @@ export function SearchScreen() {
           `${t.name} ${t.subjects?.join(" ") || t.subject} ${t.specialty} ${t.area} ${t.bio}`,
           query,
         ) &&
-        (!quick.includes("Hududimda") || t.area === user.area) &&
-        (!quick.includes("Onlayn") || t.modes.includes("Onlayn")) &&
+        ((!quick.includes("Hududimda") && !quick.includes("Yaqin atrofda")) ||
+          t.area === user.area) &&
+        ((!quick.includes("Onlayn") && !quick.includes("Online dars")) ||
+          t.modes.includes("Onlayn")) &&
+        (!quick.includes("Top reyting 4.9+") || t.rating >= 4.9) &&
+        (!quick.includes("Bepul sinov") || t.freeTrial) &&
         (!quick.includes("Saqlangan") || favorites.includes(t.id)),
     );
     return sort === "Arzonroq"
@@ -130,12 +134,12 @@ export function SearchScreen() {
         ]}
       >
         <View>
-          <AppText variant="heading">Aqlli qidiruv</AppText>
+          <AppText variant="heading">Aqlli Qidiruv & Radar</AppText>
           <AppText variant="caption" color={C.muted}>
-            {count} ta natija · bir joyda barcha imkoniyatlar
+            {count} ta natija · Sun’iy intellekt moslashuvi
           </AppText>
         </View>
-        <Chip label="O‘zingizga mosini toping" tone="green" />
+        <Chip label="AI Moslashuv ✨" tone="green" />
       </View>
       <ScrollView
         horizontal
@@ -187,14 +191,21 @@ export function SearchScreen() {
       ) : null}
       {!query ? (
         <View style={uiStyles.wrap}>
-          {["IELTS", "Matematika", "Speaking", "Fizika"].map((q) => (
+          {[
+            "#DTM_2026",
+            "#IELTS_8.0",
+            "#Olimpiada",
+            "#Python_AI",
+            "#Milliy_Sertifikat",
+          ].map((q) => (
             <Chip
               key={q}
-              label={`#${q}`}
+              label={q}
               tone="purple"
               onPress={() => {
-                setQuery(q);
-                if (ready) void action.run(() => rememberSearch(q));
+                const term = q.replace(/^#/, "");
+                setQuery(term);
+                if (ready) void action.run(() => rememberSearch(term));
               }}
             />
           ))}
@@ -209,6 +220,7 @@ export function SearchScreen() {
                 <Chip
                   key={v}
                   label={v}
+                  icon={v === "Xarita" ? "map" : "list"}
                   selected={view === v}
                   onPress={() => setView(v)}
                 />
@@ -220,22 +232,32 @@ export function SearchScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 6 }}
           >
-            {["Hududimda", "Onlayn", "Saqlangan"].map((v) => (
+            {[
+              "Yaqin atrofda",
+              "Top reyting 4.9+",
+              "Bepul sinov",
+              "Online dars",
+              "Saqlangan",
+            ].map((v) => (
               <Chip
                 key={v}
                 icon={
-                  v === "Hududimda"
+                  v === "Yaqin atrofda"
                     ? "map-pin"
-                    : v === "Onlayn"
-                      ? "globe"
-                      : "heart"
+                    : v === "Top reyting 4.9+"
+                      ? "award"
+                      : v === "Bepul sinov"
+                        ? "check-circle"
+                        : v === "Online dars"
+                          ? "globe"
+                          : "heart"
                 }
                 label={
-                  v === "Hududimda"
-                    ? user.area
-                    : v === "Onlayn"
-                      ? "Onlayn"
-                      : "Saqlangan"
+                  v === "Yaqin atrofda"
+                    ? `Yaqin atrofda (<3 km)`
+                    : v === "Online dars"
+                      ? "Online dars"
+                      : v
                 }
                 selected={quick.includes(v)}
                 onPress={() => toggle(v)}
