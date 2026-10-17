@@ -84,34 +84,41 @@ export async function reconcileReminders(sessions: LessonSession[]) {
   try {
     const Notifications = await import("expo-notifications");
     const reminders = await Notifications.getAllScheduledNotificationsAsync();
-  for (const reminder of reminders.filter((r) =>
-    r.identifier.startsWith("darsino-"),
-  )) {
-    const session = sessions.find(
-      (s) => `darsino-${s.id}` === reminder.identifier,
-    );
-    const date = session
-      ? new Date(new Date(session.startsAt).getTime() - 15 * 60000)
-      : null;
-    if (!session || !date || date.getTime() <= Date.now())
-      await Notifications.cancelScheduledNotificationAsync(reminder.identifier);
-    else if (reminder.content.data?.startsAt !== session.startsAt) {
-      await Notifications.cancelScheduledNotificationAsync(reminder.identifier);
-      await Notifications.scheduleNotificationAsync({
-        identifier: reminder.identifier,
-        content: {
-          title: "Darsingiz boshlanadi",
-          body: `${session.title} — 15 daqiqadan so‘ng.`,
-          data: { offeringId: session.offeringId, startsAt: session.startsAt },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date,
-          channelId: "lessons",
-        },
-      });
+    for (const reminder of reminders.filter((r) =>
+      r.identifier.startsWith("darsino-"),
+    )) {
+      const session = sessions.find(
+        (s) => `darsino-${s.id}` === reminder.identifier,
+      );
+      const date = session
+        ? new Date(new Date(session.startsAt).getTime() - 15 * 60000)
+        : null;
+      if (!session || !date || date.getTime() <= Date.now())
+        await Notifications.cancelScheduledNotificationAsync(
+          reminder.identifier,
+        );
+      else if (reminder.content.data?.startsAt !== session.startsAt) {
+        await Notifications.cancelScheduledNotificationAsync(
+          reminder.identifier,
+        );
+        await Notifications.scheduleNotificationAsync({
+          identifier: reminder.identifier,
+          content: {
+            title: "Darsingiz boshlanadi",
+            body: `${session.title} — 15 daqiqadan so‘ng.`,
+            data: {
+              offeringId: session.offeringId,
+              startsAt: session.startsAt,
+            },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date,
+            channelId: "lessons",
+          },
+        });
+      }
     }
-  }
   } catch {
     // Non-blocking background sync
   }

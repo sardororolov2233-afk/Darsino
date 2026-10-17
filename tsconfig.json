@@ -1,5 +1,6 @@
 {
   "extends": "expo/tsconfig.base",
+  "exclude": ["node_modules", "supabase/functions"],
   "compilerOptions": {
     "strict": true,
     "types": ["react", "react-native", "node"]

@@ -43,8 +43,10 @@ export function SearchScreen() {
           `${t.name} ${t.subjects?.join(" ") || t.subject} ${t.specialty} ${t.area} ${t.bio}`,
           query,
         ) &&
-        (!quick.includes("Hududimda") && !quick.includes("Yaqin atrofda") || t.area === user.area) &&
-        (!quick.includes("Onlayn") && !quick.includes("Online dars") || t.modes.includes("Onlayn")) &&
+        ((!quick.includes("Hududimda") && !quick.includes("Yaqin atrofda")) ||
+          t.area === user.area) &&
+        ((!quick.includes("Onlayn") && !quick.includes("Online dars")) ||
+          t.modes.includes("Onlayn")) &&
         (!quick.includes("Top reyting 4.9+") || t.rating >= 4.9) &&
         (!quick.includes("Bepul sinov") || t.freeTrial) &&
         (!quick.includes("Saqlangan") || favorites.includes(t.id)),
@@ -189,7 +191,13 @@ export function SearchScreen() {
       ) : null}
       {!query ? (
         <View style={uiStyles.wrap}>
-          {["#DTM_2026", "#IELTS_8.0", "#Olimpiada", "#Python_AI", "#Milliy_Sertifikat"].map((q) => (
+          {[
+            "#DTM_2026",
+            "#IELTS_8.0",
+            "#Olimpiada",
+            "#Python_AI",
+            "#Milliy_Sertifikat",
+          ].map((q) => (
             <Chip
               key={q}
               label={q}
@@ -224,7 +232,13 @@ export function SearchScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 6 }}
           >
-            {["Yaqin atrofda", "Top reyting 4.9+", "Bepul sinov", "Online dars", "Saqlangan"].map((v) => (
+            {[
+              "Yaqin atrofda",
+              "Top reyting 4.9+",
+              "Bepul sinov",
+              "Online dars",
+              "Saqlangan",
+            ].map((v) => (
               <Chip
                 key={v}
                 icon={

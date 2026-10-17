@@ -14,7 +14,13 @@ import {
   uid,
   dmId,
 } from "../state/domain";
-import { rooms, formatPrice, type StudyRoom, INITIAL_BOOKINGS, INITIAL_TEACHER_CLUBS } from "../data/catalog";
+import {
+  rooms,
+  formatPrice,
+  type StudyRoom,
+  INITIAL_BOOKINGS,
+  INITIAL_TEACHER_CLUBS,
+} from "../data/catalog";
 import { diagnostics } from "../data/learning";
 import {
   encodeAssessment,
@@ -49,9 +55,7 @@ function RoomCard({ room }: { room: StudyRoom }) {
       <RoomIllustration height={110} />
       <View style={uiStyles.between}>
         <View style={{ flex: 1, gap: 2 }}>
-          <AppText variant="heading">
-            {room.name || room.title}
-          </AppText>
+          <AppText variant="heading">{room.name || room.title}</AppText>
           <View style={uiStyles.row}>
             <Icon name="map-pin" size={14} color={C.muted} />
             <AppText variant="caption" color={C.muted} style={{ flex: 1 }}>
@@ -63,7 +67,10 @@ function RoomCard({ room }: { room: StudyRoom }) {
       </View>
 
       <View style={uiStyles.row}>
-        <AppText variant="caption" style={{ fontFamily: font.bold, color: C.navy }}>
+        <AppText
+          variant="caption"
+          style={{ fontFamily: font.bold, color: C.navy }}
+        >
           ⭐ {room.rating || 4.9} ({room.reviews || 84} baho)
         </AppText>
         <AppText variant="caption" color={C.muted}>
@@ -73,7 +80,11 @@ function RoomCard({ room }: { room: StudyRoom }) {
 
       <View style={uiStyles.wrap}>
         {room.amenities.map((a) => (
-          <Chip key={a} label={a} icon={a === "Wi-Fi" || a.includes("Wi-Fi") ? "wifi" : "monitor"} />
+          <Chip
+            key={a}
+            label={a}
+            icon={a === "Wi-Fi" || a.includes("Wi-Fi") ? "wifi" : "monitor"}
+          />
         ))}
       </View>
 
@@ -92,7 +103,9 @@ function RoomCard({ room }: { room: StudyRoom }) {
 
       <View style={[uiStyles.between, { flexWrap: "wrap", marginTop: 4 }]}>
         <View>
-          <AppText variant="heading">{formatPrice(room.pricePerHour || room.price)}</AppText>
+          <AppText variant="heading">
+            {formatPrice(room.pricePerHour || room.price)}
+          </AppText>
           <AppText variant="caption" color={C.muted}>
             soatiga · to‘liq jihozlangan
           </AppText>
@@ -126,11 +139,18 @@ export function TeacherRoomsScreen() {
     <Screen top={<TeacherHeader />}>
       <Header title="O‘quv xonalari" />
       <AppText variant="caption" color={C.muted}>
-        Guruh darslari, seminar va olimpiadalar uchun darsxonalarni bron qilish va boshqarish.
+        Guruh darslari, seminar va olimpiadalar uchun darsxonalarni bron qilish
+        va boshqarish.
       </AppText>
 
       {/* Prototype Active Bookings Banner */}
-      <Card style={{ backgroundColor: "#F0FDF4", borderColor: "#86EFAC", borderWidth: 1 }}>
+      <Card
+        style={{
+          backgroundColor: "#F0FDF4",
+          borderColor: "#86EFAC",
+          borderWidth: 1,
+        }}
+      >
         <View style={uiStyles.between}>
           <View style={uiStyles.row}>
             <Icon name="check-circle" color={C.green} size={18} />
@@ -168,15 +188,17 @@ export function TeacherRoomsScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 6 }}
       >
-        {["Barchasi", "Chilonzor", "Yunusobod", "Mirobod", "Shayxontohur"].map((d) => (
-          <Chip
-            key={d}
-            label={d}
-            icon="map-pin"
-            selected={district === d}
-            onPress={() => setDistrict(d)}
-          />
-        ))}
+        {["Barchasi", "Chilonzor", "Yunusobod", "Mirobod", "Shayxontohur"].map(
+          (d) => (
+            <Chip
+              key={d}
+              label={d}
+              icon="map-pin"
+              selected={district === d}
+              onPress={() => setDistrict(d)}
+            />
+          ),
+        )}
       </ScrollView>
       <View style={uiStyles.wrap}>
         {[0, 10, 16, 25].map((n) => (
@@ -430,7 +452,8 @@ export function TeacherClubsScreen() {
         <View style={{ flex: 1 }}>
           <AppText variant="title">O‘quv Klublari & Tadbirlarim</AppText>
           <AppText variant="caption" color={C.muted}>
-            O‘z hamjamiyatingizni yarating, ochiq master-klasslar va diagnostik olimpiadalar o‘tkazing.
+            O‘z hamjamiyatingizni yarating, ochiq master-klasslar va diagnostik
+            olimpiadalar o‘tkazing.
           </AppText>
         </View>
         <Button
@@ -453,11 +476,20 @@ export function TeacherClubsScreen() {
       {INITIAL_TEACHER_CLUBS.map((c) => (
         <Card key={c.id}>
           <View style={uiStyles.between}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                flex: 1,
+              }}
+            >
               <AppText style={{ fontSize: 22 }}>{c.icon}</AppText>
               <View style={{ flex: 1 }}>
                 <AppText variant="heading">{c.title}</AppText>
-                <AppText variant="caption" color={C.muted}>{c.type}</AppText>
+                <AppText variant="caption" color={C.muted}>
+                  {c.type}
+                </AppText>
               </View>
             </View>
             <Chip label={c.badge} tone="gold" />
@@ -470,9 +502,13 @@ export function TeacherClubsScreen() {
               📍 {c.location}
             </AppText>
             <AppText variant="caption" color={C.muted}>
-              👥 {c.membersCount} nafar a’zo • {c.pendingRequests} ta yangi ariza
+              👥 {c.membersCount} nafar a’zo • {c.pendingRequests} ta yangi
+              ariza
             </AppText>
-            <AppText variant="caption" style={{ fontFamily: font.bold, color: C.navy }}>
+            <AppText
+              variant="caption"
+              style={{ fontFamily: font.bold, color: C.navy }}
+            >
               💵 {c.fee}
             </AppText>
           </View>
@@ -482,7 +518,9 @@ export function TeacherClubsScreen() {
               icon="inbox"
               variant="outline"
               style={{ flex: 1 }}
-              onPress={() => navigation.navigate("Applications", { offeringId: c.id })}
+              onPress={() =>
+                navigation.navigate("Applications", { offeringId: c.id })
+              }
             />
             <Button
               title="Guruhga xabar"

@@ -245,7 +245,8 @@ export const openLessons: OpenLesson[] = [
     duration: "24:15",
     views: "14.2K",
     isLive: false,
-    thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=80",
     badge: "Video dars",
   },
   {
@@ -263,7 +264,8 @@ export const openLessons: OpenLesson[] = [
     duration: "JONLI EFIR",
     views: "348 kuzatuvchi",
     isLive: true,
-    thumbnail: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&auto=format&fit=crop&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&auto=format&fit=crop&q=80",
     badge: "Hozir jonli 🔴",
   },
   {
@@ -281,7 +283,8 @@ export const openLessons: OpenLesson[] = [
     duration: "31:40",
     views: "8.9K",
     isLive: false,
-    thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&auto=format&fit=crop&q=80",
+    thumbnail:
+      "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&auto=format&fit=crop&q=80",
     badge: "3D Darslik",
   },
 ];

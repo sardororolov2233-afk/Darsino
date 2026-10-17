@@ -1,6 +1,10 @@
+import { completeStudentSetup } from "./onboardingHelpers";
 import { expect, test, type Page } from "@playwright/test";
 async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "Boshlash", exact: true }).click();
+  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Email orqali davom etish", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "Email manzilingiz", exact: true })
     .fill(email);
@@ -34,12 +38,7 @@ test("student application requires tutor approval before My Lessons", async ({
 }) => {
   await page.goto("/");
   await login(page, "sardor@example.com");
-  await page
-    .getByRole("textbox", { name: "Ism va familiya", exact: true })
-    .fill("Sardor Test");
-  await page
-    .getByRole("button", { name: "O‘qiga kirish", exact: true })
-    .click();
+  await completeStudentSetup(page, "Sardor Test");
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await page
     .getByRole("button", {
@@ -86,7 +85,10 @@ test("email validation and empty tutor search have actionable errors", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Boshlash", exact: true }).click();
+  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Email orqali davom etish", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Emailga kod yuborish", exact: true })
     .click();
@@ -112,12 +114,7 @@ test("email validation and empty tutor search have actionable errors", async ({
     .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .fill("421806");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Ism va familiya", exact: true })
-    .fill("Sardor Test");
-  await page
-    .getByRole("button", { name: "O‘qiga kirish", exact: true })
-    .click();
+  await completeStudentSetup(page, "Sardor Test");
   await page.getByRole("tab", { name: "Qidirish", exact: true }).click();
   await page
     .getByRole("textbox", { name: "Repetitor qidirish", exact: true })

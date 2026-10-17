@@ -1,6 +1,10 @@
+import { completeStudentSetup } from "./onboardingHelpers";
 import { test, expect, type Page } from "@playwright/test";
 async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "Boshlash", exact: true }).click();
+  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Email orqali davom etish", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "Email manzilingiz", exact: true })
     .fill(email);
@@ -11,12 +15,7 @@ async function login(page: Page, email: string) {
     .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
     .fill("421806");
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Ism va familiya", exact: true })
-    .fill("Oqi Sinov");
-  await page
-    .getByRole("button", { name: "O‘qiga kirish", exact: true })
-    .click();
+  await completeStudentSetup(page, "Oqi Sinov");
 }
 test("diagnostic results and followed clubs persist and remain private to each account", async ({
   page,

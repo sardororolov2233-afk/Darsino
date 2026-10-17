@@ -33,6 +33,7 @@ import {
 import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
 import { C, font } from "../theme";
+import { LessonMaterials } from "../components/LessonMaterials";
 import { UserAvatar } from "../components/UserAvatar";
 import {
   TeacherHeader,
@@ -138,9 +139,7 @@ export function TutorHomeScreen() {
           subtitle="92% to‘lov qilingan"
           icon="credit-card"
           dark
-          onPress={() =>
-            navigation.navigate("Main", { screen: "Profile" })
-          }
+          onPress={() => navigation.navigate("Main", { screen: "Profile" })}
         />
       </View>
       <TeacherRadar
@@ -157,7 +156,14 @@ export function TutorHomeScreen() {
         </View>
         <Chip label="O‘zlashtirish < 70%" tone="purple" />
       </View>
-      <Card style={{ backgroundColor: "#FFF5F5", borderColor: "#FFE4E6", gap: 10, padding: 12 }}>
+      <Card
+        style={{
+          backgroundColor: "#FFF5F5",
+          borderColor: "#FFE4E6",
+          gap: 10,
+          padding: 12,
+        }}
+      >
         {attention.map((s, idx) => (
           <View
             key={s.id}
@@ -172,15 +178,27 @@ export function TutorHomeScreen() {
             ]}
           >
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
                 <AppText variant="label">{s.name}</AppText>
-                <AppText variant="caption" style={{ color: "#E11D48", fontFamily: font.extra }}>
+                <AppText
+                  variant="caption"
+                  style={{ color: "#E11D48", fontFamily: font.extra }}
+                >
                   {s.score}% ({s.trend})
                 </AppText>
               </View>
-              <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10 }}
+              >
                 {s.group} • Qiynalayotgan mavzu:{" "}
-                <AppText variant="caption" style={{ fontFamily: font.bold, fontSize: 10 }}>
+                <AppText
+                  variant="caption"
+                  style={{ fontFamily: font.bold, fontSize: 10 }}
+                >
                   {s.topic}
                 </AppText>
               </AppText>
@@ -211,7 +229,10 @@ export function TutorHomeScreen() {
       <Card style={{ padding: 12, gap: 8 }}>
         <View style={uiStyles.between}>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <AppText variant="caption" style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}>
+            <AppText
+              variant="caption"
+              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
+            >
               14:00 - 16:00 • Offline
             </AppText>
             <AppText variant="label">DTM-101 Intensiv (Aniq fanlar)</AppText>
@@ -230,7 +251,10 @@ export function TutorHomeScreen() {
       <Card style={{ padding: 12, gap: 8 }}>
         <View style={uiStyles.between}>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <AppText variant="caption" style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}>
+            <AppText
+              variant="caption"
+              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
+            >
               16:00 - 18:00 • Offline
             </AppText>
             <AppText variant="label">Milliy Sertifikat A+ Guruhi</AppText>
@@ -456,7 +480,8 @@ export function TutorClassesScreen() {
   const action = useAction();
   const [query, setQuery] = useState(""),
     [type, setType] = useState("Barchasi");
-  const [selectedGroupDetail, setSelectedGroupDetail] = useState<Offering | null>(null);
+  const [selectedGroupDetail, setSelectedGroupDetail] =
+    useState<Offering | null>(null);
   const [studentList, setStudentList] = useState(INITIAL_TEACHER_STUDENTS);
 
   const cycleAttendance = (id: string) => {
@@ -466,7 +491,7 @@ export function TutorClassesScreen() {
         if (s.id !== id) return s;
         const next = cycle[(cycle.indexOf(s.status) + 1) % cycle.length];
         return { ...s, status: next };
-      })
+      }),
     );
   };
 
@@ -504,19 +529,56 @@ export function TutorClassesScreen() {
       </View>
 
       {selectedGroupDetail ? (
-        <Card style={{ borderRadius: 24, padding: 16, gap: 12, borderColor: C.purple }}>
-          <View style={[uiStyles.between, { alignItems: "flex-start", paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: C.border }]}>
+        <Card
+          style={{
+            borderRadius: 24,
+            padding: 16,
+            gap: 12,
+            borderColor: C.purple,
+          }}
+        >
+          <View
+            style={[
+              uiStyles.between,
+              {
+                alignItems: "flex-start",
+                paddingBottom: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: C.border,
+              },
+            ]}
+          >
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              <View style={{ backgroundColor: "#F3EFFE", alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
-                <AppText variant="caption" style={{ color: C.purple, fontSize: 10, fontFamily: font.extra }}>
+              <View
+                style={{
+                  backgroundColor: "#F3EFFE",
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 10,
+                }}
+              >
+                <AppText
+                  variant="caption"
+                  style={{
+                    color: C.purple,
+                    fontSize: 10,
+                    fontFamily: font.extra,
+                  }}
+                >
                   GURUH NAZORATI VA YO‘QLAMA
                 </AppText>
               </View>
               <AppText variant="heading" style={{ fontSize: 15 }}>
                 {selectedGroupDetail.title}
               </AppText>
-              <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
-                📅 {selectedGroupDetail.days} | {selectedGroupDetail.time} • 📍 {selectedGroupDetail.room || selectedGroupDetail.location}
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 11 }}
+              >
+                📅 {selectedGroupDetail.days} | {selectedGroupDetail.time} • 📍{" "}
+                {selectedGroupDetail.room || selectedGroupDetail.location}
               </AppText>
             </View>
             <Button
@@ -527,13 +589,31 @@ export function TutorClassesScreen() {
             />
           </View>
 
-          <View style={[uiStyles.between, { backgroundColor: "#F8FAFC", padding: 10, borderRadius: 14 }]}>
+          <View
+            style={[
+              uiStyles.between,
+              { backgroundColor: "#F8FAFC", padding: 10, borderRadius: 14 },
+            ]}
+          >
             <View style={{ flex: 1 }}>
-              <AppText variant="caption" style={{ fontFamily: font.bold, fontSize: 11 }}>
+              <AppText
+                variant="caption"
+                style={{ fontFamily: font.bold, fontSize: 11 }}
+              >
                 Yangi o‘quvchilar qabuli (Qidiruvda ko‘rinish)
               </AppText>
-              <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-                Bo‘sh joylar: {Math.max(0, (selectedGroupDetail.capacity || 20) - (selectedGroupDetail.students || 14))} ta qoldi
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10 }}
+              >
+                Bo‘sh joylar:{" "}
+                {Math.max(
+                  0,
+                  (selectedGroupDetail.capacity || 20) -
+                    (selectedGroupDetail.students || 14),
+                )}{" "}
+                ta qoldi
               </AppText>
             </View>
             <Button
@@ -546,7 +626,7 @@ export function TutorClassesScreen() {
                     type: "offering-visibility",
                     offeringId: selectedGroupDetail.id,
                     published: !selectedGroupDetail.published,
-                  })
+                  }),
                 )
               }
             />
@@ -554,10 +634,18 @@ export function TutorClassesScreen() {
 
           <View style={{ gap: 8 }}>
             <View style={uiStyles.between}>
-              <AppText variant="caption" color={C.muted} style={{ fontSize: 10, fontFamily: font.bold }}>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10, fontFamily: font.bold }}
+              >
                 O‘QUVCHI VA RADAR KO‘RSATKICHI
               </AppText>
-              <AppText variant="caption" color={C.muted} style={{ fontSize: 10, fontFamily: font.bold }}>
+              <AppText
+                variant="caption"
+                color={C.muted}
+                style={{ fontSize: 10, fontFamily: font.bold }}
+              >
                 BUGUNGI DAVOMAT (BOSING)
               </AppText>
             </View>
@@ -580,7 +668,13 @@ export function TutorClassesScreen() {
                   <AppText variant="label" style={{ fontSize: 12 }}>
                     {st.name}
                   </AppText>
-                  <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 6,
+                      alignItems: "center",
+                    }}
+                  >
                     <AppText
                       variant="caption"
                       style={{
@@ -591,7 +685,11 @@ export function TutorClassesScreen() {
                     >
                       Radar: {st.mastery}% ({st.trend})
                     </AppText>
-                    <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
+                    <AppText
+                      variant="caption"
+                      color={C.muted}
+                      style={{ fontSize: 10 }}
+                    >
                       • {st.xp} XP
                     </AppText>
                   </View>
@@ -644,12 +742,24 @@ export function TutorClassesScreen() {
             ))}
           </View>
 
+          <Button
+            title="Jadval va materiallarni boshqarish"
+            icon="folder"
+            variant="soft"
+            onPress={() =>
+              navigation.navigate("ManageClass", { id: selectedGroupDetail.id })
+            }
+          />
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
             <Button
               title="🎯 Test Yuborish"
               variant="soft"
               style={{ flex: 1, minHeight: 40, borderRadius: 12 }}
-              onPress={() => navigation.navigate("AssignDiagnostic", { offeringId: selectedGroupDetail.id })}
+              onPress={() =>
+                navigation.navigate("AssignDiagnostic", {
+                  offeringId: selectedGroupDetail.id,
+                })
+              }
             />
             <Button
               title="Saqlash va Yakunlash"
@@ -955,6 +1065,7 @@ export function ManageClassScreen({
         }
       />
       <TeacherRadar offeringId={group.id} compact />
+      <LessonMaterials offeringId={group.id} />
       <AppText variant="heading">Jadval va davomat</AppText>
       <View style={uiStyles.wrap}>
         {sessions.map((s) => (

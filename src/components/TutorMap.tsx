@@ -1,176 +1,171 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
+import React, { useEffect, useState } from "react";
+import { Linking, View } from "react-native";
 import type { Tutor } from "../data/catalog";
-import { AppText, Card, Icon } from "./ui";
+import { AppText, Button, Card, Chip, uiStyles } from "./ui";
 import { TutorCard } from "../screens/DiscoveryScreens";
-import { C, font } from "../theme";
-const districtPoints: Record<string, { x: number; y: number }> = {
-  Yunusobod: { x: 190, y: 55 },
-  "Mirzo Ulug‘bek": { x: 268, y: 98 },
-  Chilonzor: { x: 86, y: 178 },
-  Yakkasaroy: { x: 188, y: 185 },
-  Shayxontohur: { x: 100, y: 75 },
+import { MapSurface } from "./MapSurface";
+import { Feedback, useAction } from "./feedback";
+import { useApp } from "../state/AppContext";
+import { requireBackend } from "../services/backend";
+import {
+  createLocationService,
+  directionsUrl,
+  type TutorLocation,
+} from "../services/locations";
+import { currentLocation, type Coordinates } from "../services/permissions";
+import { C } from "../theme";
+
+const demoPoints: Record<string, Coordinates> = {
+  Yunusobod: { latitude: 41.367, longitude: 69.284 },
+  "Mirzo Ulug‘bek": { latitude: 41.326, longitude: 69.338 },
+  Chilonzor: { latitude: 41.278, longitude: 69.204 },
+  Yakkasaroy: { latitude: 41.286, longitude: 69.26 },
+  Shayxontohur: { latitude: 41.326, longitude: 69.239 },
 };
 export function TutorMap({ tutors }: { tutors: Tutor[] }) {
+  const { mode } = useApp();
   const [selectedId, setSelectedId] = useState("");
-  const located = tutors.filter((t) => districtPoints[t.area]);
-  const selected = located.find((t) => t.id === selectedId) || located[0];
+  const [locations, setLocations] = useState<TutorLocation[]>([]);
+  const [origin, setOrigin] = useState<Coordinates>();
+  const [radius, setRadius] = useState(25);
+  const [loading, setLoading] = useState(false),
+    [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
+  const action = useAction();
+  const idsKey = tutors.map((t) => t.id).join(",");
+  useEffect(() => {
+    let active = true;
+    setError("");
+    setLoading(true);
+    const ids = idsKey ? idsKey.split(",") : [];
+    const request =
+      mode === "demo"
+        ? Promise.resolve(
+            tutors
+              .filter((t) => demoPoints[t.area])
+              .map((t) => ({
+                tutorId: t.id,
+                ...demoPoints[t.area],
+                label: `${t.area} · namuna nuqtasi`,
+              })),
+          )
+        : createLocationService(requireBackend()).nearby(ids, origin, radius);
+    void request
+      .then((points) => {
+        if (active) setLocations(points);
+      })
+      .catch((e) => {
+        if (active) {
+          setError(e.message);
+          setLocations([]);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [idsKey, mode, origin, radius, revision]);
+  const visible = locations.filter((l) =>
+    tutors.some((t) => t.id === l.tutorId),
+  );
+  const point = visible.find((l) => l.tutorId === selectedId) || visible[0];
+  const selected = tutors.find((t) => t.id === point?.tutorId);
   return (
     <>
-      <Card style={{ padding: 12 }}>
-        <AppText variant="label">Ustozlar hududlar bo‘yicha</AppText>
+      <Card>
+        <AppText variant="heading">Ustozlar xaritada</AppText>
         <AppText variant="caption" color={C.muted}>
-          Toshkent sxemasi · belgilar aniq manzil emas
+          {mode === "demo"
+            ? "Namuna nuqtalari · ustozlarning haqiqiy manzili emas"
+            : "Ustozlar ko‘rsatgan dars manzillari"}
         </AppText>
-        <View style={styles.map}>
-          <Svg
-            viewBox="0 0 340 250"
-            width="100%"
-            height="100%"
-            preserveAspectRatio="none"
-          >
-            <Rect width="340" height="250" fill="#E9EFF8" />
-            <Path
-              d="M12 30Q60 2 96 35L112 85Q55 110 18 80Z M245 172Q310 140 338 198L325 245H248Z"
-              fill="#C8EAD3"
+        <Button
+          title="Yaqinimdagi ustozlar"
+          icon="navigation"
+          variant="soft"
+          loading={action.busy}
+          onPress={() =>
+            action.run(async () => {
+              if (mode === "demo")
+                throw new Error(
+                  "Masofa bo‘yicha haqiqiy qidiruv Supabase rejimida ishlaydi.",
+                );
+              setOrigin(await currentLocation());
+            })
+          }
+        />
+        {origin ? (
+          <View style={uiStyles.wrap}>
+            {[5, 10, 25, 50].map((km) => (
+              <Chip
+                key={km}
+                label={`${km} km`}
+                selected={radius === km}
+                onPress={() => setRadius(km)}
+              />
+            ))}
+            <Button
+              title="Barcha manzillar"
+              variant="outline"
+              onPress={() => setOrigin(undefined)}
             />
-            <Path
-              d="M-20 203Q130 181 200 113T370 27"
-              fill="none"
-              stroke="#A3CFF2"
-              strokeWidth="12"
-            />
-            <Line
-              x1="0"
-              y1="90"
-              x2="340"
-              y2="130"
-              stroke="white"
-              strokeWidth="7"
-            />
-            <Line
-              x1="104"
-              y1="0"
-              x2="160"
-              y2="250"
-              stroke="white"
-              strokeWidth="7"
-            />
-            <Line
-              x1="271"
-              y1="0"
-              x2="229"
-              y2="250"
-              stroke="white"
-              strokeWidth="6"
-            />
-            <Line
-              x1="0"
-              y1="217"
-              x2="340"
-              y2="168"
-              stroke="white"
-              strokeWidth="5"
-            />
-            <Circle
-              cx="170"
-              cy="130"
-              r="48"
-              fill="#10B9810A"
-              stroke={C.accent}
-              strokeDasharray="4 4"
-            />
-            <Circle
-              cx="170"
-              cy="130"
-              r="86"
-              fill="none"
-              stroke={C.accent}
-              strokeDasharray="4 4"
-              strokeOpacity="0.35"
-            />
-          </Svg>
-          {located.map((t, i) => {
-            const p = districtPoints[t.area];
-            const sameDistrictIndex = located
-              .slice(0, i)
-              .filter((other) => other.area === t.area).length;
-            return (
-              <Pressable
-                key={t.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${t.name}, ${t.area} xarita belgisi`}
-                accessibilityState={{ selected: selected?.id === t.id }}
-                onPress={() => setSelectedId(t.id)}
-                style={[
-                  styles.pin,
-                  {
-                    left: `${(Math.min(p.x + sameDistrictIndex * 38, 306) / 340) * 100}%`,
-                    top: `${(p.y / 250) * 100}%`,
-                    backgroundColor: selected?.id === t.id ? C.accent : C.navy,
-                  },
-                ]}
-              >
-                <AppText
-                  color="white"
-                  style={{ fontFamily: font.extra, fontSize: 11 }}
-                >
-                  {t.initials}
-                </AppText>
-              </Pressable>
-            );
-          })}
-          <View style={styles.label}>
-            <Icon name="map-pin" size={12} color={C.green} />
-            <AppText variant="caption" color={C.green}>
-              Hududlar sxemasi
-            </AppText>
           </View>
-        </View>
-        {tutors.length > located.length ? (
-          <AppText variant="caption" color={C.muted}>
-            {tutors.length - located.length} ustozning hududi sxemada yo‘q.
-            Ularni ro‘yxatdan ko‘ring.
+        ) : null}
+        <MapSurface
+          locations={visible}
+          selectedId={point?.tutorId}
+          origin={origin}
+          onSelect={setSelectedId}
+        />
+        {loading ? (
+          <AppText color={C.muted}>Manzillar yuklanmoqda…</AppText>
+        ) : null}
+        {!loading && !visible.length ? (
+          <AppText color={C.muted}>
+            Bu natijalar uchun saqlangan manzil topilmadi. Ustozlarni ro‘yxatdan
+            ko‘ring yoki masofani kengaytiring.
           </AppText>
         ) : null}
-        {!located.length ? (
-          <AppText variant="caption" color={C.muted}>
-            Tanlangan natijalarda xaritada ko‘rsatiladigan Toshkent hududi yo‘q.
-          </AppText>
+        {visible.map((p) => {
+          const tutor = tutors.find((t) => t.id === p.tutorId)!;
+          return (
+            <Button
+              key={p.tutorId}
+              title={`${tutor.name}, ${tutor.area} xarita belgisi`}
+              variant={p.tutorId === point?.tutorId ? "soft" : "outline"}
+              onPress={() => setSelectedId(p.tutorId)}
+            />
+          );
+        })}
+        {point ? (
+          <>
+            <AppText variant="caption" color={C.muted}>
+              {point.label}
+              {point.distanceKm != null
+                ? ` · ${point.distanceKm.toFixed(1)} km`
+                : ""}
+            </AppText>
+            <Button
+              title="Yo‘nalishni ochish"
+              variant="outline"
+              icon="map-pin"
+              onPress={() =>
+                action.run(() => Linking.openURL(directionsUrl(point)))
+              }
+            />
+          </>
         ) : null}
+        <Button
+          title="Manzillarni yangilash"
+          variant="soft"
+          disabled={loading}
+          onPress={() => setRevision((n) => n + 1)}
+        />
+        <Feedback error={error || action.error} />
       </Card>
       {selected ? <TutorCard tutor={selected} /> : null}
     </>
   );
 }
-const styles = StyleSheet.create({
-  map: {
-    height: 245,
-    borderRadius: 18,
-    overflow: "hidden",
-    position: "relative",
-  },
-  pin: {
-    position: "absolute",
-    width: 36,
-    height: 36,
-    marginLeft: -18,
-    marginTop: -18,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: C.white,
-  },
-  label: {
-    position: "absolute",
-    bottom: 10,
-    left: 10,
-    flexDirection: "row",
-    gap: 4,
-    backgroundColor: C.white,
-    borderRadius: 9,
-    padding: 7,
-  },
-});

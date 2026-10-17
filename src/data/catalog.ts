@@ -123,7 +123,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn", "Onlayn"],
     tags: ["#IELTS_8.0", "#Speaking_Club", "#CEFR_C1"],
     bio: "IELTS 8.5 sohibi. Har bir darsda gapirish, fikrni aniq ifodalash va individual fikr-mulohazaga e’tibor beraman.",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     coords: { top: "55%", left: "68%" },
   },
   {
@@ -150,7 +151,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn", "Onlayn"],
     tags: ["#DTM_2026", "#Matematika"],
     bio: "Murakkab masalalarni sodda usullar bilan yechamiz. Kirish imtihoniga tayyorgarlik va mavzularni mustahkamlash.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     coords: { top: "32%", left: "42%" },
   },
   {
@@ -178,7 +180,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn", "Onlayn"],
     tags: ["#DTM_2026", "#Olimpiada", "#SAT_Math"],
     bio: "Xalqaro matematika olimpiadalari g‘olibi. 500+ o‘quvchisi WIUT, INHA va Milliy universitet talabasi bo‘lgan.",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     coords: { top: "32%", left: "42%" },
   },
   {
@@ -206,7 +209,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn", "Onlayn"],
     tags: ["#IELTS_8.0", "#Speaking_Club", "#CEFR_C1"],
     bio: "CELTA sertifikatiga ega mutaxassis. Qisqa 3 oyda IELTS 7.0+ natijaga olib chiqish bo‘yicha maxsus metodika muallifi.",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     coords: { top: "55%", left: "68%" },
   },
   {
@@ -234,7 +238,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn"],
     tags: ["#Fizika_DTM", "#Tajribalar", "#Texnika"],
     bio: "Murakkab fizika qonunlarini real hayotiy tajribalar va 3D simulyatsiyalar orqali juda sodda tilda tushuntiraman.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     coords: { top: "24%", left: "74%" },
   },
   {
@@ -262,7 +267,8 @@ export const tutors: Tutor[] = [
     modes: ["Onlayn"],
     tags: ["#Python", "#Sun’iy_Intellekt", "#React"],
     bio: "Senior Software Engineer. O‘quvchilarga noldan dasturlash, algoritmlar va real startap loyihalar qilishni o‘rgataman.",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     coords: { top: "66%", left: "28%" },
   },
   {
@@ -290,7 +296,8 @@ export const tutors: Tutor[] = [
     modes: ["Oflayn", "Onlayn"],
     tags: ["#Tibbiyot_DTM", "#Organik_Kimyo"],
     bio: "Tibbiyot oliygohlariga tayyorlovchi maxsus intensiv kurs ustozi. Har hafta diagnostik radar testlar o‘tkaziladi.",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
     coords: { top: "44%", left: "20%" },
   },
 ];
@@ -510,7 +517,8 @@ export const events: PracticeEvent[] = [
     color: "from-violet-600 to-purple-700",
     icon: "📚",
     tag: "Bepul uchrashuv",
-    description: "Kitobxonlik, mantiqiy savollar va intelektual o‘yinlar do‘stona muhitda.",
+    description:
+      "Kitobxonlik, mantiqiy savollar va intelektual o‘yinlar do‘stona muhitda.",
     benefits: ["Kitob taqdimotlari", "Zakovat turniri", "Yangi tanishlar"],
   },
   {
@@ -531,8 +539,13 @@ export const events: PracticeEvent[] = [
     color: "from-blue-600 to-indigo-700",
     icon: "🎙️",
     tag: "IELTS 7.0+ spikerlar",
-    description: "IELTS speaking amaliyoti, munozaralar va erkin muloqot klubi.",
-    benefits: ["Native speaker feedback", "Debat texnikalari", "Vocabulary boosting"],
+    description:
+      "IELTS speaking amaliyoti, munozaralar va erkin muloqot klubi.",
+    benefits: [
+      "Native speaker feedback",
+      "Debat texnikalari",
+      "Vocabulary boosting",
+    ],
   },
   {
     id: "olympiad-math",
@@ -552,8 +565,13 @@ export const events: PracticeEvent[] = [
     color: "from-emerald-500 to-teal-700",
     icon: "🏆",
     tag: "Sovrin: 15,000,000 so‘m",
-    description: "Katta diagnostik olimpiada va AI vositalaridan foydalanish bo‘yicha bellashuv.",
-    benefits: ["Diplom va sertifikat", "Pul mukofoti", "Iqtidorli o‘quvchilar reytingi"],
+    description:
+      "Katta diagnostik olimpiada va AI vositalaridan foydalanish bo‘yicha bellashuv.",
+    benefits: [
+      "Diplom va sertifikat",
+      "Pul mukofoti",
+      "Iqtidorli o‘quvchilar reytingi",
+    ],
   },
   {
     id: "speaking",
@@ -636,8 +654,15 @@ export const rooms: StudyRoom[] = [
     reviews: 84,
     distance: "0.6 km",
     coords: { top: "36%", left: "38%" },
-    image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&auto=format&fit=crop&q=80",
-    amenities: ["Interaktiv doska 75\"", "Konditsioner", "Optik Wi-Fi", "Kofe-breyk", "Proyektor"],
+    image:
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&auto=format&fit=crop&q=80",
+    amenities: [
+      'Interaktiv doska 75"',
+      "Konditsioner",
+      "Optik Wi-Fi",
+      "Kofe-breyk",
+      "Proyektor",
+    ],
     slots: ["09:00 - 11:00", "14:00 - 16:00", "16:00 - 18:00", "18:30 - 20:30"],
   },
   {
@@ -672,8 +697,14 @@ export const rooms: StudyRoom[] = [
     reviews: 112,
     distance: "1.8 km",
     coords: { top: "25%", left: "66%" },
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=80",
-    amenities: ["Proyektor HD", "Magnit doska", "Wi-Fi 5G", "Chiroq generatori"],
+    image:
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=80",
+    amenities: [
+      "Proyektor HD",
+      "Magnit doska",
+      "Wi-Fi 5G",
+      "Chiroq generatori",
+    ],
     slots: ["10:00 - 12:00", "14:00 - 16:00", "17:00 - 19:00"],
   },
   {
@@ -691,8 +722,14 @@ export const rooms: StudyRoom[] = [
     reviews: 67,
     distance: "2.4 km",
     coords: { top: "62%", left: "54%" },
-    image: "https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400&auto=format&fit=crop&q=80",
-    amenities: ["LED Ekran + Mikrofon", "45 o‘rindiq", "Konditsioner", "Olimpiada uchun mos"],
+    image:
+      "https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=400&auto=format&fit=crop&q=80",
+    amenities: [
+      "LED Ekran + Mikrofon",
+      "45 o‘rindiq",
+      "Konditsioner",
+      "Olimpiada uchun mos",
+    ],
     slots: ["11:00 - 13:00", "15:00 - 17:00", "17:00 - 19:00"],
   },
   {
@@ -710,7 +747,8 @@ export const rooms: StudyRoom[] = [
     reviews: 49,
     distance: "3.1 km",
     coords: { top: "48%", left: "22%" },
-    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400&auto=format&fit=crop&q=80",
     amenities: ["Doska + Markerlar", "Wi-Fi", "Arzon narx", "Suv kulleri"],
     slots: ["08:30 - 10:30", "13:30 - 15:30", "16:00 - 18:00"],
   },
@@ -735,7 +773,8 @@ export const INITIAL_TEACHER_STUDENTS = [
     name: "Jasurbek Rahimov",
     groupId: "g1",
     groupName: "DTM-101 Intensiv",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
     mastery: 94,
     trend: "+8%",
     status: "present" as "present" | "late" | "absent",
@@ -748,7 +787,8 @@ export const INITIAL_TEACHER_STUDENTS = [
     name: "Madina Otaboyeva",
     groupId: "g1",
     groupName: "DTM-101 Intensiv",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
     mastery: 91,
     trend: "+6%",
     status: "present" as "present" | "late" | "absent",
@@ -761,7 +801,8 @@ export const INITIAL_TEACHER_STUDENTS = [
     name: "Bekzod Tursunov",
     groupId: "g1",
     groupName: "DTM-101 Intensiv",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
     mastery: 62,
     trend: "-7%",
     status: "absent" as "present" | "late" | "absent",
@@ -774,7 +815,8 @@ export const INITIAL_TEACHER_STUDENTS = [
     name: "Nilufar Karimova",
     groupId: "g3",
     groupName: "SAT Math & Olimpiada",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
     mastery: 67,
     trend: "-4%",
     status: "late" as "present" | "late" | "absent",
@@ -787,7 +829,8 @@ export const INITIAL_TEACHER_STUDENTS = [
     name: "Sardorbek Yo‘ldoshev",
     groupId: "g2",
     groupName: "Milliy Sertifikat A+",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
     mastery: 97,
     trend: "+11%",
     status: "present" as "present" | "late" | "absent",

@@ -22,12 +22,48 @@ import { openLessons } from "../data/learning";
 import { C, font } from "../theme";
 
 const subjects = [
-  { name: "Matematika", icon: "triangle" as const, emoji: "📐", color: "#EEF2FF", count: 142 },
-  { name: "Fizika", icon: "sun" as const, emoji: "⚛️", color: "#F3EFFE", count: 86 },
-  { name: "Ingliz tili", icon: "globe" as const, emoji: "🇬🇧", color: "#FFF7E5", count: 215 },
-  { name: "Kimyo", icon: "droplet" as const, emoji: "🧪", color: "#E8FAF2", count: 64 },
-  { name: "Dasturlash", icon: "code" as const, emoji: "💻", color: "#E7F6FD", count: 118 },
-  { name: "Tarix", icon: "columns" as const, emoji: "🏛️", color: "#FFF0F3", count: 73 },
+  {
+    name: "Matematika",
+    icon: "triangle" as const,
+    emoji: "📐",
+    color: "#EEF2FF",
+    count: 142,
+  },
+  {
+    name: "Fizika",
+    icon: "sun" as const,
+    emoji: "⚛️",
+    color: "#F3EFFE",
+    count: 86,
+  },
+  {
+    name: "Ingliz tili",
+    icon: "globe" as const,
+    emoji: "🇬🇧",
+    color: "#FFF7E5",
+    count: 215,
+  },
+  {
+    name: "Kimyo",
+    icon: "droplet" as const,
+    emoji: "🧪",
+    color: "#E8FAF2",
+    count: 64,
+  },
+  {
+    name: "Dasturlash",
+    icon: "code" as const,
+    emoji: "💻",
+    color: "#E7F6FD",
+    count: 118,
+  },
+  {
+    name: "Tarix",
+    icon: "columns" as const,
+    emoji: "🏛️",
+    color: "#FFF0F3",
+    count: 73,
+  },
 ];
 
 export function HomeScreen() {
@@ -56,76 +92,61 @@ export function HomeScreen() {
         b.rating - a.rating,
     )
     .slice(0, 2);
-
-  const displayXp = stats.xp > 0 ? stats.xp : 1450;
-  const displayStreak = stats.streak > 0 ? stats.streak : 14;
-
   return (
     <Screen top={<OqiHeader />}>
-      {/* 1. Header & Greeting */}
-      <View style={uiStyles.between}>
-        <View style={{ flex: 1 }}>
-          <AppText variant="caption" color={C.muted}>
-            Salom, {user.name.split(" ")[0] || "Jasurbek"}! 👋
-          </AppText>
-          <AppText variant="title">Bugun bilimingizni sinab ko‘ring</AppText>
-          <AppText variant="caption" color={C.muted}>
-            Yangi bosqichga bir qadam qoldi.
-          </AppText>
-        </View>
-        <View style={{ alignItems: "flex-end", gap: 5 }}>
-          <Chip icon="zap" label={`⚡ ${displayXp} XP`} tone="green" />
-          <Chip icon="trending-up" label={`${displayStreak} kun 🔥`} tone="gold" />
-        </View>
+      <View style={{ gap: 4 }}>
+        <AppText variant="caption" color={C.muted}>
+          Salom, {user.name.split(" ")[0]}
+        </AppText>
+        <AppText variant="title">Maqsadingiz sari bir qadam</AppText>
       </View>
 
-      {/* 2. Daily Goal Card (Prototype: 80% / 4 of 5) */}
+      {/* Selected learning goal */}
       <Card
-        style={{
-          backgroundColor: C.navy,
-          borderColor: C.navy,
-          padding: 20,
-          overflow: "hidden",
-        }}
+        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 22 }}
       >
         <View style={uiStyles.between}>
           <View style={uiStyles.row}>
-            <Icon name="target" color={C.mint} size={17} />
+            <Icon name="target" color={C.mint} size={20} />
             <AppText variant="caption" color="#C6D5F1">
-              KUNLIK MAQSAD
+              MENING MAQSADIM
             </AppText>
           </View>
-          <Chip label="80% bajarildi 🔥" tone="green" />
+          <Icon name="bookmark" color={C.mint} size={18} />
         </View>
-        <AppText variant="heading" color="white">
-          Bugungi reja: 4 / 5 topshiriq
+        <AppText variant="display" color="white">
+          {user.goal || "Maqsadingizni belgilang"}
         </AppText>
-        <AppText variant="caption" color="#C6D5F1">
-          Keyingi nishon: Fizika bo‘yicha 1 ta diagnostik test yechish (+120 XP)
-        </AppText>
-        <View
-          style={{ height: 7, backgroundColor: "#304673", borderRadius: 4 }}
-        >
-          <View
-            style={{
-              height: 7,
-              borderRadius: 4,
-              width: "80%",
-              backgroundColor: C.mint,
-            }}
-          />
-        </View>
-        <View style={uiStyles.between}>
-          <AppText variant="caption" color="#D7E5FA">
-            ⚡ {displayXp} XP · {stats.level || 4}-bosqich
+        <AppText color="#C6D5F1">{user.interests.join(" · ")}</AppText>
+        {user.studyMode || user.studySupport ? (
+          <AppText variant="caption" color={C.mint}>
+            {[user.studyMode, user.studySupport].filter(Boolean).join(" · ")}
           </AppText>
-          <Button
-            title="Testni boshlash →"
-            variant="gold"
-            style={{ minHeight: 44 }}
-            onPress={() => navigation.navigate("Main", { screen: "Radar" })}
-          />
-        </View>
+        ) : null}
+        <AppText variant="caption" color="#C6D5F1">
+          {user.city}, {user.area}
+        </AppText>
+        <Button
+          title={
+            user.studySupport === "Mustaqil"
+              ? "Darslar va materiallarni ko‘rish"
+              : "Maqsadimga mos ustoz topish"
+          }
+          icon="arrow-right"
+          variant="gold"
+          onPress={() => {
+            if (user.studySupport === "Mustaqil")
+              navigation.navigate("Main", { screen: "Lessons" });
+            else {
+              setFilters({
+                subject: user.interests[0] || "Barchasi",
+                mode: user.studyMode || "Barchasi",
+                area: "Barcha hududlar",
+              });
+              navigation.navigate("Main", { screen: "Search" });
+            }
+          }}
+        />
       </Card>
 
       {/* 3. Bilim Radari & Rivojlanish (Dual Radar Preview) */}
@@ -147,7 +168,10 @@ export function HomeScreen() {
           <View style={{ flex: 1, gap: 8 }}>
             <View style={uiStyles.row}>
               <Icon name="trending-up" color={C.green} size={15} />
-              <AppText variant="caption" style={{ fontFamily: font.bold, color: C.green }}>
+              <AppText
+                variant="caption"
+                style={{ fontFamily: font.bold, color: C.green }}
+              >
                 +14% haftalik o‘sish
               </AppText>
             </View>
@@ -182,7 +206,10 @@ export function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel={`${s.name} ustozlarini topish`}
             onPress={() => {
-              setFilters({ subject: s.name === "Dasturlash" ? "IT" : s.name, area: "Barcha hududlar" });
+              setFilters({
+                subject: s.name === "Dasturlash" ? "IT" : s.name,
+                area: "Barcha hududlar",
+              });
               navigation.navigate("Main", { screen: "Search" });
             }}
             style={{
@@ -237,7 +264,14 @@ export function HomeScreen() {
           justifyContent: "space-between",
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            flex: 1,
+          }}
+        >
           <View
             style={{
               width: 38,
@@ -251,7 +285,10 @@ export function HomeScreen() {
             <Icon name="map-pin" color={C.navy} size={20} />
           </View>
           <View style={{ flex: 1 }}>
-            <AppText variant="caption" style={{ fontFamily: font.bold, color: C.navy }}>
+            <AppText
+              variant="caption"
+              style={{ fontFamily: font.bold, color: C.navy }}
+            >
               Chilonzor, Toshkent
             </AppText>
             <AppText variant="caption" color={C.muted}>
@@ -324,7 +361,10 @@ export function HomeScreen() {
       </View>
       <View style={{ gap: 10 }}>
         {openLessons.slice(0, 2).map((l) => (
-          <Card key={l.id} onPress={() => navigation.navigate("Main", { screen: "Lessons" })}>
+          <Card
+            key={l.id}
+            onPress={() => navigation.navigate("Main", { screen: "Lessons" })}
+          >
             <View style={uiStyles.between}>
               <Chip label={l.subject} tone="purple" />
               {l.live ? (

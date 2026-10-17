@@ -1,5 +1,11 @@
 import React from "react";
-import { ActivityIndicator, Image, Platform, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -31,8 +37,12 @@ import { C, font } from "./src/theme";
 import { Icon } from "./src/components/ui";
 import { Brand } from "./src/components/Brand";
 import type { RootStackParamList } from "./src/navigation";
+import { FloatingAssistant } from "./src/components/FloatingAssistant";
+import { PermissionScreen } from "./src/screens/PermissionScreen";
+import { TutorLocationScreen } from "./src/screens/TutorLocationScreen";
+import { MaterialViewerScreen } from "./src/screens/MaterialViewerScreen";
+import { MaterialsScreen } from "./src/screens/MaterialsScreen";
 import {
-  SplashScreen,
   WelcomeScreen,
   SignInScreen,
   VerifyEmailScreen,
@@ -258,7 +268,6 @@ function Navigator() {
       >
         {!signedIn && !authenticated ? (
           <Stack.Group navigationKey="auth">
-            <Stack.Screen name="Splash" component={SplashScreen} />
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
@@ -270,6 +279,16 @@ function Navigator() {
         ) : (
           <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
             <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="Permissions" component={PermissionScreen} />
+            <Stack.Screen
+              name="TutorLocation"
+              component={TutorLocationScreen}
+            />
+            <Stack.Screen
+              name="MaterialViewer"
+              component={MaterialViewerScreen}
+            />
+            <Stack.Screen name="Materials" component={MaterialsScreen} />
             <Stack.Screen name="Tutors" component={SearchScreen} />
             <Stack.Screen name="Chats" component={ChatsScreen} />
             <Stack.Screen name="Applications" component={ApplicationsScreen} />
@@ -339,7 +358,10 @@ export default function App() {
             <AppProvider>
               <LearningProvider>
                 <TeacherProvider>
-                  <Navigator />
+                  <View style={{ flex: 1 }}>
+                    <Navigator />
+                    <FloatingAssistant />
+                  </View>
                 </TeacherProvider>
               </LearningProvider>
             </AppProvider>

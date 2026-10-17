@@ -54,7 +54,10 @@ async function logout(page: Page) {
     .click();
 }
 async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "Boshlash", exact: true }).click();
+  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Email orqali davom etish", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: "Email manzilingiz", exact: true })
     .fill(email);

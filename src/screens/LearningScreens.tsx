@@ -29,6 +29,7 @@ import { GroupCard } from "./DiscoveryScreens";
 import { isClubOffering } from "../state/teacher";
 import { encodeAssessment, validInvitation } from "../state/assessments";
 import { C, font } from "../theme";
+import { LessonMaterials } from "../components/LessonMaterials";
 
 export function LearningLibrary({
   section,
@@ -61,6 +62,8 @@ export function LearningLibrary({
       ) : null}
       {section === "Video darslar" ? (
         <>
+          <LessonMaterials videosOnly />
+          <AppText variant="heading">Ochiq manbalar</AppText>
           <View style={uiStyles.wrap}>
             {["Barchasi", ...new Set(openLessons.map((l) => l.subject))].map(
               (s) => (
@@ -104,7 +107,8 @@ export function RadarScreen() {
         <View style={{ flex: 1 }}>
           <AppText variant="title">Bilim Radari va Tahlil</AppText>
           <AppText variant="caption" color={C.muted}>
-            Sun’iy intellekt asosida bilimlaringiz xaritasi va zaif nuqtalar diagnostikasi
+            Sun’iy intellekt asosida bilimlaringiz xaritasi va zaif nuqtalar
+            diagnostikasi
           </AppText>
         </View>
         <Chip icon="zap" label={`⚡ ${displayXp} XP`} tone="green" />
@@ -126,10 +130,7 @@ export function RadarScreen() {
       <Card style={{ alignItems: "stretch", padding: 18 }}>
         <View style={uiStyles.between}>
           <AppText variant="label">Ko‘p qirrali bilim darajasi</AppText>
-          <Chip
-            label={`Umumiy o‘zlashtirish: ${displayScore}`}
-            tone="purple"
-          />
+          <Chip label={`Umumiy o‘zlashtirish: ${displayScore}`} tone="purple" />
         </View>
         <RadarChart skills={stats.skills} />
         <AppText
@@ -144,7 +145,13 @@ export function RadarScreen() {
       </Card>
 
       {/* AI Recommendation Banner from Prototype */}
-      <Card style={{ backgroundColor: "#F5F3FF", borderColor: "#DDD6FE", borderWidth: 1 }}>
+      <Card
+        style={{
+          backgroundColor: "#F5F3FF",
+          borderColor: "#DDD6FE",
+          borderWidth: 1,
+        }}
+      >
         <View style={uiStyles.row}>
           <Icon name="award" color="#7C3AED" size={20} />
           <AppText variant="label" style={{ color: "#7C3AED" }}>
@@ -152,13 +159,15 @@ export function RadarScreen() {
           </AppText>
         </View>
         <AppText variant="caption" color={C.navy} style={{ lineHeight: 18 }}>
-          💡 Fizikadan Optika va Dinamika bo‘yicha zaifliklar aniqlandi. Ushbu mavzularda 2 ta qisqa dars va diagnostik test tavsiya etiladi.
+          💡 Fizikadan Optika va Dinamika bo‘yicha zaifliklar aniqlandi. Ushbu
+          mavzularda 2 ta qisqa dars va diagnostik test tavsiya etiladi.
         </AppText>
         <Button
           title="Tavsiya etilgan testni boshlash (+120 XP)"
           variant="gold"
           onPress={() => {
-            const phys = diagnostics.find((d) => d.subject === "Fizika") || diagnostics[0];
+            const phys =
+              diagnostics.find((d) => d.subject === "Fizika") || diagnostics[0];
             if (phys) setSubject("Fizika");
           }}
         />

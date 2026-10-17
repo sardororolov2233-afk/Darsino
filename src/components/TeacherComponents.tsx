@@ -231,8 +231,22 @@ export function TeacherRadar({
         </ScrollView>
       ) : null}
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
-        <View style={{ width: 155, height: 140, alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 8,
+        }}
+      >
+        <View
+          style={{
+            width: 155,
+            height: 140,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <Svg viewBox="0 0 200 170" width="100%" height="100%">
             <Polygon
               points="100,15 172,62 145,145 55,145 28,62"
@@ -246,30 +260,100 @@ export function TeacherRadar({
               stroke="#E2E8F0"
               strokeWidth="1"
             />
-            <Line x1="100" y1="88" x2="100" y2="15" stroke="#E2E8F0" strokeWidth="1" />
-            <Line x1="100" y1="88" x2="172" y2="62" stroke="#E2E8F0" strokeWidth="1" />
-            <Line x1="100" y1="88" x2="145" y2="145" stroke="#E2E8F0" strokeWidth="1" />
-            <Line x1="100" y1="88" x2="55" y2="145" stroke="#E2E8F0" strokeWidth="1" />
-            <Line x1="100" y1="88" x2="28" y2="62" stroke="#E2E8F0" strokeWidth="1" />
+            <Line
+              x1="100"
+              y1="88"
+              x2="100"
+              y2="15"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+            />
+            <Line
+              x1="100"
+              y1="88"
+              x2="172"
+              y2="62"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+            />
+            <Line
+              x1="100"
+              y1="88"
+              x2="145"
+              y2="145"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+            />
+            <Line
+              x1="100"
+              y1="88"
+              x2="55"
+              y2="145"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+            />
+            <Line
+              x1="100"
+              y1="88"
+              x2="28"
+              y2="62"
+              stroke="#E2E8F0"
+              strokeWidth="1"
+            />
             <Polygon
               points={currentRadarPoints}
               fill="rgba(16, 185, 129, 0.25)"
               stroke="#10B981"
               strokeWidth="2.5"
             />
-            <SvgText x="100" y="11" textAnchor="middle" fill="#334155" fontSize="9" fontWeight="bold">
+            <SvgText
+              x="100"
+              y="11"
+              textAnchor="middle"
+              fill="#334155"
+              fontSize="9"
+              fontWeight="bold"
+            >
               Algebra
             </SvgText>
-            <SvgText x="175" y="65" textAnchor="start" fill="#475569" fontSize="8" fontWeight="bold">
+            <SvgText
+              x="175"
+              y="65"
+              textAnchor="start"
+              fill="#475569"
+              fontSize="8"
+              fontWeight="bold"
+            >
               Geometriya
             </SvgText>
-            <SvgText x="145" y="158" textAnchor="middle" fill="#475569" fontSize="8" fontWeight="bold">
+            <SvgText
+              x="145"
+              y="158"
+              textAnchor="middle"
+              fill="#475569"
+              fontSize="8"
+              fontWeight="bold"
+            >
               Logarifm
             </SvgText>
-            <SvgText x="55" y="158" textAnchor="middle" fill="#E11D48" fontSize="8" fontWeight="bold">
+            <SvgText
+              x="55"
+              y="158"
+              textAnchor="middle"
+              fill="#E11D48"
+              fontSize="8"
+              fontWeight="bold"
+            >
               Trigonometriya
             </SvgText>
-            <SvgText x="25" y="65" textAnchor="end" fill="#475569" fontSize="8" fontWeight="bold">
+            <SvgText
+              x="25"
+              y="65"
+              textAnchor="end"
+              fill="#475569"
+              fontSize="8"
+              fontWeight="bold"
+            >
               Mantiq
             </SvgText>
           </Svg>
@@ -284,10 +368,17 @@ export function TeacherRadar({
           ].map((item) => (
             <View key={item.topic} style={{ gap: 2 }}>
               <View style={uiStyles.between}>
-                <AppText variant="caption" style={{ fontSize: 10, fontFamily: font.bold, flex: 1 }} numberOfLines={1}>
+                <AppText
+                  variant="caption"
+                  style={{ fontSize: 10, fontFamily: font.bold, flex: 1 }}
+                  numberOfLines={1}
+                >
                   {item.topic}
                 </AppText>
-                <AppText variant="caption" style={{ fontSize: 10, fontFamily: font.extra }}>
+                <AppText
+                  variant="caption"
+                  style={{ fontSize: 10, fontFamily: font.extra }}
+                >
                   {item.pct}%
                 </AppText>
               </View>
@@ -326,14 +417,53 @@ export function TeacherGroupCard({
       <View style={[uiStyles.between, { alignItems: "flex-start" }]}>
         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-            <View style={[styles.pill, { backgroundColor: group.mode === "Onlayn" || group.mode === "Online" ? "#F3EFFE" : "#EEF2FF" }]}>
-              <AppText variant="caption" style={{ fontSize: 10, fontFamily: font.extra, color: C.purple }}>
+            <View
+              style={[
+                styles.pill,
+                {
+                  backgroundColor:
+                    group.mode === "Onlayn" || group.mode === "Online"
+                      ? "#F3EFFE"
+                      : "#EEF2FF",
+                },
+              ]}
+            >
+              <AppText
+                variant="caption"
+                style={{
+                  fontSize: 10,
+                  fontFamily: font.extra,
+                  color: C.purple,
+                }}
+              >
                 {group.mode}
               </AppText>
             </View>
-            <View style={[styles.pill, { backgroundColor: group.isOpenForEnrollment ?? group.published ? "#ECFDF5" : "#F1F5F9" }]}>
-              <AppText variant="caption" style={{ fontSize: 10, fontFamily: font.bold, color: group.isOpenForEnrollment ?? group.published ? C.green : C.muted }}>
-                {group.isOpenForEnrollment ?? group.published ? "● Qabul ochiq" : "Qabul to‘lgan"}
+            <View
+              style={[
+                styles.pill,
+                {
+                  backgroundColor:
+                    (group.isOpenForEnrollment ?? group.published)
+                      ? "#ECFDF5"
+                      : "#F1F5F9",
+                },
+              ]}
+            >
+              <AppText
+                variant="caption"
+                style={{
+                  fontSize: 10,
+                  fontFamily: font.bold,
+                  color:
+                    (group.isOpenForEnrollment ?? group.published)
+                      ? C.green
+                      : C.muted,
+                }}
+              >
+                {(group.isOpenForEnrollment ?? group.published)
+                  ? "● Qabul ochiq"
+                  : "Qabul to‘lgan"}
               </AppText>
             </View>
           </View>
@@ -350,7 +480,10 @@ export function TeacherGroupCard({
 
         <View style={{ alignItems: "flex-end", gap: 2 }}>
           <View style={styles.masteryPill}>
-            <AppText variant="caption" style={{ fontSize: 11, fontFamily: font.extra, color: C.green }}>
+            <AppText
+              variant="caption"
+              style={{ fontSize: 11, fontFamily: font.extra, color: C.green }}
+            >
               Radar: {group.mastery || 89}%
             </AppText>
           </View>
@@ -365,7 +498,10 @@ export function TeacherGroupCard({
           <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
             O‘quvchilar kvotasi: {studentsCount} / {maxQuota} nafar
           </AppText>
-          <AppText variant="caption" style={{ fontSize: 11, fontFamily: font.bold, color: C.purple }}>
+          <AppText
+            variant="caption"
+            style={{ fontSize: 11, fontFamily: font.bold, color: C.purple }}
+          >
             {fillPct}% to‘lgan
           </AppText>
         </View>
@@ -387,15 +523,29 @@ export function TeacherGroupCard({
           { paddingTop: 8, borderTopWidth: 1, borderTopColor: C.border },
         ]}
       >
-        <AppText variant="caption" color={C.muted} style={{ flex: 1, fontSize: 10 }} numberOfLines={1}>
-          Keyingi dars: <AppText variant="caption" style={{ fontFamily: font.bold, fontSize: 10 }}>{group.nextTopic || "Logarifmik tengsizliklar"}</AppText>
+        <AppText
+          variant="caption"
+          color={C.muted}
+          style={{ flex: 1, fontSize: 10 }}
+          numberOfLines={1}
+        >
+          Keyingi dars:{" "}
+          <AppText
+            variant="caption"
+            style={{ fontFamily: font.bold, fontSize: 10 }}
+          >
+            {group.nextTopic || "Logarifmik tengsizliklar"}
+          </AppText>
         </AppText>
         <Button
           title="Boshqarish"
           icon="arrow-up-right"
           variant="soft"
           style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
-          onPress={onManage || (() => navigation.navigate("ManageClass", { id: group.id }))}
+          onPress={
+            onManage ||
+            (() => navigation.navigate("ManageClass", { id: group.id }))
+          }
         />
       </View>
     </Card>
@@ -411,13 +561,29 @@ export function TeacherFinance() {
   const navigation = useAppNavigation();
 
   return (
-    <Card style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 18, borderRadius: 24, gap: 10 }}>
+    <Card
+      style={{
+        backgroundColor: C.navy,
+        borderColor: C.navy,
+        padding: 18,
+        borderRadius: 24,
+        gap: 10,
+      }}
+    >
       <View style={uiStyles.between}>
         <View style={{ gap: 2 }}>
-          <AppText variant="caption" color="#C6D5F1" style={{ fontSize: 10, fontFamily: font.bold }}>
+          <AppText
+            variant="caption"
+            color="#C6D5F1"
+            style={{ fontSize: 10, fontFamily: font.bold }}
+          >
             USTOZ HAMYONI (OKTABR OYI)
           </AppText>
-          <AppText variant="title" color={C.mint} style={{ fontSize: 22, fontFamily: font.extra }}>
+          <AppText
+            variant="title"
+            color={C.mint}
+            style={{ fontSize: 22, fontFamily: font.extra }}
+          >
             24 850 000 so‘m
           </AppText>
         </View>
@@ -428,11 +594,19 @@ export function TeacherFinance() {
           style={{ minHeight: 38, paddingHorizontal: 12, borderRadius: 12 }}
         />
       </View>
-      <View style={[uiStyles.between, { paddingTop: 8, borderTopWidth: 1, borderTopColor: "#FFFFFF15" }]}>
+      <View
+        style={[
+          uiStyles.between,
+          { paddingTop: 8, borderTopWidth: 1, borderTopColor: "#FFFFFF15" },
+        ]}
+      >
         <AppText variant="caption" color="#D0DEF5" style={{ fontSize: 11 }}>
           O‘quv xonalari ijarasi xarajati:
         </AppText>
-        <AppText variant="caption" style={{ fontSize: 11, fontFamily: font.bold, color: C.amber }}>
+        <AppText
+          variant="caption"
+          style={{ fontSize: 11, fontFamily: font.bold, color: C.amber }}
+        >
           -{cost ? formatPrice(cost) : "1 850 000 so‘m"}
         </AppText>
       </View>
@@ -445,20 +619,40 @@ export function TeacherProfileSummary() {
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
 
   return (
-    <Card style={{ borderRadius: 24, padding: 18, alignItems: "center", gap: 10 }}>
+    <Card
+      style={{ borderRadius: 24, padding: 18, alignItems: "center", gap: 10 }}
+    >
       <View style={styles.topBadge}>
-        <AppText variant="caption" style={{ color: "#0B1E47", fontSize: 9, fontFamily: font.extra }}>
+        <AppText
+          variant="caption"
+          style={{ color: "#0B1E47", fontSize: 9, fontFamily: font.extra }}
+        >
           TOP 1%
         </AppText>
       </View>
       <AppText variant="title" style={{ fontSize: 18, textAlign: "center" }}>
         {user.name || "Aliyev Temur"}
       </AppText>
-      <AppText variant="caption" color={C.purple} style={{ fontFamily: font.bold, textAlign: "center", fontSize: 11 }}>
-        {profile?.specialty || "Matematika, Mantiq & SAT Math Mentori (7 yil tajriba)"}
+      <AppText
+        variant="caption"
+        color={C.purple}
+        style={{ fontFamily: font.bold, textAlign: "center", fontSize: 11 }}
+      >
+        {profile?.specialty ||
+          "Matematika, Mantiq & SAT Math Mentori (7 yil tajriba)"}
       </AppText>
 
-      <View style={[uiStyles.row, { width: "100%", paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border }]}>
+      <View
+        style={[
+          uiStyles.row,
+          {
+            width: "100%",
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: C.border,
+          },
+        ]}
+      >
         <View style={{ flex: 1, alignItems: "center", gap: 2 }}>
           <AppText variant="title" style={{ fontSize: 15 }}>
             ⭐ 4.95

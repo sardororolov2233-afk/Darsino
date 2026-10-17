@@ -6,7 +6,7 @@ import { readFile, readdir } from "node:fs/promises";
 export async function supabaseFixture() {
   const db = new PGlite();
   await db.exec(`
-    create role anon; create role authenticated;
+    create role anon; create role authenticated; create role service_role;
     create schema auth;
     create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz default now(),email text default (gen_random_uuid()::text||'@example.test'),email_confirmed_at timestamptz default now(),raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;

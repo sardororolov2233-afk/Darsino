@@ -12,7 +12,13 @@
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "uz.darsino.app"
+      "package": "uz.darsino.app",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -22,6 +28,17 @@
       "description": "O‘qi — ustozlar, ochiq darslar va bilim radari. O‘zingizga mos ta’lim yo‘lini toping."
     },
     "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Yaqiningizdagi ustozlarni topish va dars manzilini belgilash uchun joylashuvga ruxsat bering.",
+          "locationAlwaysPermission": false,
+          "locationAlwaysAndWhenInUsePermission": false,
+          "motionUsagePermission": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-video",
       "expo-font",
       "expo-secure-store",
       "expo-notifications",

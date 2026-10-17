@@ -1,7 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 export type RootStackParamList = {
-  Splash: undefined;
   Welcome: undefined;
   SignIn: undefined;
   VerifyEmail: undefined;
@@ -47,6 +46,10 @@ export type RootStackParamList = {
   ModerateTutor: { id: string };
   Notifications: undefined;
   Review: { sessionId: string };
+  Permissions: undefined;
+  TutorLocation: undefined;
+  MaterialViewer: { fileId: string; title: string };
+  Materials: { offeringId: string; sessionId?: string };
 };
 export const useAppNavigation = () =>
   useNavigation<NativeStackNavigationProp<RootStackParamList>>();

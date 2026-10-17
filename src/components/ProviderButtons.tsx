@@ -40,10 +40,12 @@ export function ProviderButtons({
   onPress,
   busy,
   demo,
+  dark = false,
 }: {
   onPress: (provider: SocialProvider) => void;
   busy: boolean;
   demo: boolean;
+  dark?: boolean;
 }) {
   const [nativeApple, setNativeApple] = useState(false);
   useEffect(() => {
@@ -87,8 +89,12 @@ export function ProviderButtons({
               minHeight: 54,
               borderRadius: 16,
               borderWidth: provider === "google" ? 1 : 0,
-              borderColor: C.border,
-              backgroundColor: provider === "google" ? C.white : "#141414",
+              borderColor: dark ? "#43506A" : C.border,
+              backgroundColor: dark
+                ? "#1D2D49"
+                : provider === "google"
+                  ? C.white
+                  : "#141414",
               flexDirection: "row",
               gap: 12,
               alignItems: "center",
@@ -106,7 +112,7 @@ export function ProviderButtons({
             )}
             <AppText
               variant="label"
-              color={provider === "google" ? C.ink : C.white}
+              color={dark ? C.white : provider === "google" ? C.ink : C.white}
               style={{ flexShrink: 1 }}
             >
               {provider === "google" ? "Google" : "Apple"} orqali davom etish

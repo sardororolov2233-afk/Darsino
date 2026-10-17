@@ -249,6 +249,17 @@ function StudentLessonCard({ session }: { session: LessonSession }) {
           }
         />
       ) : null}
+      <Button
+        title="Dars materiallari"
+        icon="folder"
+        variant="soft"
+        onPress={() =>
+          navigation.navigate("Materials", {
+            offeringId: session.offeringId,
+            sessionId: session.id,
+          })
+        }
+      />
       {ended && attendance?.status === "present" && !reviewed ? (
         <Button
           title="Fikr qoldirish"
@@ -750,7 +761,11 @@ export function ProfileScreen() {
       <Card style={{ alignItems: "center", padding: 24 }}>
         <AvatarEditor />
         <AppText variant="title">{user.name || "Jasurbek Rahimov"}</AppText>
-        <AppText variant="caption" color={C.muted} style={{ textAlign: "center" }}>
+        <AppText
+          variant="caption"
+          color={C.muted}
+          style={{ textAlign: "center" }}
+        >
           Abituriyent & Matematika ishqibozi
         </AppText>
         <Chip
@@ -767,23 +782,52 @@ export function ProfileScreen() {
           📍 {user.area || "Chilonzor"}, {user.city || "Toshkent"}
         </AppText>
       </Card>
-      {user.role === "tutor" ? <TeacherProfileSummary /> : null}
+      <Button
+        title="Ruxsatlar va xotira"
+        icon="shield"
+        variant="soft"
+        onPress={() => navigation.navigate("Permissions")}
+      />
+      {user.role === "tutor" ? (
+        <>
+          <Button
+            title="Dars manzilini belgilash"
+            icon="map-pin"
+            variant="soft"
+            onPress={() => navigation.navigate("TutorLocation")}
+          />
+          <TeacherProfileSummary />
+        </>
+      ) : null}
       {user.role === "student" ? (
         <>
           <View style={uiStyles.row}>
             {[
               { title: "Umumiy ball", value: `⚡ ${stats.xp || 1450} XP` },
-              { title: "Bilim Radari", value: `🎯 ${stats.score !== null ? `${stats.score}%` : "84%"}` },
-              { title: "Uzluksiz o‘qish", value: `🔥 ${stats.streak || 14} kun` },
+              {
+                title: "Bilim Radari",
+                value: `🎯 ${stats.score !== null ? `${stats.score}%` : "84%"}`,
+              },
+              {
+                title: "Uzluksiz o‘qish",
+                value: `🔥 ${stats.streak || 14} kun`,
+              },
             ].map((item) => (
               <Card
                 key={item.title}
                 style={{ flex: 1, paddingHorizontal: 4, alignItems: "center" }}
               >
-                <AppText variant="label" style={{ color: C.navy, fontFamily: font.bold }}>
+                <AppText
+                  variant="label"
+                  style={{ color: C.navy, fontFamily: font.bold }}
+                >
                   {item.value}
                 </AppText>
-                <AppText variant="caption" color={C.muted} style={{ fontSize: 10, textAlign: "center" }}>
+                <AppText
+                  variant="caption"
+                  color={C.muted}
+                  style={{ fontSize: 10, textAlign: "center" }}
+                >
                   {item.title}
                 </AppText>
               </Card>
@@ -792,16 +836,8 @@ export function ProfileScreen() {
           <Card>
             <AppText variant="heading">Yutuqlar va Nishonlar</AppText>
             <View style={uiStyles.wrap}>
-              <Chip
-                icon="award"
-                label="🏆 Olimpiada 1-bosqich"
-                tone="gold"
-              />
-              <Chip
-                icon="zap"
-                label="⚡ Radar Chempioni (80%+)"
-                tone="green"
-              />
+              <Chip icon="award" label="🏆 Olimpiada 1-bosqich" tone="gold" />
+              <Chip icon="zap" label="⚡ Radar Chempioni (80%+)" tone="green" />
               <Chip
                 icon="book-open"
                 label="📚 Kitobxon Zakovat a’zosi"

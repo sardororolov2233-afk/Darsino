@@ -846,4 +846,240 @@ end $oqi_free_clubs$;
 revoke all on function public.darsino_mutate_core(jsonb) from public,anon,authenticated;
 notify pgrst,'reload schema';
 
+-- Source: 202610160001_locations_ai.sql
+-- Only tutors' deliberately published teaching addresses are stored here.
+-- A student's live GPS position is a query parameter, never a profile field.
+create table if not exists public.oqi_tutor_locations (
+  tutor_id uuid primary key references public.darsino_tutors(user_id),
+  latitude double precision not null check(latitude between -90 and 90),
+  longitude double precision not null check(longitude between -180 and 180),
+  label text not null check(char_length(trim(label)) between 3 and 200),
+  updated_at timestamptz not null default now()
+);
+alter table public.oqi_tutor_locations enable row level security;
+revoke all on public.oqi_tutor_locations from public,anon,authenticated;
+
+create or replace function public.oqi_save_tutor_location(p_latitude double precision,p_longitude double precision,p_label text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); begin
+  perform public.darsino_assert(exists(select 1 from public.darsino_tutors where user_id=me),'Faqat ustoz manzil saqlaydi.');
+  perform public.darsino_assert(p_latitude between -90 and 90 and p_longitude between -180 and 180,'Koordinatalar noto‘g‘ri.');
+  perform public.darsino_assert(char_length(trim(p_label)) between 3 and 200,'Manzil nomini kiriting.');
+  insert into public.oqi_tutor_locations(tutor_id,latitude,longitude,label) values(me,p_latitude,p_longitude,trim(p_label))
+  on conflict(tutor_id) do update set latitude=excluded.latitude,longitude=excluded.longitude,label=excluded.label,updated_at=now();
+end $$;
+create or replace function public.oqi_own_tutor_location() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); begin
+  return (select jsonb_build_object('tutorId',tutor_id,'latitude',latitude,'longitude',longitude,'label',label) from public.oqi_tutor_locations where tutor_id=me);
+end $$;
+create or replace function public.oqi_delete_tutor_location() returns void
+language plpgsql security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); begin
+  delete from public.oqi_tutor_locations where tutor_id=me;
+end $$;
+create or replace function public.oqi_nearby_tutors(p_tutor_ids uuid[],p_latitude double precision default null,p_longitude double precision default null,p_radius_km double precision default 25) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.darsino_account_id();
+  perform public.darsino_assert(coalesce(cardinality(p_tutor_ids),0)<=200,'Juda ko‘p ustoz tanlandi.');
+  perform public.darsino_assert((p_latitude is null and p_longitude is null) or (p_latitude between -90 and 90 and p_longitude between -180 and 180),'Koordinatalar noto‘g‘ri.');
+  perform public.darsino_assert(p_radius_km between 1 and 100,'Masofa 1–100 km bo‘lishi kerak.');
+  return coalesce((select jsonb_agg(jsonb_build_object('tutorId',x.tutor_id,'latitude',x.latitude,'longitude',x.longitude,'label',x.label,'distanceKm',x.distance_km) order by x.distance_km nulls last,x.tutor_id) from (
+    select l.*,case when p_latitude is null then null else
+      6371.0*2*asin(sqrt(least(1.0,greatest(0.0,power(sin(radians(l.latitude-p_latitude)/2),2)+cos(radians(p_latitude))*cos(radians(l.latitude))*power(sin(radians(l.longitude-p_longitude)/2),2))))) end distance_km
+    from public.oqi_tutor_locations l join public.darsino_tutors t on t.user_id=l.tutor_id
+    join public.darsino_profiles p on p.id=l.tutor_id
+    where l.tutor_id=any(p_tutor_ids) and t.verification='approved' and p.onboarded and not p.is_suspended
+  ) x where x.distance_km is null or x.distance_km<=p_radius_km),'[]'::jsonb);
+end $$;
+
+create table if not exists public.oqi_ai_conversations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.darsino_profiles(id),
+  created_at timestamptz not null default now()
+);
+create index if not exists oqi_ai_conversations_user on public.oqi_ai_conversations(user_id,created_at desc);
+create table if not exists public.oqi_ai_requests (
+  id uuid primary key,
+  user_id uuid not null references public.darsino_profiles(id),
+  conversation_id uuid not null references public.oqi_ai_conversations(id) on delete cascade,
+  status text not null default 'pending' check(status in ('pending','completed','failed')),
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+create index if not exists oqi_ai_requests_rate on public.oqi_ai_requests(user_id,created_at desc);
+create table if not exists public.oqi_ai_messages (
+  id bigint generated always as identity primary key,
+  conversation_id uuid not null references public.oqi_ai_conversations(id) on delete cascade,
+  request_id uuid not null references public.oqi_ai_requests(id) on delete cascade,
+  role text not null check(role in ('user','assistant')),
+  content text not null check(char_length(content) between 1 and 8000),
+  created_at timestamptz not null default now(),
+  unique(request_id,role)
+);
+create index if not exists oqi_ai_messages_conversation on public.oqi_ai_messages(conversation_id,id);
+alter table public.oqi_ai_conversations enable row level security;
+alter table public.oqi_ai_requests enable row level security;
+alter table public.oqi_ai_messages enable row level security;
+revoke all on public.oqi_ai_conversations,public.oqi_ai_requests,public.oqi_ai_messages from public,anon,authenticated;
+
+create or replace function public.oqi_ai_history(p_conversation_id uuid default null) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); conversation uuid; begin
+  select id into conversation from public.oqi_ai_conversations where user_id=me and (p_conversation_id is null or id=p_conversation_id) order by created_at desc,id limit 1;
+  perform public.darsino_assert(p_conversation_id is null or conversation is not null,'Suhbat topilmadi.');
+  return jsonb_build_object('conversationId',conversation,'messages',coalesce((select jsonb_agg(jsonb_build_object('id',m.id::text,'role',m.role,'content',m.content) order by m.id) from (
+    select m.* from public.oqi_ai_messages m join public.oqi_ai_requests r on r.id=m.request_id
+    where m.conversation_id=conversation and r.status='completed' order by m.id desc limit 100
+  ) m),'[]'::jsonb));
+end $$;
+
+create or replace function public.oqi_ai_begin_request(p_request_id uuid,p_conversation_id uuid,p_message text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); conversation uuid:=p_conversation_id; previous public.oqi_ai_requests; begin
+  -- Serialize per account: concurrent Edge instances share one atomic quota.
+  perform 1 from public.darsino_profiles where id=me and role='student' and onboarded for update;
+  perform public.darsino_assert(found,'AI yordamchi o‘quvchi akkaunti uchun.');
+  perform public.darsino_assert(p_request_id is not null and char_length(trim(p_message)) between 1 and 2000,'Savol 1–2000 belgidan iborat bo‘lsin.');
+  select * into previous from public.oqi_ai_requests where id=p_request_id;
+  if found then
+    perform public.darsino_assert(previous.user_id=me,'So‘rov identifikatori band.');
+    perform public.darsino_assert(previous.status='completed','Bu so‘rov bajarilmoqda yoki yakunlanmagan. Qayta urinib ko‘ring.');
+    return jsonb_build_object('conversationId',previous.conversation_id,'reply',(select content from public.oqi_ai_messages where request_id=p_request_id and role='assistant'));
+  end if;
+  update public.oqi_ai_requests set status='failed',completed_at=now() where user_id=me and status='pending' and created_at<now()-interval '60 seconds';
+  perform public.darsino_assert(not exists(select 1 from public.oqi_ai_requests where user_id=me and status='pending'),'Avvalgi javobni kuting.');
+  perform public.darsino_assert((select count(*) from public.oqi_ai_requests where user_id=me and created_at>now()-interval '1 minute')<5,'Bir daqiqada 5 ta savol mumkin. Biroz kuting.');
+  perform public.darsino_assert((select count(*) from public.oqi_ai_requests where user_id=me and created_at>now()-interval '24 hours')<30,'24 soatlik 30 ta savol limiti tugadi.');
+  if conversation is null then
+    insert into public.oqi_ai_conversations(user_id) values(me) returning id into conversation;
+  else
+    perform public.darsino_assert(exists(select 1 from public.oqi_ai_conversations where id=conversation and user_id=me),'Suhbat topilmadi.');
+  end if;
+  insert into public.oqi_ai_requests(id,user_id,conversation_id) values(p_request_id,me,conversation);
+  insert into public.oqi_ai_messages(conversation_id,request_id,role,content) values(conversation,p_request_id,'user',trim(p_message));
+  return jsonb_build_object('conversationId',conversation,'messages',coalesce((select jsonb_agg(jsonb_build_object('role',m.role,'content',m.content) order by m.id) from (
+    select m.* from public.oqi_ai_messages m join public.oqi_ai_requests r on r.id=m.request_id
+    where m.conversation_id=conversation and (r.status='completed' or r.id=p_request_id) order by m.id desc limit 15
+  ) m),'[]'::jsonb));
+end $$;
+
+-- The app cannot forge assistant replies. Only the server credential can finish.
+create or replace function public.oqi_ai_finish_request(p_user_id uuid,p_request_id uuid,p_reply text default null) returns void
+language plpgsql security definer set search_path = '' as $$
+declare r public.oqi_ai_requests; begin
+  select * into r from public.oqi_ai_requests where id=p_request_id and user_id=p_user_id for update;
+  perform public.darsino_assert(found and r.status='pending','Faol AI so‘rovi topilmadi.');
+  if p_reply is null then
+    update public.oqi_ai_requests set status='failed',completed_at=now() where id=r.id;
+  else
+    perform public.darsino_assert(char_length(trim(p_reply)) between 1 and 8000,'AI javobi bo‘sh yoki juda uzun.');
+    insert into public.oqi_ai_messages(conversation_id,request_id,role,content) values(r.conversation_id,r.id,'assistant',trim(p_reply));
+    update public.oqi_ai_requests set status='completed',completed_at=now() where id=r.id;
+  end if;
+end $$;
+
+revoke all on function public.oqi_save_tutor_location(double precision,double precision,text),public.oqi_own_tutor_location(),public.oqi_delete_tutor_location(),public.oqi_nearby_tutors(uuid[],double precision,double precision,double precision),public.oqi_ai_history(uuid),public.oqi_ai_begin_request(uuid,uuid,text),public.oqi_ai_finish_request(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.oqi_save_tutor_location(double precision,double precision,text),public.oqi_own_tutor_location(),public.oqi_delete_tutor_location(),public.oqi_nearby_tutors(uuid[],double precision,double precision,double precision),public.oqi_ai_history(uuid),public.oqi_ai_begin_request(uuid,uuid,text) to authenticated;
+grant execute on function public.oqi_ai_finish_request(uuid,uuid,text) to service_role;
+
+-- Source: 202610160002_video_materials.sql
+-- MVP: short videos and documents up to 20 MiB; all files remain private.
+update storage.buckets set allowed_mime_types=array['application/pdf','image/jpeg','image/png','image/webp','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','video/mp4','video/webm'] where id='darsino-lesson-materials';
+
+create or replace function public.darsino_prepare_upload(
+  p_purpose text,p_original_name text,p_mime_type text,p_size_bytes bigint,
+  p_conversation_id text default null,p_offering_id uuid default null
+) returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  me uuid:=public.darsino_account_id(); f public.darsino_files; bucket text; lim bigint; ext text;
+  mime text:=lower(trim(p_mime_type));
+begin
+  perform 1 from public.darsino_profiles where id=me for update;
+  perform public.darsino_assert(p_purpose in ('avatar','verification','chat','material','cover'),'Fayl maqsadi noto‘g‘ri.');
+  perform public.darsino_assert(char_length(trim(p_original_name)) between 1 and 180 and p_original_name !~ '[[:cntrl:]/\\]','Fayl nomi noto‘g‘ri.');
+  bucket:=case p_purpose when 'avatar' then 'darsino-avatars' when 'verification' then 'darsino-verifications'
+    when 'chat' then 'darsino-chat-files' when 'material' then 'darsino-lesson-materials' when 'cover' then 'darsino-group-covers' end;
+  select file_size_limit into lim from storage.buckets where id=bucket and mime=any(allowed_mime_types);
+  perform public.darsino_assert(lim is not null and p_size_bytes between 1 and lim,'Fayl turi yoki hajmi ruxsat etilmagan.');
+  perform public.darsino_assert((p_purpose='chat')=(p_conversation_id is not null) and (p_purpose in ('material','cover'))=(p_offering_id is not null),'Fayl bog‘lanishi noto‘g‘ri.');
+  if p_purpose='verification' then
+    perform public.darsino_assert(exists(select 1 from public.darsino_tutors where user_id=me),'Repetitor profilini to‘ldiring.');
+  elsif p_purpose='chat' then
+    perform public.darsino_assert(public.darsino_can_message(p_conversation_id),'Suhbatga yozish huquqi yo‘q.');
+  elsif p_purpose in ('material','cover') then
+    perform public.darsino_assert(exists(select 1 from public.darsino_offerings o join public.darsino_tutors t on t.user_id=o.tutor_id where o.id=p_offering_id and o.tutor_id=me and t.verification='approved'),'Faqat tasdiqlangan dars egasi fayl yuklaydi.');
+  end if;
+  perform public.darsino_assert((select count(*) from public.darsino_files where owner_id=me and state='pending' and created_at>now()-interval '1 hour')<20,'Yuklanayotgan fayllar soni ko‘p. Avval ularni yakunlang.');
+  perform public.darsino_assert((select count(*) from public.darsino_files where owner_id=me and state<>'deleted')<1000
+    and (select coalesce(sum(size_bytes),0) from public.darsino_files where owner_id=me and state<>'deleted')+p_size_bytes<=2147483648,'Akkaunt fayl limiti tugadi.');
+  ext:=case mime when 'image/jpeg' then 'jpg' when 'image/png' then 'png' when 'image/webp' then 'webp' when 'application/pdf' then 'pdf' when 'video/mp4' then 'mp4' when 'video/webm' then 'webm'
+    when 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' then 'docx'
+    when 'application/vnd.openxmlformats-officedocument.presentationml.presentation' then 'pptx'
+    when 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' then 'xlsx' end;
+  f.id:=gen_random_uuid();
+  insert into public.darsino_files(id,owner_id,purpose,bucket_id,object_path,original_name,mime_type,size_bytes,conversation_id,offering_id)
+    values(f.id,me,p_purpose,bucket,me::text||'/'||f.id::text||'.'||ext,trim(p_original_name),mime,p_size_bytes,p_conversation_id,p_offering_id) returning * into f;
+  return public.darsino_file_json(f);
+end $$;
+
+-- Source: 202610160003_onboarding_preferences.sql
+-- Preferences belong to the authenticated profile. Older clients can omit them.
+
+alter table public.darsino_profiles add column if not exists study_mode text check(study_mode in ('Onlayn','Oflayn'));
+alter table public.darsino_profiles add column if not exists study_support text check(study_support in ('Mustaqil','Ustoz bilan'));
+
+create or replace function public.darsino_snapshot() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); result jsonb; market jsonb;
+begin
+  result:=public.darsino_snapshot_core(); market:=result->'market';
+  market:=jsonb_set(market,'{users}',coalesce((
+    select jsonb_agg(u.value||jsonb_build_object('avatarFileId',p.avatar_file_id,'email',case when p.id=me then p.email else '' end)||case when p.id=me then jsonb_strip_nulls(jsonb_build_object('studyMode',p.study_mode,'studySupport',p.study_support)) else '{}'::jsonb end order by u.ordinality)
+    from jsonb_array_elements(market->'users') with ordinality u(value,ordinality)
+    join public.darsino_profiles p on p.id=(u.value->>'id')::uuid),'[]'::jsonb));
+  market:=jsonb_set(market,'{offerings}',coalesce((
+    select jsonb_agg(o.value||jsonb_build_object('coverFileId',p.cover_file_id) order by o.ordinality)
+    from jsonb_array_elements(market->'offerings') with ordinality o(value,ordinality)
+    join public.darsino_offerings p on p.id=(o.value->>'id')::uuid),'[]'::jsonb));
+  market:=jsonb_set(market,'{messages}',coalesce((
+    select jsonb_agg(m.value||jsonb_build_object('attachmentIds',coalesce((select jsonb_agg(mf.file_id) from public.darsino_message_files mf where mf.message_id=(m.value->>'id')::uuid),'[]'::jsonb)) order by m.ordinality)
+    from jsonb_array_elements(market->'messages') with ordinality m(value,ordinality)),'[]'::jsonb));
+  market:=market||jsonb_build_object(
+    'files',coalesce((select jsonb_agg(public.darsino_file_json(f) order by f.created_at) from public.darsino_files f where public.darsino_can_read_file(f.id)),'[]'::jsonb),
+    'tutorDocuments',coalesce((select jsonb_agg(jsonb_build_object('id',d.id,'tutorId',d.tutor_id,'fileId',d.file_id,'documentType',d.document_type,'label',d.label,'status',d.status,'reviewNote',d.review_note,'createdAt',d.created_at,'reviewedAt',d.reviewed_at) order by d.created_at) from public.darsino_tutor_documents d where d.tutor_id=me or public.darsino_is_moderator()),'[]'::jsonb),
+    'lessonFiles',coalesce((select jsonb_agg(jsonb_build_object('id',f.id,'offeringId',f.offering_id,'sessionId',f.session_id,'fileId',f.file_id,'title',f.title,'published',f.published,'createdAt',f.created_at) order by f.created_at) from public.darsino_lesson_files f join public.darsino_offerings o on o.id=f.offering_id where o.tutor_id=me or (f.published and public.darsino_class_access(f.offering_id))),'[]'::jsonb));
+  return jsonb_build_object('market',market,'user',(select u from jsonb_array_elements(market->'users') u where u->>'id'=me::text));
+end $$;
+
+create or replace function public.darsino_mutate(command jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare result jsonb; prefs jsonb; begin
+  perform public.darsino_account_id();
+  if command->>'type'='profile' then
+    prefs:=command->'profile';
+    if prefs ? 'studyMode' or prefs ? 'studySupport' then
+      perform public.darsino_assert(
+        coalesce(prefs->>'studyMode','') in ('Onlayn','Oflayn') and
+        coalesce(prefs->>'studySupport','') in ('Mustaqil','Ustoz bilan'),
+        'Ta’lim shakli va tayyorgarlik usulini tanlang.');
+    end if;
+  end if;
+  result:=public.darsino_mutate_core(command);
+  if command->>'type'='profile' and (prefs ? 'studyMode' or prefs ? 'studySupport') then
+    update public.darsino_profiles set study_mode=prefs->>'studyMode',study_support=prefs->>'studySupport' where id=auth.uid();
+  end if;
+  if command->>'type'='moderate' then
+    update public.darsino_tutor_documents set status=command->>'decision',reviewer_id=auth.uid(),
+      review_note=trim(coalesce(command->>'note','')),reviewed_at=now()
+    where tutor_id=(command->>'tutorId')::uuid and status='pending';
+  end if;
+  return public.darsino_snapshot()||jsonb_build_object('id',result->'id');
+end $$;
+
+revoke all on function public.darsino_snapshot(),public.darsino_mutate(jsonb) from public,anon;
+grant execute on function public.darsino_snapshot(),public.darsino_mutate(jsonb) to authenticated;
+notify pgrst,'reload schema';
+
 commit;
