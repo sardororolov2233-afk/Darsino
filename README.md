@@ -1,5 +1,7 @@
 # O‘qi
 
+Ustoz guruhlari, oylik to‘lovlar va testlar: [foydalanish va migratsiya](docs/group-management.md).
+
 Yangi kirish oqimi va bosh sahifadagi maqsad kartasi: [onboarding](docs/onboarding.md).
 
 Backend kengaytmasi: GPS ruxsatlari, ustoz koordinatalari, yaqin manzillar qidiruvi, yopiq video/materiallar va suriladigan AI chat. Ishga tushirish: [Backend sozlamalari](docs/backend.md).
@@ -13,8 +15,8 @@ O‘qi interfeysi taqdim etilgan interaktiv prototip asosida Expo / React Native
 - **Bosh:** haqiqiy faoliyatdan hisoblangan kunlik maqsad, fanlar katalogi, bilim radari, mos ustozlar va keyingi dars.
 - **Qidirish:** ustozlar, video manbalar, diagnostika, klublar va guruhlar. Bir nechta so‘z, o‘zbekcha apostrof va teglar bilan qidirish; so‘nggi qidiruvlar; narx, fan, hudud, reyting va shakl filtrlari. Hududimda, onlayn va saqlangan ustozlar tezkor tanlovlari ishlaydi.
 - **Xarita:** Toshkent hududlari bo‘yicha interaktiv sxema. Aniq GPS nuqtalari va masofa berilmagan, shuning uchun sxema aniq manzil yoki 3 km ichida ekanlikni da’vo qilmaydi. Belgilar va tanlangan profil filtrlar bilan birga yangilanadi.
-- **Radar:** matematika, ingliz tili va fizikadan 5 savolli original qisqa testlar; har javobga izoh, haqiqiy natija va besh ko‘nikma tahlili. Radar oxirgi urinishdan, XP esa har bir testdagi eng yaxshi natijadan hisoblanadi. Bular sertifikat, AI baholash yoki IELTS prognozi emas.
-- **Darslarim:** mavjud tasdiqlangan jadval, guruhlar va arizalar; yonida video darslar va klublar katalogi.
+- **Radar:** o‘quvchiga «Tez kunda ishga tushadi» xabari ko‘rsatiladi. Ustoz yuborgan testlarni bajarish, natijani ulashish va mustaqil diagnostika ochiq. Sun’iy reyting va tahlillar ko‘rsatilmaydi.
+- **Darslarim:** mavjud tasdiqlangan jadval, guruhlar, oylik to‘lov holati va arizalar; yonida video darslar va klublar katalogi.
 - **Video darslar:** Khan Academy va British Council manbalarida ochiladi. Manbani ochgandan keyin foydalanuvchi «O‘rgandim» deb belgilaydi; avtomatik video kuzatuvi yo‘q.
 - **Klublar:** ustoz e’lon qilgan klublarga ariza va ustoz tasdig‘i bilan a’zolik; yonida alohida belgilangan namuna katalogini kuzatish. Namuna klubini kuzatish a’zolik yaratmaydi.
 - **Profil:** rasm yuklash, XP, erishilgan yutuqlar, kuzatilgan klublar, saqlangan ustozlar va suhbatlar. Chatga yuqoridagi xabar belgisi orqali ham kiriladi.
@@ -82,7 +84,7 @@ Sinov rejimi qurilmalararo autentifikatsiya uchun mo‘ljallanmagan. Profil rasm
 
 To‘liq SQL va ishga tushirish yo‘riqnomasi: [supabase/README.md](supabase/README.md).
 
-1. Supabase SQL Editor’da [Darsino_Supabase_setup.sql](supabase/Darsino_Supabase_setup.sql) faylini to‘liq bajaring. U 16 ta jadval, 5 ta private Storage bucket, RLS, RPC, Auth trigger va Realtime’ni tayyorlaydi. Mavjud Darsino bazasini ma’lumotlarini saqlagan holda yangilash va qayta bajarish test qilingan.
+1. Supabase SQL Editor’da [Darsino_Supabase_setup.sql](supabase/Darsino_Supabase_setup.sql) faylini to‘liq bajaring. U Darsino jadvallari, 5 ta private Storage bucket, RLS, RPC, Auth trigger va Realtime’ni tayyorlaydi. Mavjud Darsino bazasini ma’lumotlarini saqlagan holda yangilash va qayta bajarish test qilingan.
 2. Authentication’da Email, Google va Apple providerlarini sozlang. Email shabloniga `{{ .Token }}` qo‘ying, custom SMTP va OAuth qaytish manzillarini yo‘riqnoma bo‘yicha ulang. SMS provider talab qilinmaydi.
 3. `.env.example` asosida `.env` yarating; rejimni `supabase` qilib, loyiha URL va publishable / anon kalitini yozing. Ilovaga **service_role / secret kalitini kiritmang**. Ilovani qayta boshlang.
 4. Moderator alohida akkauntda emailini tasdiqlagach, [moderator SQL](supabase/admin/01_assign_moderator.sql) ichidagi `target` UUID’ni almashtirib bajaring. Demo emaillar real bazada huquq bermaydi.

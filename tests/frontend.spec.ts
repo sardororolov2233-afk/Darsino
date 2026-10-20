@@ -20,12 +20,16 @@ async function logout(page: Page) {
   for (
     let i = 0;
     i < 4 &&
-    !(await page.getByRole("tab", { name: "Profil", exact: true }).count()) &&
+    !(await page
+      .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+      .count()) &&
     (await page.getByRole("button", { name: "Orqaga", exact: true }).count());
     i++
   )
     await page.getByRole("button", { name: "Orqaga", exact: true }).click();
-  await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page
+    .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Hisobdan chiqish", exact: true })
     .click();
@@ -62,7 +66,7 @@ test("student application requires tutor approval before My Lessons", async ({
   await logout(page);
   await login(page, "dilnoza@darsino.demo");
   await page
-    .getByRole("button", { name: "Arizalarni ochish", exact: true })
+    .getByRole("button", { name: "Yangi arizalar", exact: true })
     .click();
   await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await expect(
@@ -70,13 +74,13 @@ test("student application requires tutor approval before My Lessons", async ({
   ).toBeVisible();
   await logout(page);
   await login(page, "sardor@example.com");
-  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
+  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await expect(
     page.getByText("Qabul qilingansiz", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
+  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
   await expect(
     page.getByText("IELTS 6.5+ guruhi", { exact: true }).first(),
   ).toBeVisible();

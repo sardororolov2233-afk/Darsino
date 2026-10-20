@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
   AppText,
@@ -32,7 +32,7 @@ import {
 } from "../state/domain";
 import { initials } from "../state/model";
 import { money } from "./DiscoveryScreens";
-import { C, font } from "../theme";
+import { C } from "../theme";
 import { LessonMaterials } from "../components/LessonMaterials";
 import { UserAvatar } from "../components/UserAvatar";
 import {
@@ -42,11 +42,23 @@ import {
   TeacherGroupCard,
 } from "../components/TeacherComponents";
 import { useTeacher } from "../state/TeacherContext";
-import { assessmentSummary } from "../state/assessments";
 import { teacherOverview, isClubOffering } from "../state/teacher";
-import { diagnostics } from "../data/learning";
 import { matchesSearch } from "../state/learning";
-import { formatPrice, INITIAL_TEACHER_STUDENTS } from "../data/catalog";
+import { formatPrice } from "../data/catalog";
+import {
+  groupPaymentRows,
+  monthLabel,
+  paymentMonth,
+  paymentSummary,
+} from "../state/payments";
+import {
+  FilterPanel,
+  FilterOptions,
+  FilterSelect,
+  filterChoices,
+} from "../components/FilterControls";
+import { GroupPayments } from "../components/GroupPayments";
+import { GroupTests } from "../components/GroupTests";
 
 export function TutorHomeScreen() {
   const { user, market, syncError } = useApp();
@@ -55,36 +67,17 @@ export function TutorHomeScreen() {
   const [selectedGroup, setSelectedGroup] = useState("all");
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
   const approved = profile?.verification === "approved";
-  const overview = teacherOverview(market, user.id, selectedGroup);
   const all = teacherOverview(market, user.id);
-  const radar = assessmentSummary(market, user.id, selectedGroup);
-  const cost = data.roomPlans.reduce((n, p) => n + p.estimatedCost, 0);
-  const next = overview.sessions
+  const month = paymentMonth();
+  const finances = paymentSummary(market, user.id, month);
+  const next = all.sessions
     .filter((s) => Date.parse(s.endsAt) > Date.now())
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
-  const attention = [
-    {
-      id: "s3",
-      name: "Bekzod Tursunov",
-      group: "DTM-101 Intensiv",
-      score: 62,
-      trend: "-7%",
-      topic: "Trigonometriya va Logarifm",
-    },
-    {
-      id: "s4",
-      name: "Nilufar Karimova",
-      group: "SAT Math & Olimpiada",
-      score: 67,
-      trend: "-4%",
-      topic: "Funksiyalar grafigi",
-    },
-  ];
-
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+    .slice(0, 3);
   return (
     <Screen top={<TeacherHeader />}>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
-        <View>
+        <View style={{ flex: 1, minWidth: 160 }}>
           <AppText variant="caption" color={C.muted}>
             Repetitor kabineti
           </AppText>
@@ -108,180 +101,88 @@ export function TutorHomeScreen() {
           />
         </Card>
       ) : null}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+      <View style={uiStyles.wrap}>
         <TeacherMetric
-          title="Jami o‘quvchilarim"
-          value="72 nafar"
-          badge="+14% o‘sish"
-          subtitle="4 ta faol guruhda tahsil olmoqda"
+          title="Faol o‘quvchilar"
+          value={`${all.studentIds.size} nafar`}
+          subtitle={`${all.classes.length} guruh va darsda`}
           icon="users"
           onPress={() => navigation.navigate("Main", { screen: "Classes" })}
         />
         <TeacherMetric
-          title="O‘zlashtirish (Radar)"
-          value="87%"
-          subtitle="O‘rtacha indeks"
-          progress={87}
-          icon="trending-up"
+          title="Yangi arizalar"
+          value={all.pending}
+          subtitle="Tasdiqlash kutilmoqda"
+          icon="inbox"
+          onPress={() => navigation.navigate("Applications")}
         />
         <TeacherMetric
-          title="Bron qilingan xonalar"
-          value="1 ta o‘quv xona"
-          subtitle="+ Yangi xona izlash →"
-          icon="grid"
-          onPress={() =>
-            navigation.navigate("Main", { screen: "TeacherRooms" })
-          }
-        />
-        <TeacherMetric
-          title="Oylik tushum (Oktabr)"
-          value="24.8 mln so‘m"
-          subtitle="92% to‘lov qilingan"
+          title="Oylik to‘lovlar"
+          value={formatPrice(finances.received)}
+          subtitle={monthLabel(month)}
           icon="credit-card"
           dark
-          onPress={() => navigation.navigate("Main", { screen: "Profile" })}
+          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        />
+        <TeacherMetric
+          title="To‘lov qoldig‘i"
+          value={formatPrice(finances.outstanding)}
+          subtitle={`${finances.unpaidCount} o‘quvchidan kutilmoqda`}
+          icon="clock"
+          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
         />
       </View>
+      <Button
+        title="Yangi guruh"
+        icon="plus"
+        variant="gold"
+        disabled={!approved}
+        onPress={() => navigation.navigate("CreateOffering")}
+      />
       <TeacherRadar
         offeringId={selectedGroup}
         onSelect={setSelectedGroup}
         compact
       />
-      <View style={[uiStyles.between, { marginTop: 4 }]}>
-        <View style={uiStyles.row}>
-          <Icon name="alert-circle" color="#E11D48" size={17} />
-          <AppText variant="heading" style={{ fontSize: 13 }}>
-            Diqqat talab qiluvchi o‘quvchilar (2)
+      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
+        <AppText variant="heading">Yaqin darslar</AppText>
+        <Chip label={`${data.roomPlans.length} xona rejasi`} tone="purple" />
+      </View>
+      {next.map((session) => (
+        <Card key={session.id}>
+          <AppText variant="caption" color={C.purple}>
+            {dateLabel(session.startsAt)} · {timeLabel(session.startsAt)}–
+            {timeLabel(session.endsAt)} · {session.mode}
           </AppText>
-        </View>
-        <Chip label="O‘zlashtirish < 70%" tone="purple" />
-      </View>
-      <Card
-        style={{
-          backgroundColor: "#FFF5F5",
-          borderColor: "#FFE4E6",
-          gap: 10,
-          padding: 12,
-        }}
-      >
-        {attention.map((s, idx) => (
-          <View
-            key={s.id}
-            style={[
-              uiStyles.between,
-              {
-                alignItems: "center",
-                paddingTop: idx > 0 ? 8 : 0,
-                borderTopWidth: idx > 0 ? 1 : 0,
-                borderTopColor: "#FFE4E6",
-              },
-            ]}
-          >
-            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-              >
-                <AppText variant="label">{s.name}</AppText>
-                <AppText
-                  variant="caption"
-                  style={{ color: "#E11D48", fontFamily: font.extra }}
-                >
-                  {s.score}% ({s.trend})
-                </AppText>
-              </View>
-              <AppText
-                variant="caption"
-                color={C.muted}
-                style={{ fontSize: 10 }}
-              >
-                {s.group} • Qiynalayotgan mavzu:{" "}
-                <AppText
-                  variant="caption"
-                  style={{ fontFamily: font.bold, fontSize: 10 }}
-                >
-                  {s.topic}
-                </AppText>
-              </AppText>
-            </View>
-            <Button
-              title="Vazifa berish"
-              variant="soft"
-              style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10 }}
-              onPress={() => navigation.navigate("AssignDiagnostic")}
-            />
-          </View>
-        ))}
-      </Card>
-      <View style={[uiStyles.between, { marginTop: 4 }]}>
-        <View style={uiStyles.row}>
-          <Icon name="calendar" color={C.purple} size={17} />
-          <AppText variant="heading" style={{ fontSize: 13 }}>
-            Bugungi dars jadvali
+          <AppText variant="heading">{session.title}</AppText>
+          <AppText variant="caption" color={C.muted}>
+            {session.location}
           </AppText>
-        </View>
-        <Button
-          title="Barcha guruhlar →"
-          variant="soft"
-          style={{ minHeight: 32, paddingHorizontal: 8 }}
-          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
-        />
-      </View>
-      <Card style={{ padding: 12, gap: 8 }}>
-        <View style={uiStyles.between}>
-          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <AppText
-              variant="caption"
-              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
-            >
-              14:00 - 16:00 • Offline
-            </AppText>
-            <AppText variant="label">DTM-101 Intensiv (Aniq fanlar)</AppText>
-            <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-              📍 Chilonzor Smart Edu-Hub • 👥 18/20 o‘quvchi
-            </AppText>
-          </View>
           <Button
-            title="Yo‘qlama qilish"
-            variant="gold"
-            style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
-            onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+            title="Jadval va davomat"
+            variant="soft"
+            onPress={() =>
+              navigation.navigate("ManageClass", { id: session.offeringId })
+            }
           />
-        </View>
-      </Card>
-      <Card style={{ padding: 12, gap: 8 }}>
-        <View style={uiStyles.between}>
-          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <AppText
-              variant="caption"
-              style={{ color: C.purple, fontFamily: font.bold, fontSize: 11 }}
-            >
-              16:00 - 18:00 • Offline
-            </AppText>
-            <AppText variant="label">Milliy Sertifikat A+ Guruhi</AppText>
-            <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-              📍 Yunusobod EduHub • 👥 16/16 o‘quvchi
-            </AppText>
-          </View>
-          <Button
-            title="Yo‘qlama qilish"
-            variant="gold"
-            style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
-            onPress={() => navigation.navigate("Main", { screen: "Classes" })}
-          />
-        </View>
-      </Card>
-      <View style={uiStyles.between}>
-        <AppText variant="heading">Guruhlarim</AppText>
-        <Button
-          title="Barcha guruhlar"
-          variant="soft"
-          style={{ minHeight: 44 }}
-          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        </Card>
+      ))}
+      {!next.length ? (
+        <EmptyState
+          title="Kelgusi darslar yo‘q"
+          subtitle="Yangi guruh oching yoki guruhingiz jadvalini tekshiring."
+          icon="calendar"
         />
-      </View>
+      ) : null}
+      <AppText variant="heading">Guruhlarim</AppText>
       {all.classes.slice(0, 2).map((g) => (
         <TeacherGroupCard key={g.id} group={g} />
       ))}
+      <Button
+        title="Barcha guruhlar"
+        variant="outline"
+        onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+      />
       <Feedback error={syncError || error} />
     </Screen>
   );
@@ -475,335 +376,114 @@ export function TutorProfileScreen() {
   );
 }
 export function TutorClassesScreen() {
-  const { market, user, command } = useApp();
+  const { market, user } = useApp();
   const navigation = useAppNavigation();
-  const action = useAction();
   const [query, setQuery] = useState(""),
-    [type, setType] = useState("Barchasi");
-  const [selectedGroupDetail, setSelectedGroupDetail] =
-    useState<Offering | null>(null);
-  const [studentList, setStudentList] = useState(INITIAL_TEACHER_STUDENTS);
-
-  const cycleAttendance = (id: string) => {
-    const cycle = ["present", "late", "absent"] as const;
-    setStudentList((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        const next = cycle[(cycle.indexOf(s.status) + 1) % cycle.length];
-        return { ...s, status: next };
-      }),
+    [type, setType] = useState("Barchasi"),
+    [mode, setMode] = useState("Barchasi"),
+    [sort, setSort] = useState("Nom bo‘yicha");
+  const all = teacherOverview(market, user.id);
+  const classes = all.classes
+    .filter(
+      (g) =>
+        matchesSearch(`${g.title} ${g.subject} ${g.location}`, query) &&
+        (mode === "Barchasi" || g.mode === mode) &&
+        (type === "Barchasi" ||
+          (type === "Ochiq" && g.published) ||
+          (type === "Yopiq" && !g.published) ||
+          (type === "Klublar" && isClubOffering(g))),
+    )
+    .sort((a, b) =>
+      sort === "Nom bo‘yicha"
+        ? a.title.localeCompare(b.title, "uz")
+        : groupPaymentRows(market, b.id, paymentMonth()).length -
+          groupPaymentRows(market, a.id, paymentMonth()).length,
     );
-  };
-
-  const classes = market.offerings.filter(
-    (g) =>
-      g.tutorId === user.id &&
-      matchesSearch(`${g.title} ${g.subject} ${g.location}`, query) &&
-      (type === "Barchasi" ||
-        (type === "Ochiq" && g.published) ||
-        (type === "Klublar" && isClubOffering(g)) ||
-        (type === "Yopiq" && !g.published)),
-  );
   const approved = market.tutorProfiles.some(
     (p) => p.userId === user.id && p.verification === "approved",
   );
-
+  const active = [
+    type !== "Barchasi",
+    mode !== "Barchasi",
+    sort !== "Nom bo‘yicha",
+  ].filter(Boolean).length;
   return (
     <Screen top={<TeacherHeader />}>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
         <View style={{ flex: 1, minWidth: 160 }}>
-          <AppText variant="title" style={{ fontSize: 17 }}>
-            Guruhlarim va Nazorat
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
-            Jami {classes.length || 4} ta guruh • 72 nafar faol o‘quvchi
+          <AppText variant="title">Guruhlarim va nazorat</AppText>
+          <AppText variant="caption" color={C.muted}>
+            {all.classes.length} ta guruh · {all.studentIds.size} faol o‘quvchi
           </AppText>
         </View>
         <Button
-          title="+ Yangi guruh"
+          title="Yangi guruh"
+          icon="plus"
           variant="gold"
           disabled={!approved}
           onPress={() => navigation.navigate("CreateOffering")}
-          style={{ minHeight: 38, paddingHorizontal: 12, borderRadius: 12 }}
         />
       </View>
-
-      {selectedGroupDetail ? (
-        <Card
-          style={{
-            borderRadius: 24,
-            padding: 16,
-            gap: 12,
-            borderColor: C.purple,
-          }}
-        >
-          <View
-            style={[
-              uiStyles.between,
-              {
-                alignItems: "flex-start",
-                paddingBottom: 10,
-                borderBottomWidth: 1,
-                borderBottomColor: C.border,
-              },
-            ]}
-          >
-            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              <View
-                style={{
-                  backgroundColor: "#F3EFFE",
-                  alignSelf: "flex-start",
-                  paddingHorizontal: 8,
-                  paddingVertical: 3,
-                  borderRadius: 10,
-                }}
-              >
-                <AppText
-                  variant="caption"
-                  style={{
-                    color: C.purple,
-                    fontSize: 10,
-                    fontFamily: font.extra,
-                  }}
-                >
-                  GURUH NAZORATI VA YO‘QLAMA
-                </AppText>
-              </View>
-              <AppText variant="heading" style={{ fontSize: 15 }}>
-                {selectedGroupDetail.title}
-              </AppText>
-              <AppText
-                variant="caption"
-                color={C.muted}
-                style={{ fontSize: 11 }}
-              >
-                📅 {selectedGroupDetail.days} | {selectedGroupDetail.time} • 📍{" "}
-                {selectedGroupDetail.room || selectedGroupDetail.location}
-              </AppText>
-            </View>
-            <Button
-              title="← Orqaga"
-              variant="soft"
-              style={{ minHeight: 32, paddingHorizontal: 8, borderRadius: 8 }}
-              onPress={() => setSelectedGroupDetail(null)}
-            />
-          </View>
-
-          <View
-            style={[
-              uiStyles.between,
-              { backgroundColor: "#F8FAFC", padding: 10, borderRadius: 14 },
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <AppText
-                variant="caption"
-                style={{ fontFamily: font.bold, fontSize: 11 }}
-              >
-                Yangi o‘quvchilar qabuli (Qidiruvda ko‘rinish)
-              </AppText>
-              <AppText
-                variant="caption"
-                color={C.muted}
-                style={{ fontSize: 10 }}
-              >
-                Bo‘sh joylar:{" "}
-                {Math.max(
-                  0,
-                  (selectedGroupDetail.capacity || 20) -
-                    (selectedGroupDetail.students || 14),
-                )}{" "}
-                ta qoldi
-              </AppText>
-            </View>
-            <Button
-              title={selectedGroupDetail.published ? "Qabul Ochiq ✓" : "Yopiq"}
-              variant={selectedGroupDetail.published ? "gold" : "outline"}
-              style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10 }}
-              onPress={() =>
-                action.run(() =>
-                  command({
-                    type: "offering-visibility",
-                    offeringId: selectedGroupDetail.id,
-                    published: !selectedGroupDetail.published,
-                  }),
-                )
-              }
-            />
-          </View>
-
-          <View style={{ gap: 8 }}>
-            <View style={uiStyles.between}>
-              <AppText
-                variant="caption"
-                color={C.muted}
-                style={{ fontSize: 10, fontFamily: font.bold }}
-              >
-                O‘QUVCHI VA RADAR KO‘RSATKICHI
-              </AppText>
-              <AppText
-                variant="caption"
-                color={C.muted}
-                style={{ fontSize: 10, fontFamily: font.bold }}
-              >
-                BUGUNGI DAVOMAT (BOSING)
-              </AppText>
-            </View>
-
-            {studentList.map((st) => (
-              <View
-                key={st.id}
-                style={[
-                  uiStyles.between,
-                  {
-                    padding: 10,
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: C.border,
-                    backgroundColor: C.white,
-                  },
-                ]}
-              >
-                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                  <AppText variant="label" style={{ fontSize: 12 }}>
-                    {st.name}
-                  </AppText>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 6,
-                      alignItems: "center",
-                    }}
-                  >
-                    <AppText
-                      variant="caption"
-                      style={{
-                        fontSize: 10,
-                        fontFamily: font.bold,
-                        color: st.mastery >= 85 ? C.green : C.amber,
-                      }}
-                    >
-                      Radar: {st.mastery}% ({st.trend})
-                    </AppText>
-                    <AppText
-                      variant="caption"
-                      color={C.muted}
-                      style={{ fontSize: 10 }}
-                    >
-                      • {st.xp} XP
-                    </AppText>
-                  </View>
-                </View>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${st.name} davomatini o‘zgartirish`}
-                  onPress={() => cycleAttendance(st.id)}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 10,
-                    backgroundColor:
-                      st.status === "present"
-                        ? "#ECFDF5"
-                        : st.status === "late"
-                          ? "#FEF3C7"
-                          : "#FFE4E6",
-                    borderWidth: 1,
-                    borderColor:
-                      st.status === "present"
-                        ? "#A7F3D0"
-                        : st.status === "late"
-                          ? "#FDE68A"
-                          : "#FECDD3",
-                  }}
-                >
-                  <AppText
-                    variant="caption"
-                    style={{
-                      fontFamily: font.extra,
-                      fontSize: 11,
-                      color:
-                        st.status === "present"
-                          ? "#065F46"
-                          : st.status === "late"
-                            ? "#92400E"
-                            : "#9F1239",
-                    }}
-                  >
-                    {st.status === "present"
-                      ? "✓ Keldi"
-                      : st.status === "late"
-                        ? "⏳ Kechikdi"
-                        : "✕ Kelmadi"}
-                  </AppText>
-                </Pressable>
-              </View>
-            ))}
-          </View>
-
-          <Button
-            title="Jadval va materiallarni boshqarish"
-            icon="folder"
-            variant="soft"
-            onPress={() =>
-              navigation.navigate("ManageClass", { id: selectedGroupDetail.id })
-            }
-          />
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <Button
-              title="🎯 Test Yuborish"
-              variant="soft"
-              style={{ flex: 1, minHeight: 40, borderRadius: 12 }}
-              onPress={() =>
-                navigation.navigate("AssignDiagnostic", {
-                  offeringId: selectedGroupDetail.id,
-                })
-              }
-            />
-            <Button
-              title="Saqlash va Yakunlash"
-              variant="primary"
-              style={{ flex: 1, minHeight: 40, borderRadius: 12 }}
-              onPress={() => setSelectedGroupDetail(null)}
-            />
-          </View>
-        </Card>
-      ) : (
-        <>
-          <Field
-            accessibilityLabel="Guruhlarimni qidirish"
-            placeholder="Guruh, fan yoki manzil"
-            icon="search"
-            value={query}
-            onChangeText={setQuery}
-          />
-          <View style={uiStyles.wrap}>
-            {["Barchasi", "Ochiq", "Yopiq", "Klublar"].map((t) => (
-              <Chip
-                key={t}
-                label={t}
-                selected={type === t}
-                onPress={() => setType(t)}
-              />
-            ))}
-          </View>
-          {classes.map((g) => (
-            <TeacherGroupCard
-              key={g.id}
-              group={g}
-              onManage={() => setSelectedGroupDetail(g)}
-            />
-          ))}
-          {!classes.length ? (
-            <EmptyState
-              title="Darslar hali yaratilmagan"
-              subtitle="Yangi guruh yarating yoki qidiruv filtrini o‘zgartiring."
-              icon="book-open"
-            />
-          ) : null}
-        </>
-      )}
+      <Field
+        icon="search"
+        placeholder="Guruh, fan yoki manzilni qidirish"
+        value={query}
+        onChangeText={setQuery}
+      />
+      <FilterPanel
+        count={active}
+        onReset={() => {
+          setType("Barchasi");
+          setMode("Barchasi");
+          setSort("Nom bo‘yicha");
+        }}
+        initiallyOpen
+      >
+        <FilterOptions
+          label="Guruh holati"
+          options={filterChoices(["Barchasi", "Ochiq", "Yopiq", "Klublar"])}
+          value={type}
+          onChange={setType}
+        />
+        <FilterOptions
+          label="Dars shakli"
+          options={filterChoices(["Barchasi", "Onlayn", "Oflayn"])}
+          value={mode}
+          onChange={setMode}
+        />
+        <FilterSelect
+          label="Saralash"
+          options={filterChoices(["Nom bo‘yicha", "O‘quvchilar soni"])}
+          value={sort}
+          onChange={setSort}
+        />
+      </FilterPanel>
+      <AppText variant="caption" color={C.muted}>
+        {classes.length} ta guruh topildi. Boshqarishda o‘quvchilar, to‘lovlar,
+        davomat va testlar mavjud.
+      </AppText>
+      {classes.map((g) => (
+        <TeacherGroupCard key={g.id} group={g} />
+      ))}
+      {!classes.length ? (
+        <EmptyState
+          title={
+            all.classes.length ? "Guruh topilmadi" : "Hali guruh ochilmagan"
+          }
+          subtitle={
+            all.classes.length
+              ? "Qidiruv yoki filtrlarni o‘zgartiring."
+              : "Yangi guruh oching va o‘quvchilar arizalarini tasdiqlang."
+          }
+          icon="users"
+        />
+      ) : null}
+      <Button
+        title={`O‘quvchilar arizalari · ${all.pending}`}
+        icon="inbox"
+        variant="outline"
+        onPress={() => navigation.navigate("Applications")}
+      />
     </Screen>
   );
 }
@@ -1020,7 +700,8 @@ export function ManageClassScreen({
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const [selected, setSelected] = useState(sessions[0]?.id || ""),
     [remove, setRemove] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false),
+  const [tab, setTab] = useState("O‘quvchilar"),
+    [editing, setEditing] = useState(false),
     [newDate, setNewDate] = useState(""),
     [newTime, setNewTime] = useState("");
   const members = market.enrollments.filter(
@@ -1064,197 +745,220 @@ export function ManageClassScreen({
           )
         }
       />
-      <TeacherRadar offeringId={group.id} compact />
-      <LessonMaterials offeringId={group.id} />
-      <AppText variant="heading">Jadval va davomat</AppText>
-      <View style={uiStyles.wrap}>
-        {sessions.map((s) => (
-          <Chip
-            key={s.id}
-            label={`${dateLabel(s.startsAt)} · ${timeLabel(s.startsAt)}`}
-            selected={selected === s.id}
-            onPress={() => {
-              setSelected(s.id);
+      <Button
+        title="Guruh arizalarini ko‘rish"
+        variant="soft"
+        icon="inbox"
+        onPress={() =>
+          navigation.navigate("Applications", { offeringId: group.id })
+        }
+      />
+      <FilterOptions
+        label="Guruh bo‘limlari"
+        options={filterChoices([
+          "O‘quvchilar",
+          "Davomat",
+          "Testlar",
+          "Materiallar",
+        ])}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "O‘quvchilar" ? <GroupPayments group={group} /> : null}
+      {tab === "Testlar" ? <GroupTests group={group} /> : null}
+      {tab === "Materiallar" ? <LessonMaterials offeringId={group.id} /> : null}
+      {tab === "Davomat" ? (
+        <>
+          <AppText variant="heading">Jadval va davomat</AppText>
+          <FilterSelect
+            label="Dars sanasi"
+            value={selected}
+            onChange={(id) => {
+              setSelected(id);
               setEditing(false);
             }}
+            options={sessions.map((s) => ({
+              value: s.id,
+              label: `${dateLabel(s.startsAt)} · ${timeLabel(s.startsAt)}`,
+            }))}
           />
-        ))}
-      </View>
-      {session && !started ? (
-        <Button
-          title="Tanlangan dars vaqtini o‘zgartirish"
-          variant="soft"
-          onPress={() => {
-            setNewDate(localDate(new Date(session.startsAt)));
-            setNewTime(timeLabel(session.startsAt));
-            setEditing((v) => !v);
-          }}
-        />
-      ) : null}
-      {editing && session ? (
-        <Card>
-          <Field
-            label="Yangi sana (YYYY-MM-DD)"
-            value={newDate}
-            onChangeText={setNewDate}
-          />
-          <Field
-            label="Yangi vaqt (HH:MM)"
-            value={newTime}
-            onChangeText={setNewTime}
-          />
-          <AppText variant="caption" color={C.muted}>
-            Qatnashchilar yangi jadval haqida bildirishnoma oladi.
-          </AppText>
-          <Button
-            title="Jadvalni saqlash"
-            loading={action.busy}
-            onPress={() =>
-              action.run(
-                async () => {
-                  const times = toLessonTime(
-                    newDate,
-                    newTime,
-                    Math.round(
-                      (new Date(session.endsAt).getTime() -
-                        new Date(session.startsAt).getTime()) /
-                        60000,
-                    ),
-                  );
-                  return command({
-                    type: "update-session",
-                    sessionId: session.id,
-                    ...times,
-                  });
-                },
-                () => setEditing(false),
-              )
-            }
-          />
-        </Card>
-      ) : null}
-      <AppText variant="caption" color={C.muted}>
-        {started
-          ? "Tanlangan dars uchun qatnashganlarni belgilang."
-          : "Davomat tanlangan dars boshlangach belgilanadi."}
-      </AppText>
-      {members.map((e) => {
-        const student = market.users.find((u) => u.id === e.studentId),
-          attendance = market.attendance.find(
-            (a) => a.sessionId === selected && a.studentId === e.studentId,
-          );
-        return (
-          <Card key={e.id}>
-            <View style={uiStyles.row}>
-              <UserAvatar
-                userId={student?.id}
-                initials={initials(student?.name || "O‘quvchi")}
-              />
-              <View style={{ flex: 1 }}>
-                <AppText variant="heading">
-                  {student?.name || "O‘quvchi"}
-                </AppText>
-                <AppText variant="caption" color={C.muted}>
-                  {student?.area}
-                </AppText>
-              </View>
-            </View>
-            <View style={uiStyles.wrap}>
-              <Chip
-                label="Qatnashgan"
-                selected={attendance?.status === "present"}
-                onPress={
-                  started && !action.busy
-                    ? () =>
-                        action.run(() =>
-                          command({
-                            type: "attendance",
-                            sessionId: selected,
-                            studentId: e.studentId,
-                            status: "present",
-                          }),
-                        )
-                    : undefined
-                }
-              />
-              <Chip
-                label="Qatnashmagan"
-                selected={attendance?.status === "absent"}
-                onPress={
-                  started && !action.busy
-                    ? () =>
-                        action.run(() =>
-                          command({
-                            type: "attendance",
-                            sessionId: selected,
-                            studentId: e.studentId,
-                            status: "absent",
-                          }),
-                        )
-                    : undefined
-                }
-              />
-            </View>
+          {session && !started ? (
             <Button
-              title="O‘quvchiga yozish"
+              title="Tanlangan dars vaqtini o‘zgartirish"
               variant="soft"
-              onPress={() =>
-                navigation.navigate("Conversation", {
-                  id: dmId(e.studentId, user.id),
-                })
-              }
+              onPress={() => {
+                setNewDate(localDate(new Date(session.startsAt)));
+                setNewTime(timeLabel(session.startsAt));
+                setEditing((v) => !v);
+              }}
             />
-            {remove === e.studentId ? (
-              <>
-                <AppText color={C.error}>
-                  Qatnashchini guruhdan chiqarish tasdiqlansinmi?
-                </AppText>
+          ) : null}
+          {editing && session ? (
+            <Card>
+              <Field
+                label="Yangi sana (YYYY-MM-DD)"
+                value={newDate}
+                onChangeText={setNewDate}
+              />
+              <Field
+                label="Yangi vaqt (HH:MM)"
+                value={newTime}
+                onChangeText={setNewTime}
+              />
+              <AppText variant="caption" color={C.muted}>
+                Qatnashchilar yangi jadval haqida bildirishnoma oladi.
+              </AppText>
+              <Button
+                title="Jadvalni saqlash"
+                loading={action.busy}
+                onPress={() =>
+                  action.run(
+                    async () => {
+                      const times = toLessonTime(
+                        newDate,
+                        newTime,
+                        Math.round(
+                          (new Date(session.endsAt).getTime() -
+                            new Date(session.startsAt).getTime()) /
+                            60000,
+                        ),
+                      );
+                      return command({
+                        type: "update-session",
+                        sessionId: session.id,
+                        ...times,
+                      });
+                    },
+                    () => setEditing(false),
+                  )
+                }
+              />
+            </Card>
+          ) : null}
+          <AppText variant="caption" color={C.muted}>
+            {started
+              ? "Tanlangan dars uchun qatnashganlarni belgilang."
+              : "Davomat tanlangan dars boshlangach belgilanadi."}
+          </AppText>
+          {members.map((e) => {
+            const student = market.users.find((u) => u.id === e.studentId),
+              attendance = market.attendance.find(
+                (a) => a.sessionId === selected && a.studentId === e.studentId,
+              );
+            return (
+              <Card key={e.id}>
                 <View style={uiStyles.row}>
-                  <Button
-                    title="Guruhdan chiqarish"
-                    loading={action.busy}
-                    onPress={() =>
-                      action.run(
-                        () =>
-                          command({
-                            type: "remove-participant",
-                            offeringId: group.id,
-                            studentId: e.studentId,
-                          }),
-                        () => setRemove(null),
-                      )
-                    }
-                    style={{ flex: 1 }}
+                  <UserAvatar
+                    userId={student?.id}
+                    initials={initials(student?.name || "O‘quvchi")}
                   />
-                  <Button
-                    title="Qoldirish"
-                    variant="outline"
-                    onPress={() => setRemove(null)}
+                  <View style={{ flex: 1 }}>
+                    <AppText variant="heading">
+                      {student?.name || "O‘quvchi"}
+                    </AppText>
+                    <AppText variant="caption" color={C.muted}>
+                      {student?.area}
+                    </AppText>
+                  </View>
+                </View>
+                <View style={uiStyles.wrap}>
+                  <Chip
+                    label="Qatnashgan"
+                    selected={attendance?.status === "present"}
+                    onPress={
+                      started && !action.busy
+                        ? () =>
+                            action.run(() =>
+                              command({
+                                type: "attendance",
+                                sessionId: selected,
+                                studentId: e.studentId,
+                                status: "present",
+                              }),
+                            )
+                        : undefined
+                    }
+                  />
+                  <Chip
+                    label="Qatnashmagan"
+                    selected={attendance?.status === "absent"}
+                    onPress={
+                      started && !action.busy
+                        ? () =>
+                            action.run(() =>
+                              command({
+                                type: "attendance",
+                                sessionId: selected,
+                                studentId: e.studentId,
+                                status: "absent",
+                              }),
+                            )
+                        : undefined
+                    }
                   />
                 </View>
-              </>
-            ) : (
-              <Button
-                title="Qatnashchini chiqarish"
-                variant="outline"
-                onPress={() => setRemove(e.studentId)}
-              />
-            )}
-          </Card>
-        );
-      })}
-      {!members.length ? (
-        <EmptyState
-          title="Hali qatnashchi yo‘q"
-          subtitle="O‘quvchi arizasini tasdiqlagach uning ma’lumotlari va davomati shu yerda ko‘rinadi."
-          icon="users"
-        />
-      ) : null}
-      {group.reservedSeats ? (
-        <AppText variant="caption" color={C.muted}>
-          {group.reservedSeats} ta o‘rin sinov katalogida avvaldan band. Ularga
-          soxta qatnashchi akkauntlari kiritilmagan.
-        </AppText>
+                <Button
+                  title="O‘quvchiga yozish"
+                  variant="soft"
+                  onPress={() =>
+                    navigation.navigate("Conversation", {
+                      id: dmId(e.studentId, user.id),
+                    })
+                  }
+                />
+                {remove === e.studentId ? (
+                  <>
+                    <AppText color={C.error}>
+                      Qatnashchini guruhdan chiqarish tasdiqlansinmi?
+                    </AppText>
+                    <View style={uiStyles.row}>
+                      <Button
+                        title="Guruhdan chiqarish"
+                        loading={action.busy}
+                        onPress={() =>
+                          action.run(
+                            () =>
+                              command({
+                                type: "remove-participant",
+                                offeringId: group.id,
+                                studentId: e.studentId,
+                              }),
+                            () => setRemove(null),
+                          )
+                        }
+                        style={{ flex: 1 }}
+                      />
+                      <Button
+                        title="Qoldirish"
+                        variant="outline"
+                        onPress={() => setRemove(null)}
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <Button
+                    title="Qatnashchini chiqarish"
+                    variant="outline"
+                    onPress={() => setRemove(e.studentId)}
+                  />
+                )}
+              </Card>
+            );
+          })}
+          {!members.length ? (
+            <EmptyState
+              title="Hali qatnashchi yo‘q"
+              subtitle="O‘quvchi arizasini tasdiqlagach uning ma’lumotlari va davomati shu yerda ko‘rinadi."
+              icon="users"
+            />
+          ) : null}
+          {group.reservedSeats ? (
+            <AppText variant="caption" color={C.muted}>
+              {group.reservedSeats} ta o‘rin sinov katalogida avvaldan band.
+              Ularga soxta qatnashchi akkauntlari kiritilmagan.
+            </AppText>
+          ) : null}
+        </>
       ) : null}
       <Feedback {...action} />
     </Screen>

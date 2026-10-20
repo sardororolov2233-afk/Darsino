@@ -163,3 +163,7 @@ npm run format:check
 PostgreSQL funksiyalari, haqiqiy RLS va tranzaksiyalar PGlite’da tekshiriladi. Testdagi Supabase `auth` / `storage` jadvallari minimal fixture; ular haqiqiy Email/OAuth, Storage binary HTTP, signed URL yuklab olish yoki Realtime WebSocket serverini ishga tushirmaydi. Fayl klienti va Realtime unsubscribe / refresh tartibi alohida stub testlarda tekshiriladi. Production loyiha sozlangach, haqiqiy ikki akkaunt va fayl bilan shu oqimni qo‘shimcha tekshiring.
 
 Rasmiy manbalar: [Email OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless), [Auth users](https://supabase.com/docs/guides/auth/users), [Storage RLS](https://supabase.com/docs/guides/storage/security/access-control), [Storage schema](https://supabase.com/docs/guides/storage/schema/design), [ArrayBuffer upload](https://supabase.com/docs/reference/javascript/storage-from-upload), [Realtime Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes).
+
+## Guruhlarning oylik to‘lovlari
+
+Mavjud bazaga `migrations/202610200001_group_payments.sql` qo‘llanadi; yangi bazalar uchun `Darsino_Supabase_setup.sql` qayta generatsiya qilingan. `darsino_payments` yozuvlari guruh, o‘quvchi va oy bo‘yicha noyob. Faqat guruh egasi bo‘lgan tasdiqlangan ustoz to‘lovni belgilaydi yoki eslatadi. Snapshot ustozga o‘z guruhlarini, o‘quvchiga faqat o‘z to‘lovlarini beradi. To‘g‘ridan-to‘g‘ri jadvalga yozish taqiqlangan. Eslatmalar mavjud Realtime bildirishnomalar oqimiga kiradi; masofaviy push/SMS/email provayderi talab qilinmaydi.

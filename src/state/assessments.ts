@@ -156,7 +156,7 @@ export function assessmentSummary(
 export function assessmentLabel(text: string) {
   const p = parseAssessment(text);
   return p?.kind === "invite"
-    ? `Radar testi: ${p.title}`
+    ? `Test topshirig‘i: ${p.title}`
     : p?.kind === "result"
       ? "Diagnostika natijasi ulashildi"
       : text;

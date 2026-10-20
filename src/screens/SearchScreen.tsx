@@ -1,3 +1,10 @@
+import {
+  FilterPanel,
+  FilterOptions,
+  FilterSelect,
+  filterChoices,
+} from "../components/FilterControls";
+import { useAppNavigation } from "../navigation";
 import React, { useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
 import {
@@ -36,6 +43,7 @@ export function SearchScreen() {
   const [quick, setQuick] = useState<string[]>([]);
   const [sort, setSort] = useState("Mosligi");
   const action = useAction();
+  const navigation = useAppNavigation();
   const results = useMemo(() => {
     const list = filterTutors(tutors, filters).filter(
       (t) =>
@@ -77,12 +85,18 @@ export function SearchScreen() {
   const communityGroups = groups.filter(
     (g) =>
       isClubOffering(g) &&
+      (filters.area === "Barcha hududlar" || filters.area === g.area) &&
+      (filters.mode === "Barchasi" || filters.mode === g.mode) &&
+      g.price >= filters.minPrice &&
+      g.price <= filters.maxPrice &&
       matchesSubject(g.subject) &&
       matchesSearch(`${g.title} ${g.subject} ${g.tutor} ${g.area}`, query),
   );
   const studyGroups = groups.filter(
     (g) =>
       !isClubOffering(g) &&
+      g.price >= filters.minPrice &&
+      g.price <= filters.maxPrice &&
       matchesSubject(g.subject) &&
       (filters.area === "Barcha hududlar" || filters.area === g.area) &&
       (filters.mode === "Barchasi" || filters.mode === g.mode) &&
@@ -101,7 +115,7 @@ export function SearchScreen() {
     },
     { label: "Ustozlar", count: results.length },
     { label: "Video darslar", count: videos.length },
-    { label: "Radar testlar", count: tests.length },
+    { label: "Testlar", count: tests.length },
     { label: "Klublar", count: communities.length + communityGroups.length },
     { label: "Guruhlar", count: studyGroups.length },
   ];
@@ -134,41 +148,94 @@ export function SearchScreen() {
         ]}
       >
         <View>
-          <AppText variant="heading">Aqlli Qidiruv & Radar</AppText>
+          <AppText variant="heading">Qidiruv</AppText>
           <AppText variant="caption" color={C.muted}>
-            {count} ta natija · Sun’iy intellekt moslashuvi
+            {count} ta natija
           </AppText>
         </View>
-        <Chip label="AI Moslashuv ✨" tone="green" />
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 6 }}
+      <FilterOptions
+        label="Natija turi"
+        options={categories.map((c) => ({
+          value: c.label,
+          label: `${c.label} · ${c.count}`,
+        }))}
+        value={category}
+        onChange={setCategory}
+      />
+      <FilterPanel
+        count={
+          Number(filters.subject !== "Barchasi") +
+          Number(filters.area !== "Barcha hududlar") +
+          Number(filters.mode !== "Barchasi") +
+          Number(
+            filters.minPrice !== defaultFilters.minPrice ||
+              filters.maxPrice !== defaultFilters.maxPrice,
+          ) +
+          Number(filters.minRating > 0) +
+          quick.length +
+          Number(sort !== "Mosligi")
+        }
+        onReset={() => {
+          reset();
+          setSort("Mosligi");
+        }}
       >
-        {categories.map((c) => (
-          <Chip
-            key={c.label}
-            label={`${c.label} · ${c.count}`}
-            selected={category === c.label}
-            onPress={() => setCategory(c.label)}
-          />
-        ))}
-      </ScrollView>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 6 }}
-      >
-        {["Barchasi", ...SUBJECTS].map((s) => (
-          <Chip
-            key={s}
-            label={s}
-            selected={filters.subject === s}
-            onPress={() => setFilters({ subject: s })}
-          />
-        ))}
-      </ScrollView>
+        <FilterSelect
+          label="Fan"
+          options={filterChoices(["Barchasi", ...SUBJECTS])}
+          value={filters.subject}
+          onChange={(subject) => setFilters({ subject })}
+        />
+        <FilterSelect
+          label="Hudud"
+          options={filterChoices([
+            "Barcha hududlar",
+            ...new Set(
+              [
+                user.area,
+                ...tutors.map((t) => t.area),
+                ...groups.map((g) => g.area),
+              ].filter(Boolean),
+            ),
+          ])}
+          value={filters.area}
+          onChange={(area) => setFilters({ area })}
+        />
+        <FilterOptions
+          label="Dars shakli"
+          options={filterChoices(["Barchasi", "Onlayn", "Oflayn"])}
+          value={filters.mode}
+          onChange={(mode) => setFilters({ mode })}
+        />
+        <FilterOptions
+          label="Saralash"
+          options={filterChoices(["Mosligi", "Arzonroq", "Reyting"])}
+          value={sort}
+          onChange={setSort}
+        />
+        <View style={{ gap: 6 }}>
+          <AppText variant="caption" color={C.muted}>
+            Ustozlar uchun tezkor tanlovlar
+          </AppText>
+          <View style={uiStyles.wrap}>
+            {["Hududimda", "Top reyting 4.9+", "Saqlangan"].map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={quick.includes(v)}
+                onPress={() => toggle(v)}
+              />
+            ))}
+          </View>
+        </View>
+        <Button
+          title="Narx va reyting filtrlari"
+          icon="sliders"
+          variant="outline"
+          onPress={() => navigation.navigate("Filters")}
+        />
+      </FilterPanel>
       {!query && data.recentSearches.length ? (
         <Card>
           <View style={uiStyles.between}>
@@ -227,53 +294,6 @@ export function SearchScreen() {
               ))}
             </View>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 6 }}
-          >
-            {[
-              "Yaqin atrofda",
-              "Top reyting 4.9+",
-              "Bepul sinov",
-              "Online dars",
-              "Saqlangan",
-            ].map((v) => (
-              <Chip
-                key={v}
-                icon={
-                  v === "Yaqin atrofda"
-                    ? "map-pin"
-                    : v === "Top reyting 4.9+"
-                      ? "award"
-                      : v === "Bepul sinov"
-                        ? "check-circle"
-                        : v === "Online dars"
-                          ? "globe"
-                          : "heart"
-                }
-                label={
-                  v === "Yaqin atrofda"
-                    ? `Yaqin atrofda (<3 km)`
-                    : v === "Online dars"
-                      ? "Online dars"
-                      : v
-                }
-                selected={quick.includes(v)}
-                onPress={() => toggle(v)}
-              />
-            ))}
-          </ScrollView>
-          <View style={uiStyles.wrap}>
-            {["Mosligi", "Arzonroq", "Reyting"].map((v) => (
-              <Chip
-                key={v}
-                label={v}
-                selected={sort === v}
-                onPress={() => setSort(v)}
-              />
-            ))}
-          </View>
           {view === "Xarita" ? (
             <TutorMap tutors={results} />
           ) : (
@@ -302,9 +322,9 @@ export function SearchScreen() {
           ))}
         </>
       ) : null}
-      {section("Radar testlar") && tests.length ? (
+      {section("Testlar") && tests.length ? (
         <>
-          <AppText variant="heading">Radar testlar · {tests.length}</AppText>
+          <AppText variant="heading">Testlar · {tests.length}</AppText>
           {tests.map((t) => (
             <DiagnosticCard key={t.id} test={t} />
           ))}

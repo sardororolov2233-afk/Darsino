@@ -204,7 +204,11 @@ export function Button({
       ) : (
         <>
           {icon ? <Icon name={icon} color={fg} size={18} /> : null}
-          <AppText variant="label" color={fg}>
+          <AppText
+            variant="label"
+            color={fg}
+            style={{ flexShrink: 1, textAlign: "center" }}
+          >
             {title}
           </AppText>
         </>
@@ -287,6 +291,7 @@ export function Chip({
       <AppText
         variant="caption"
         color={selected ? C.white : tone === "green" ? C.green : C.muted}
+        style={{ flexShrink: 1 }}
       >
         {label}
       </AppText>
@@ -464,6 +469,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 18,
+    minWidth: 0,
+    flexShrink: 1,
   },
   card: {
     backgroundColor: C.white,
@@ -484,6 +491,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     minHeight: 44,
     justifyContent: "center",
+    maxWidth: "100%",
+    flexShrink: 1,
   },
   fieldWrap: { gap: 8 },
   field: {

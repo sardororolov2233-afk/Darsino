@@ -1,3 +1,4 @@
+import { diagnostics } from "../src/data/learning";
 import { expect, test, type Page } from "@playwright/test";
 import { demoMarketplace } from "../src/state/demo";
 import { blankUser } from "../src/state/domain";
@@ -40,12 +41,16 @@ async function logout(page: Page) {
   for (
     let i = 0;
     i < 5 &&
-    !(await page.getByRole("tab", { name: "Profil", exact: true }).count()) &&
+    !(await page
+      .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+      .count()) &&
     (await page.getByRole("button", { name: "Orqaga", exact: true }).count());
     i++
   )
     await page.getByRole("button", { name: "Orqaga", exact: true }).click();
-  await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page
+    .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Hisobdan chiqish", exact: true })
     .click();
@@ -76,9 +81,10 @@ test("teacher assigns a test, student shares results and teacher radar and atten
   page.on("pageerror", (e) => errors.push(e.message));
   await seed(page);
   await page.getByRole("button", { name: "Test berish", exact: true }).click();
+  await page.getByRole("button", { name: /^Testni tanlang:/ }).click();
   await page
-    .getByRole("button", {
-      name: "Matematika: bilimlarni tekshirish · 5 savol",
+    .getByRole("radio", {
+      name: `${diagnostics[0].title} · ${diagnostics[0].questions.length} savol`,
       exact: true,
     })
     .click();
@@ -135,6 +141,7 @@ test("teacher assigns a test, student shares results and teacher radar and atten
       exact: true,
     })
     .click();
+  await page.getByRole("button", { name: "Davomat", exact: true }).click();
   await page.getByRole("button", { name: "Qatnashmagan", exact: true }).click();
   await expect
     .poll(() =>
@@ -158,7 +165,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   await seed(page);
   await page.getByRole("tab", { name: "Klublar", exact: true }).click();
   await page
-    .getByRole("button", { name: "Klub tashkil etish", exact: true })
+    .getByRole("button", { name: "+ Yangi klub ochish", exact: true })
     .click();
   await page
     .getByRole("textbox", { name: "Klub yoki tadbir nomi", exact: true })
@@ -178,7 +185,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   ).toBeVisible();
   await logout(page);
   await login(page, "teacher-student@example.com");
-  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
+  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
   await page.getByRole("button", { name: "Klublar", exact: true }).click();
   await page
     .getByRole("button", {
@@ -204,7 +211,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   ).toBeVisible();
   await logout(page);
   await login(page, "teacher-student@example.com");
-  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
+  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await expect(
     page.getByRole("button", {
@@ -220,13 +227,28 @@ test("room plans persist, filters clear stale map selections and another teacher
   await seed(page);
   await page.getByRole("tab", { name: "Xonalar", exact: true }).click();
   await page.getByRole("button", { name: "Xarita", exact: true }).click();
-  await page.getByRole("button", { name: "20+ o‘rin", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Filtrlarni ochish yoki yopish", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Kamida 25 o‘rin", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Hudud: Barchasi", exact: true })
+    .click();
+  await page.getByRole("radio", { name: "Chilonzor", exact: true }).click();
   await expect(page.getByText("Xona topilmadi", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: /xarita belgisi/ }),
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Xona filtrlarini tozalash", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Study Hub · 2-xona: xarita belgisi",
+      exact: true,
+    })
     .click();
   await page
     .getByRole("button", {

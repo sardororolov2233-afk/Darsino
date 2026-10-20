@@ -253,9 +253,16 @@ async function app(saved?: string, photoBrowserStubs = false) {
     await click("Saqlash");
   }
   async function logout() {
-    for (let i = 0; i < 4 && !find("Profil", "tab") && find("Orqaga"); i++)
+    for (
+      let i = 0;
+      i < 4 &&
+      !find("Profil", "tab") &&
+      !find("Kabinet", "tab") &&
+      find("Orqaga");
+      i++
+    )
       await click("Orqaga");
-    await click("Profil", "tab");
+    await click(find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
     await click("Hisobdan chiqish");
     await click("Chiqishni tasdiqlash");
     await wait(() => find("O‘quvchi"), "signed out");
@@ -297,7 +304,7 @@ test(
       await ui.logout();
       await ui.login("dilnoza@darsino.demo");
       await ui.wait(() => ui.text("Repetitor kabineti"), "tutor home");
-      await ui.click("Arizalarni ochish");
+      await ui.click("Yangi arizalar");
       await ui.fill("O‘quvchiga izoh", "Xush kelibsiz");
       await ui.click("Tasdiqlash");
       await ui.wait(() => ui.text("Yangi arizalar yo‘q"), "approval saved");
@@ -305,6 +312,7 @@ test(
       await ui.click("Guruhlar", "tab");
       await ui.click("IELTS 6.5+ guruhini boshqarish");
       await ui.wait(() => ui.text("Sardor Test"), "real participant appears");
+      await ui.click("Davomat");
       await ui.click("Tanlangan dars vaqtini o‘zgartirish");
       await ui.fill("Yangi sana (YYYY-MM-DD)", nextDates(9)[8]);
       await ui.fill("Yangi vaqt (HH:MM)", "10:00");
@@ -316,11 +324,15 @@ test(
         () => ui.text("Maqsadingiz sari"),
         "returning student skips onboarding",
       );
-      await ui.click("Darslarim", "tab");
+      await ui.click("Dars & Klub", "tab");
       await ui.wait(() => ui.text("IELTS 6.5+ guruhi"), "approved schedule");
       await ui.click("Guruhlar");
       await ui.wait(() => ui.text("Qabul qilingansiz"), "approved group");
-      await ui.click("Profil", "tab");
+      await ui.wait(
+        () => ui.find("Kabinet", "tab") || ui.find("Profil", "tab"),
+        "profile tab loaded",
+      );
+      await ui.click(ui.find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
       await ui.click("Bildirishnomalar");
       await ui.wait(
         () =>
@@ -328,7 +340,7 @@ test(
         "student notifications",
       );
       await ui.click("Orqaga");
-      await ui.click("Darslarim", "tab");
+      await ui.click("Dars & Klub", "tab");
       await ui.click("Jadval");
       await ui.click("Ustozga yozish");
       await ui.fill("Xabar yozing", "Darsga tayyorman.");
@@ -429,7 +441,11 @@ test(
     let ui = await app(undefined, true);
     try {
       await ui.login("dilnoza@darsino.demo");
-      await ui.click("Profil", "tab");
+      await ui.wait(
+        () => ui.find("Kabinet", "tab") || ui.find("Profil", "tab"),
+        "profile tab loaded",
+      );
+      await ui.click(ui.find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
       const choose = async () => {
         await ui.click(
           ui.find("Rasmni o‘zgartirish")
@@ -475,7 +491,11 @@ test(
       assert.deepEqual(ui.errors, []);
       ui.dom.window.close();
       ui = await app(saved, true);
-      await ui.click("Profil", "tab");
+      await ui.wait(
+        () => ui.find("Kabinet", "tab") || ui.find("Profil", "tab"),
+        "profile tab loaded",
+      );
+      await ui.click(ui.find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
       await ui.click("Rasmni olib tashlash");
       await ui.wait(
         () => ui.text("Profil rasmi olib tashlandi."),
@@ -505,7 +525,7 @@ test(
       await ui.setup("Yangi", "Repetitor", true);
       await ui.wait(() => ui.text("Moderator tekshiruvida"), "pending tutor");
       assert.equal(
-        ui.find("Yangi dars yoki guruh")!.getAttribute("aria-disabled"),
+        ui.find("Yangi guruh")!.getAttribute("aria-disabled"),
         "true",
       );
       await ui.logout();
@@ -520,7 +540,7 @@ test(
       await ui.logout();
       await ui.login("yangi@example.com");
       await ui.wait(() => ui.text("Tasdiqlangan repetitor"), "approved tutor");
-      await ui.click("Yangi dars yoki guruh");
+      await ui.click("Yangi guruh");
       await ui.fill("Dars / guruh nomi", "IELTS yangi guruh");
       await ui.fill("Onlayn dars manzili", "https://example.com/lesson");
       await ui.fill("Haftalik darslar soni", "2");

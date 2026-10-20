@@ -1,3 +1,9 @@
+import {
+  FilterPanel,
+  FilterSelect,
+  FilterOptions,
+  filterChoices,
+} from "../components/FilterControls";
 import React, { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import {
@@ -276,84 +282,73 @@ export function FiltersScreen() {
       }
     >
       <Header title="Filtrlar" onBack={() => navigation.goBack()} />
-      <AppText variant="heading">Fan</AppText>
-      <View style={uiStyles.wrap}>
-        {["Barchasi", ...SUBJECTS].map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={draft.subject === v}
-            onPress={() => setDraft((p) => ({ ...p, subject: v }))}
-          />
-        ))}
-      </View>
-      <Field
-        label="Hudud"
-        value={draft.area === "Barcha hududlar" ? "" : draft.area}
-        placeholder="Barcha hududlar"
-        onChangeText={(area) =>
-          setDraft((p) => ({ ...p, area: area || "Barcha hududlar" }))
-        }
-      />
-      <View style={uiStyles.wrap}>
-        {["Barcha hududlar", ...AREAS.slice(0, 4)].map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={draft.area === v}
-            onPress={() => setDraft((p) => ({ ...p, area: v }))}
-          />
-        ))}
-      </View>
-      <AppText variant="heading">Dars shakli</AppText>
-      <View style={uiStyles.wrap}>
-        {["Barchasi", "Onlayn", "Oflayn"].map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={draft.mode === v}
-            onPress={() => setDraft((p) => ({ ...p, mode: v }))}
-          />
-        ))}
-      </View>
-      <AppText variant="heading">Bir dars narxi</AppText>
-      <View style={uiStyles.row}>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Eng kam (so‘m)"
-            keyboardType="number-pad"
-            value={min}
-            onChangeText={setMin}
-          />
+      <Card>
+        <FilterSelect
+          label="Fan"
+          options={filterChoices(["Barchasi", ...SUBJECTS])}
+          value={draft.subject}
+          onChange={(subject) => setDraft((p) => ({ ...p, subject }))}
+        />
+        <FilterSelect
+          label="Hudud"
+          options={filterChoices([
+            ...new Set([
+              "Barcha hududlar",
+              draft.area,
+              ...AREAS,
+              ...tutors.map((t) => t.area),
+            ]),
+          ])}
+          value={draft.area}
+          onChange={(area) => setDraft((p) => ({ ...p, area }))}
+        />
+        <FilterOptions
+          label="Dars shakli"
+          options={filterChoices(["Barchasi", "Onlayn", "Oflayn"])}
+          value={draft.mode}
+          onChange={(mode) => setDraft((p) => ({ ...p, mode }))}
+        />
+      </Card>
+      <Card>
+        <AppText variant="heading">Bir dars narxi</AppText>
+        <View style={uiStyles.row}>
+          <View style={{ flex: 1 }}>
+            <Field
+              label="Eng kam (so‘m)"
+              keyboardType="number-pad"
+              value={min}
+              onChangeText={setMin}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Field
+              label="Eng ko‘p (so‘m)"
+              keyboardType="number-pad"
+              value={max}
+              onChangeText={setMax}
+            />
+          </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Eng ko‘p (so‘m)"
-            keyboardType="number-pad"
-            value={max}
-            onChangeText={setMax}
-          />
-        </View>
-      </View>
-      <AppText variant="heading">Reyting</AppText>
-      <View style={uiStyles.wrap}>
-        {[0, 4, 4.5, 4.9].map((v) => (
-          <Chip
-            key={v}
-            label={v ? `${v}+` : "Barchasi"}
-            selected={draft.minRating === v}
-            onPress={() => setDraft((p) => ({ ...p, minRating: v }))}
-          />
-        ))}
-      </View>
+      </Card>
+      <Card>
+        <FilterOptions
+          label="Minimal reyting"
+          options={[0, 4, 4.5, 4.9].map((n) => ({
+            value: String(n),
+            label: n ? `${n}+` : "Barchasi",
+          }))}
+          value={String(draft.minRating)}
+          onChange={(n) => setDraft((p) => ({ ...p, minRating: Number(n) }))}
+        />
+      </Card>
       <Feedback {...action} />
       <Button
         title="Tozalash"
         variant="outline"
         onPress={() => {
           setDraft({ ...defaultFilters });
-          setMin("0");
-          setMax("1000000");
+          setMin(String(defaultFilters.minPrice));
+          setMax(String(defaultFilters.maxPrice));
         }}
       />
     </Screen>
@@ -584,21 +579,30 @@ export function GroupsScreen() {
       <AppText color={C.muted}>
         Maqsadingizga mos guruhni tanlang. Ustoz arizangizni ko‘rib chiqadi.
       </AppText>
-      <View style={uiStyles.wrap}>
-        {["Barchasi", ...SUBJECTS].map((s) => (
-          <Chip
-            key={s}
-            label={s}
-            selected={subject === s}
-            onPress={() => setSubject(s)}
-          />
-        ))}
-        <Chip
-          label="Bo‘sh o‘rin bor"
-          selected={openOnly}
-          onPress={() => setOpenOnly((v) => !v)}
+      <FilterPanel
+        count={Number(subject !== "Barchasi") + Number(!openOnly)}
+        onReset={() => {
+          setSubject("Barchasi");
+          setOpenOnly(true);
+        }}
+        initiallyOpen
+      >
+        <FilterSelect
+          label="Fan"
+          options={filterChoices(["Barchasi", ...SUBJECTS])}
+          value={subject}
+          onChange={setSubject}
         />
-      </View>
+        <FilterOptions
+          label="Guruhda bo‘sh o‘rin"
+          value={openOnly ? "open" : "all"}
+          onChange={(v) => setOpenOnly(v === "open")}
+          options={[
+            { value: "open", label: "Bo‘sh o‘rin bor" },
+            { value: "all", label: "Barcha guruhlar" },
+          ]}
+        />
+      </FilterPanel>
       {list.map((g) => (
         <GroupCard key={g.id} group={g} />
       ))}
