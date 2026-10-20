@@ -6,7 +6,7 @@ import {
   filterChoices,
 } from "../components/FilterControls";
 import React, { useState, useRef } from "react";
-import {, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAppNavigation, type RootStackParamList } from "../navigation";

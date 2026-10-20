@@ -1,4 +1,7 @@
-import { LocalizedPressable as Pressable, LocalizedTextInput as TextInput } from "../i18n/native";
+import {
+  LocalizedPressable as Pressable,
+  LocalizedTextInput as TextInput,
+} from "../i18n/native";
 import React, { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -8,7 +11,8 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  type TextInputProps} from "react-native";
+  type TextInputProps,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";

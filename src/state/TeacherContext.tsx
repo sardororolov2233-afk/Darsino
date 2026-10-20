@@ -6,7 +6,10 @@ import React, {
   useState,
 } from "react";
 import { AppState } from "react-native";
-import { readPrivateWorkspace, updatePrivateWorkspace } from "../services/privateWorkspace";
+import {
+  readPrivateWorkspace,
+  updatePrivateWorkspace,
+} from "../services/privateWorkspace";
 import { useApp } from "./AppContext";
 import {
   emptyTeacherWorkspace,
@@ -82,23 +85,44 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
     if (!account) return;
     let active = true;
     const sync = () => {
-      queue.current = queue.current.catch(() => {}).then(async () => {
-        if (!active || identity.current !== account || !current.current.ready) return;
-        try {
-          const raw = await readPrivateWorkspace("teacher", account, readTeacherWorkspace);
-          if (!active || identity.current !== account) return;
-          current.current = { account, data: readTeacherWorkspace(raw), ready: true, error: "" };
-          setSnapshot(current.current);
-        } catch (e) {
-          if (!active || identity.current !== account) return;
-          current.current = { ...current.current, error: e instanceof Error ? e.message : "Sinxronlashda xato." };
-          setSnapshot(current.current);
-        }
-      });
+      queue.current = queue.current
+        .catch(() => {})
+        .then(async () => {
+          if (!active || identity.current !== account || !current.current.ready)
+            return;
+          try {
+            const raw = await readPrivateWorkspace(
+              "teacher",
+              account,
+              readTeacherWorkspace,
+            );
+            if (!active || identity.current !== account) return;
+            current.current = {
+              account,
+              data: readTeacherWorkspace(raw),
+              ready: true,
+              error: "",
+            };
+            setSnapshot(current.current);
+          } catch (e) {
+            if (!active || identity.current !== account) return;
+            current.current = {
+              ...current.current,
+              error: e instanceof Error ? e.message : "Sinxronlashda xato.",
+            };
+            setSnapshot(current.current);
+          }
+        });
     };
     const timer = setInterval(sync, 30000);
-    const listener = AppState.addEventListener("change", (state) => { if (state === "active") sync(); });
-    return () => { active = false; clearInterval(timer); listener.remove(); };
+    const listener = AppState.addEventListener("change", (state) => {
+      if (state === "active") sync();
+    });
+    return () => {
+      active = false;
+      clearInterval(timer);
+      listener.remove();
+    };
   }, [account]);
   const update = (change: (data: TeacherWorkspace) => TeacherWorkspace) => {
     const target = account;
@@ -112,7 +136,12 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
           !current.current.ready
         )
           throw new Error("Ustoz ma’lumotlari yuklanishini kuting.");
-        const data = await updatePrivateWorkspace("teacher", target, readTeacherWorkspace, change);
+        const data = await updatePrivateWorkspace(
+          "teacher",
+          target,
+          readTeacherWorkspace,
+          change,
+        );
         if (identity.current !== target) return;
         current.current = { account: target, data, ready: true, error: "" };
         setSnapshot(current.current);

@@ -46,7 +46,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Profilingizga rasm qo‘yish uchun O‘qi ilovasiga rasmlaringizdan tanlashga ruxsat bering.",
-          "cameraPermission": false,
+          "cameraPermission": "O‘qi ID kartasidagi QR kodni o‘qish uchun kameraga ruxsat bering.",
           "microphonePermission": false
         }
       ],

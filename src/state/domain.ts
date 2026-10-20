@@ -1,4 +1,12 @@
-import type { AccountCommand, AccountSettings, Contact, ContactRequest, UserBlock, GroupInvitation, AccountReport } from "./account";
+import type {
+  AccountCommand,
+  AccountSettings,
+  Contact,
+  ContactRequest,
+  UserBlock,
+  GroupInvitation,
+  AccountReport,
+} from "./account";
 import type { StudyGroup, Tutor } from "../data/catalog";
 
 export type Role = "student" | "tutor" | "moderator";

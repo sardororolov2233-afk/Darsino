@@ -157,7 +157,13 @@ test("Realtime coalesces a burst into one refresh and cancels queued work on acc
   t.mock.timers.tick(201);
   assert.equal(refreshed, 1);
   assert.equal(filters.length, 14);
-  assert.ok(filters.some((f) => f.table === "darsino_group_invitations" && f.filter === "student_id=eq.user-uuid"));
+  assert.ok(
+    filters.some(
+      (f) =>
+        f.table === "darsino_group_invitations" &&
+        f.filter === "student_id=eq.user-uuid",
+    ),
+  );
   assert.ok(
     filters.every(
       (f) => f.event !== "DELETE" && f.filter.endsWith("=eq.user-uuid"),

@@ -513,8 +513,9 @@ export function applyMarketCommand(
       );
       ensure(
         enrollment &&
-          (previous || (enrollment.active &&
-          paymentMonth(new Date(enrollment.createdAt)) <= c.month)),
+          (previous ||
+            (enrollment.active &&
+              paymentMonth(new Date(enrollment.createdAt)) <= c.month)),
         "O‘quvchi bu oyda guruhda qatnashmaydi.",
       );
       const amount = previous?.amount ?? group.price;
@@ -655,9 +656,14 @@ export function applyMarketCommand(
       const recipientId = actorId === studentId ? tutorId : studentId;
       const recipient = m.users.find((u) => u.id === recipientId);
       ensure(
-        kind === "dm" && !extra && studentId !== tutorId &&
-          (actorId === studentId || actorId === tutorId) &&
-          recipient && canContactMessage(m, actor, recipient),
+        kind === "dm" &&
+          !extra &&
+          studentId !== tutorId &&
+          (actorId === studentId || actorId === tutorId),
+        "Suhbatda qatnashish huquqingiz yo‘q.",
+      );
+      ensure(
+        recipient && canContactMessage(m, actor, recipient),
         "Bu foydalanuvchiga yozish cheklangan.",
       );
       m.messages.push({

@@ -12,6 +12,7 @@ export type ContactPolicy = "everyone" | "contacts" | "nobody";
 export type AccountSettings = {
   language: Language;
   discoverable: boolean;
+  allowContactRequests: boolean;
   showArea: boolean;
   avatarVisibility: ContactPolicy;
   messagePolicy: ContactPolicy;
@@ -21,6 +22,7 @@ export type AccountSettings = {
 export const defaultAccountSettings: AccountSettings = {
   language: "uz",
   discoverable: true,
+  allowContactRequests: true,
   showArea: true,
   avatarVisibility: "everyone",
   messagePolicy: "everyone",
@@ -63,38 +65,68 @@ export type AccountCommand =
   | { type: "group-invite-cancel"; invitationId: string }
   | { type: "report-user"; peerId: string; reason: string };
 export const accountCommandTypes = new Set([
-  "account-settings", "contact-request", "contact-decide", "contact-remove",
-  "block-user", "group-invite", "group-invite-decide", "group-invite-cancel",
+  "account-settings",
+  "contact-request",
+  "contact-decide",
+  "contact-remove",
+  "block-user",
+  "group-invite",
+  "group-invite-decide",
+  "group-invite-cancel",
   "report-user",
 ]);
-export function readAccountSettings(value?: Partial<AccountSettings> | null): AccountSettings {
+export function readAccountSettings(
+  value?: Partial<AccountSettings> | null,
+): AccountSettings {
   const result = { ...defaultAccountSettings, ...value };
   if (!LANGUAGES.some((l) => l.code === result.language))
     throw new Error("Tilni tanlang.");
-  for (const field of ["discoverable", "showArea", "lessonReminders"] as const)
-    if (typeof result[field] !== "boolean") throw new Error("Sozlamalar noto‘g‘ri.");
-  for (const field of ["avatarVisibility", "messagePolicy", "invitePolicy"] as const)
+  for (const field of [
+    "discoverable",
+    "showArea",
+    "lessonReminders",
+    "allowContactRequests",
+  ] as const)
+    if (typeof result[field] !== "boolean")
+      throw new Error("Sozlamalar noto‘g‘ri.");
+  for (const field of [
+    "avatarVisibility",
+    "messagePolicy",
+    "invitePolicy",
+  ] as const)
     if (!["everyone", "contacts", "nobody"].includes(result[field]))
       throw new Error("Maxfiylik sozlamasi noto‘g‘ri.");
   return result;
 }
 export const defaultPublicId = (id: string) =>
-  "oqi_" + id.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+  "oqi_" +
+  id
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 16);
 export const publicIdOf = (user: Pick<User, "id" | "publicId">) =>
   user.publicId || defaultPublicId(user.id);
 export function normalizePublicId(value: string) {
   const clean = value.trim();
   if (/^darsino:\/\/connect\//i.test(clean)) {
-    try { return decodeURIComponent(clean.slice("darsino://connect/".length)).toLowerCase(); }
-    catch { return ""; }
+    try {
+      return decodeURIComponent(
+        clean.slice("darsino://connect/".length),
+      ).toLowerCase();
+    } catch {
+      return "";
+    }
   }
   return clean.replace(/^@/, "").toLowerCase();
 }
-export const validPublicId = (value: string) => /^[a-z][a-z0-9_]{4,23}$/.test(value);
-export const contactLink = (id: string) => "darsino://connect/" + encodeURIComponent(id);
+export const validPublicId = (value: string) =>
+  /^[a-z][a-z0-9_]{4,23}$/.test(value);
+export const contactLink = (id: string) =>
+  "darsino://connect/" + encodeURIComponent(id);
 export const isBlocked = (market: Marketplace, a: string, b: string) =>
-  (market.blocks || []).some((x) =>
-    (x.userId === a && x.peerId === b) || (x.userId === b && x.peerId === a),
+  (market.blocks || []).some(
+    (x) =>
+      (x.userId === a && x.peerId === b) || (x.userId === b && x.peerId === a),
   );
 export const areContacts = (market: Marketplace, a: string, b: string) =>
   (market.contacts || []).some((x) => x.userId === a && x.peerId === b);
@@ -103,19 +135,37 @@ export function permits(policy: ContactPolicy, contacts: boolean) {
 }
 export function conversationFor(a: User, b: User) {
   if (a.id === b.id) throw new Error("O‘zingizga xabar yuborib bo‘lmaydi.");
-  if (a.role === "student" && b.role === "tutor") return "dm:" + a.id + ":" + b.id;
-  if (b.role === "student" && a.role === "tutor") return "dm:" + b.id + ":" + a.id;
+  if (a.role === "student" && b.role === "tutor")
+    return "dm:" + a.id + ":" + b.id;
+  if (b.role === "student" && a.role === "tutor")
+    return "dm:" + b.id + ":" + a.id;
   return "dm:" + [a.id, b.id].sort().join(":");
 }
-export function canContactMessage(market: Marketplace, sender: User, recipient: User) {
-  if (!sender.onboarded || !recipient.onboarded || isBlocked(market, sender.id, recipient.id))
+export function canContactMessage(
+  market: Marketplace,
+  sender: User,
+  recipient: User,
+) {
+  if (
+    !sender.onboarded ||
+    !recipient.onboarded ||
+    isBlocked(market, sender.id, recipient.id)
+  )
     return false;
   const linked = areContacts(market, sender.id, recipient.id);
   const settings = readAccountSettings(market.accountSettings?.[recipient.id]);
-  const approved = (u: User) => u.role !== "tutor" ||
-    market.tutorProfiles.some((p) => p.userId === u.id && p.verification === "approved");
-  const learningPair = (sender.role === "student" && recipient.role === "tutor") ||
+  const approved = (u: User) =>
+    u.role !== "tutor" ||
+    market.tutorProfiles.some(
+      (p) => p.userId === u.id && p.verification === "approved",
+    );
+  const learningPair =
+    (sender.role === "student" && recipient.role === "tutor") ||
     (sender.role === "tutor" && recipient.role === "student");
-  return approved(sender) && approved(recipient) && (linked || learningPair) &&
-    permits(settings.messagePolicy, linked);
+  return (
+    approved(sender) &&
+    approved(recipient) &&
+    (linked || learningPair) &&
+    permits(settings.messagePolicy, linked)
+  );
 }

@@ -70,7 +70,7 @@ end $$;
 
 create or replace function public.darsino_account_preferences(target uuid) returns jsonb
 language sql stable security definer set search_path='' as $$
-  select '{"language":"uz","discoverable":true,"showArea":true,"avatarVisibility":"everyone","messagePolicy":"everyone","invitePolicy":"everyone","lessonReminders":true}'::jsonb||
+  select '{"language":"uz","discoverable":true,"allowContactRequests":true,"showArea":true,"avatarVisibility":"everyone","messagePolicy":"everyone","invitePolicy":"everyone","lessonReminders":true}'::jsonb||
     coalesce((select settings from public.darsino_account_settings where user_id=target),'{}'::jsonb)
 $$;
 create or replace function public.darsino_blocked(a uuid,b uuid) returns boolean
@@ -136,9 +136,8 @@ language sql stable security definer set search_path='' as $$
     'goal',case when p.id=auth.uid() then p.goal else '' end,'interests',p.interests,
     'city',case when p.id=auth.uid() or (public.darsino_account_preferences(p.id)->>'showArea')::boolean then p.city else '' end,
     'area',case when p.id=auth.uid() or (public.darsino_account_preferences(p.id)->>'showArea')::boolean then p.area else '' end,
-    'studyMode',case when p.id=auth.uid() then p.study_mode else null end,
-    'studySupport',case when p.id=auth.uid() then p.study_support else null end,
-    'avatarFileId',case when p.id=auth.uid() or public.darsino_policy_allows(p.id,'avatarVisibility',auth.uid()) then p.avatar_file_id else null end)
+    'avatarFileId',case when p.id=auth.uid() or public.darsino_policy_allows(p.id,'avatarVisibility',auth.uid()) then p.avatar_file_id else null end)||
+    case when p.id=auth.uid() then jsonb_strip_nulls(jsonb_build_object('studyMode',p.study_mode,'studySupport',p.study_support)) else '{}'::jsonb end
   from public.darsino_profiles p where p.id=target
 $$;
 create or replace function public.darsino_can_message(conversation text) returns boolean
@@ -244,14 +243,14 @@ begin
     value:=command->'settings'; public_name:=command->>'publicId';
     perform public.darsino_assert(jsonb_typeof(value)='object' and public_name ~ '^[a-z][a-z0-9_]{4,23}$','ID yoki sozlamalar noto‘g‘ri.');
     perform public.darsino_assert(value->>'language' in ('uz','ru','en','kk','ky'),'Tilni tanlang.');
-    foreach setting_name in array array['discoverable','showArea','lessonReminders'] loop
+    foreach setting_name in array array['discoverable','showArea','lessonReminders','allowContactRequests'] loop
       perform public.darsino_assert(jsonb_typeof(value->setting_name)='boolean','Sozlamalar noto‘g‘ri.');
     end loop;
     foreach setting_name in array array['avatarVisibility','messagePolicy','invitePolicy'] loop
       perform public.darsino_assert(value->>setting_name in ('everyone','contacts','nobody'),'Maxfiylik sozlamasi noto‘g‘ri.');
     end loop;
     value:=jsonb_build_object('language',value->'language','discoverable',value->'discoverable','showArea',value->'showArea',
-      'lessonReminders',value->'lessonReminders','avatarVisibility',value->'avatarVisibility','messagePolicy',value->'messagePolicy','invitePolicy',value->'invitePolicy');
+      'lessonReminders',value->'lessonReminders','allowContactRequests',value->'allowContactRequests','avatarVisibility',value->'avatarVisibility','messagePolicy',value->'messagePolicy','invitePolicy',value->'invitePolicy');
     perform public.darsino_assert(not exists(select 1 from public.darsino_profiles where public_id=public_name and id<>me),'Bu ID band.');
     update public.darsino_profiles set public_id=public_name where id=me;
     insert into public.darsino_account_settings(user_id,settings) values(me,value)
@@ -262,7 +261,7 @@ begin
     perform public.darsino_assert(found,'Foydalanuvchi topilmadi.');
     perform pg_advisory_xact_lock(hashtext(least(me,peer)::text||greatest(me,peer)::text)::bigint);
     if op='contact-request' then
-      perform public.darsino_assert(public.darsino_policy_allows(peer,'messagePolicy',me),'Foydalanuvchi bu amalni maxfiylik sozlamalarida cheklagan.');
+      perform public.darsino_assert(not public.darsino_blocked(peer,me) and (public.darsino_account_preferences(peer)->>'allowContactRequests')::boolean,'Foydalanuvchi bu amalni maxfiylik sozlamalarida cheklagan.');
       perform public.darsino_assert((public.darsino_account_preferences(peer)->>'discoverable')::boolean or public.darsino_contacts_linked(me,peer),'Foydalanuvchi topilmadi.');
       perform public.darsino_assert(not public.darsino_contacts_linked(me,peer),'Bu foydalanuvchi kontaktlaringizda.');
       select id into new_id from public.darsino_contact_requests where least(sender_id,recipient_id)=least(me,peer) and greatest(sender_id,recipient_id)=greatest(me,peer) and status='pending';
@@ -295,7 +294,7 @@ begin
     perform public.darsino_assert(found,'Kontakt taklifi topilmadi.');
     perform pg_advisory_xact_lock(hashtext(least(me,request.sender_id)::text||greatest(me,request.sender_id)::text)::bigint);
     select * into request from public.darsino_contact_requests where id=request.id for update;
-    if request.status=case when accepted then 'accepted' else 'declined' end then return request.id; end if;
+    if request.status=(case when accepted then 'accepted' else 'declined' end) then return request.id; end if;
     perform public.darsino_assert(request.status='pending' and not public.darsino_blocked(me,request.sender_id) and exists(select 1 from public.darsino_profiles where id=request.sender_id and onboarded and not is_suspended),'Taklifga allaqachon javob berilgan.');
     update public.darsino_contact_requests set status=case when accepted then 'accepted' else 'declined' end where id=request.id;
     if accepted then
@@ -334,7 +333,7 @@ begin
     else
       perform public.darsino_assert(jsonb_typeof(command->'accept')='boolean','Qaror noto‘g‘ri.');
       accepted:=(command->>'accept')::boolean;
-      if invitation.status=case when accepted then 'accepted' else 'declined' end then return invitation.id; end if;
+      if invitation.status=(case when accepted then 'accepted' else 'declined' end) then return invitation.id; end if;
       perform public.darsino_assert(invitation.status='pending','Taklifga allaqachon javob berilgan.');
       if accepted then
         perform public.darsino_assert(actor.role='student' and invitation.expires_at>now(),'Taklif muddati tugagan.');
@@ -367,6 +366,9 @@ begin
     new_id:=public.darsino_account_command(command);
     return public.darsino_snapshot()||jsonb_build_object('id',new_id);
   elsif op='message' then
+    perform public.darsino_assert((command->>'conversationId') ~ '^dm:[0-9a-f-]{36}:[0-9a-f-]{36}$' and
+      me::text in (split_part(command->>'conversationId',':',2),split_part(command->>'conversationId',':',3)),
+      'Suhbatda qatnashish huquqingiz yo‘q.');
     perform public.darsino_assert(public.darsino_can_message(command->>'conversationId'),'Bu foydalanuvchiga yozish cheklangan.');
     clean:=trim(command->>'text');
     perform public.darsino_assert(char_length(clean) between 1 and 2000,'Xabar 1–2000 belgi bo‘lsin.');

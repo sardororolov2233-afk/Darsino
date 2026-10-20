@@ -1,3 +1,9 @@
+import {
+  areContacts,
+  isBlocked,
+  permits,
+  readAccountSettings,
+} from "../state/account";
 import React, { useEffect, useState } from "react";
 import { Avatar } from "./ui";
 import { useApp } from "../state/AppContext";
@@ -17,7 +23,15 @@ export function UserAvatar({
 }) {
   const { market, user: actor, mode } = useApp();
   const user = market.users.find((u) => u.id === userId);
-  const fileId = user?.avatarFileId;
+  const allowed =
+    userId === actor.id ||
+    (!!userId &&
+      !isBlocked(market, actor.id, userId) &&
+      permits(
+        readAccountSettings(market.accountSettings?.[userId]).avatarVisibility,
+        areContacts(market, actor.id, userId),
+      ));
+  const fileId = allowed ? user?.avatarFileId : undefined;
   const [signed, setSigned] = useState<{
     fileId: string;
     actorId: string;
@@ -45,8 +59,8 @@ export function UserAvatar({
     };
   }, [fileId, mode, actor.id]);
   const uri =
-    previewUri ||
-    (mode === "demo"
+    (userId === actor.id ? previewUri : undefined) ||
+    (allowed && mode === "demo"
       ? user?.demoAvatarUri
       : signed && signed.fileId === fileId && signed.actorId === actor.id
         ? signed.uri

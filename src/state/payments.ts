@@ -41,8 +41,12 @@ export function groupPaymentRows(
   for (const e of market.enrollments) {
     if (e.offeringId !== offeringId) continue;
     const prior = unique.get(e.studentId);
-    if (!prior || (e.active && !prior.active) ||
-      (e.active === prior.active && e.createdAt > prior.createdAt)) unique.set(e.studentId, e);
+    if (
+      !prior ||
+      (e.active && !prior.active) ||
+      (e.active === prior.active && e.createdAt > prior.createdAt)
+    )
+      unique.set(e.studentId, e);
   }
   return [...unique.values()]
     .filter((e) => {

@@ -1,4 +1,7 @@
-import { LocalizedPressable as Pressable, LocalizedTextInput as TextInput } from "../i18n/native";
+import {
+  LocalizedPressable as Pressable,
+  LocalizedTextInput as TextInput,
+} from "../i18n/native";
 import { localizedChildren, useI18n } from "../i18n";
 import React, { type ReactNode } from "react";
 import {
@@ -13,7 +16,8 @@ import {
   type StyleProp,
   type TextInputProps,
   type TextStyle,
-  type ViewStyle} from "react-native";
+  type ViewStyle,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 import { StatusBar } from "expo-status-bar";
@@ -75,7 +79,9 @@ export function AppText({
   return (
     <Text
       {...rest}
-      accessibilityLabel={rest.accessibilityLabel ? t(rest.accessibilityLabel) : undefined}
+      accessibilityLabel={
+        rest.accessibilityLabel ? t(rest.accessibilityLabel) : undefined
+      }
       numberOfLines={numberOfLines}
       style={[textVariants[variant], { color }, style]}
     >

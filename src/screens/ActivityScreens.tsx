@@ -226,8 +226,13 @@ function StudentLessonCard({ session }: { session: LessonSession }) {
           onPress={() =>
             action.run(
               () => {
-                if (!readAccountSettings(market.accountSettings?.[user.id]).lessonReminders)
-                  throw new Error("Avval sozlamalarda dars eslatmalarini yoqing.");
+                if (
+                  !readAccountSettings(market.accountSettings?.[user.id])
+                    .lessonReminders
+                )
+                  throw new Error(
+                    "Avval sozlamalarda dars eslatmalarini yoqing.",
+                  );
                 return scheduleReminder(session);
               },
               () => action.setSuccess("Eslatma yoqildi."),
@@ -560,9 +565,18 @@ export function ConversationScreen({
         ) : undefined
       }
     >
-      <Header title={name} onBack={() => navigation.goBack()} right={
-        <Button title="Kontaktlar" icon="users" variant="soft" onPress={() => navigation.navigate("Contacts")} />
-      } />
+      <Header
+        title={name}
+        onBack={() => navigation.goBack()}
+        right={
+          <Button
+            title="Kontaktlar"
+            icon="users"
+            variant="soft"
+            onPress={() => navigation.navigate("Contacts")}
+          />
+        }
+      />
       <AppText variant="caption" color={C.muted}>
         Dars va guruh bo‘yicha suhbat
       </AppText>
@@ -628,7 +642,12 @@ export function NotificationsScreen() {
           style={{ flex: 1 }}
         />
       </View>
-      <Button title="Takliflar" icon="user-plus" variant="soft" onPress={() => navigation.navigate("Invitations")} />
+      <Button
+        title="Takliflar"
+        icon="user-plus"
+        variant="soft"
+        onPress={() => navigation.navigate("Invitations")}
+      />
       <Feedback {...action} />
       {notifications.map((n) => (
         <Card key={n.id} style={{ borderColor: n.read ? C.border : C.gold }}>

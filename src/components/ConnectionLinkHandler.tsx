@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Linking } from "react-native";
 import { normalizePublicId, validPublicId } from "../state/account";
-export function ConnectionLinkHandler({ signedIn, ready, onOpen }: {
-  signedIn: boolean; ready: boolean; onOpen: (id: string) => void;
+export function ConnectionLinkHandler({
+  signedIn,
+  ready,
+  onOpen,
+}: {
+  signedIn: boolean;
+  ready: boolean;
+  onOpen: (id: string) => void;
 }) {
   const [pending, setPending] = useState("");
   useEffect(() => {
@@ -12,12 +18,20 @@ export function ConnectionLinkHandler({ signedIn, ready, onOpen }: {
       const id = normalizePublicId(url);
       if (validPublicId(id)) setPending(id);
     };
-    void Linking.getInitialURL().then(receive).catch(() => {});
+    void Linking.getInitialURL()
+      .then(receive)
+      .catch(() => {});
     const listener = Linking.addEventListener("url", ({ url }) => receive(url));
-    return () => { active = false; listener.remove(); };
+    return () => {
+      active = false;
+      listener.remove();
+    };
   }, []);
   useEffect(() => {
-    if (pending && signedIn && ready) { onOpen(pending); setPending(""); }
+    if (pending && signedIn && ready) {
+      onOpen(pending);
+      setPending("");
+    }
   }, [pending, signedIn, ready, onOpen]);
   return null;
 }

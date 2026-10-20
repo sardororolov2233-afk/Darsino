@@ -7,7 +7,7 @@ export function LocaleBridge() {
   const { setLanguage, ready } = useI18n();
   const settings = market.accountSettings?.[user.id];
   useEffect(() => {
-    if (ready && signedIn && settings) setLanguage(readAccountSettings(settings).language);
+    if (ready && signedIn) setLanguage(readAccountSettings(settings).language);
   }, [ready, signedIn, user.id, settings?.language, setLanguage]);
   return null;
 }

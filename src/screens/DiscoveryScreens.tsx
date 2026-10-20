@@ -6,7 +6,7 @@ import {
   filterChoices,
 } from "../components/FilterControls";
 import React, { useMemo, useState } from "react";
-import {, View } from "react-native";
+import { View } from "react-native";
 import {
   AppText,
   Button,
