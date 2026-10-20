@@ -1,3 +1,4 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import {
   FilterPanel,
   FilterSelect,
@@ -5,7 +6,7 @@ import {
   filterChoices,
 } from "../components/FilterControls";
 import React, { useState, useRef } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import {, ScrollView, View } from "react-native";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAppNavigation, type RootStackParamList } from "../navigation";

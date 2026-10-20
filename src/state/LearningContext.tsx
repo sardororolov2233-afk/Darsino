@@ -6,7 +6,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AppState } from "react-native";
+import { readPrivateWorkspace, updatePrivateWorkspace } from "../services/privateWorkspace";
 import { useApp } from "./AppContext";
 import {
   emptyLearning,
@@ -54,7 +55,7 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     queue.current
       .catch(() => {})
       .then(() =>
-        AsyncStorage.getItem(`@oqi/learning-v1:${encodeURIComponent(account)}`),
+        readPrivateWorkspace("learning", account, readLearning),
       )
       .then((raw) => {
         if (!active) return;
@@ -80,6 +81,28 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
       active = false;
     };
   }, [account]);
+  useEffect(() => {
+    if (!account) return;
+    let active = true;
+    const sync = () => {
+      queue.current = queue.current.catch(() => {}).then(async () => {
+        if (!active || identity.current !== account || !current.current.ready) return;
+        try {
+          const raw = await readPrivateWorkspace("learning", account, readLearning);
+          if (!active || identity.current !== account) return;
+          current.current = { account, data: readLearning(raw), ready: true, error: "" };
+          setSnapshot(current.current);
+        } catch (e) {
+          if (!active || identity.current !== account) return;
+          current.current = { ...current.current, error: e instanceof Error ? e.message : "Sinxronlashda xato." };
+          setSnapshot(current.current);
+        }
+      });
+    };
+    const timer = setInterval(sync, 30000);
+    const listener = AppState.addEventListener("change", (state) => { if (state === "active") sync(); });
+    return () => { active = false; clearInterval(timer); listener.remove(); };
+  }, [account]);
   const update = useCallback(
     (change: (data: LearningState) => LearningState) => {
       const target = account;
@@ -93,11 +116,7 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
             !current.current.ready
           )
             throw new Error("O‘quv progressi yuklanishini kuting.");
-          const data = change(current.current.data);
-          await AsyncStorage.setItem(
-            `@oqi/learning-v1:${encodeURIComponent(target)}`,
-            JSON.stringify(data),
-          );
+          const data = await updatePrivateWorkspace("learning", target, readLearning, change);
           if (identity.current !== target) return;
           current.current = { account: target, data, ready: true, error: "" };
           setSnapshot(current.current);

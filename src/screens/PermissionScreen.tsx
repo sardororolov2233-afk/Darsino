@@ -72,11 +72,14 @@ export function PermissionScreen() {
         </AppText>
       </Card>
       <Card>
+        <AppText variant="heading">QR skanerlash</AppText>
+        <AppText color={C.muted}>Kamera faqat QR kodni o‘qish uchun ishlatiladi. Tasvir serverga yuborilmaydi.</AppText>
+        <Button title="QR skanerlash" icon="camera" variant="soft" onPress={() => navigation.navigate("ScanContact")} />
+      </Card>
+      <Card>
         <AppText variant="heading">Ilova xotirasi</AppText>
         <AppText color={C.muted}>
-          Sozlamalar va test progressi ilovaning o‘z xotirasida saqlanadi.
-          Materiallar Supabase’da turadi; tanlangan fayl yuklash uchun
-          vaqtinchalik olinadi.
+          Jonli akkauntda sozlamalar, test progressi va xona rejalari serverda saqlanadi. Sinov rejimida ma’lumotlar faqat shu qurilmada qoladi.
         </AppText>
       </Card>
       <Feedback {...action} />

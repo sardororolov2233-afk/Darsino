@@ -1,3 +1,4 @@
+import { readAccountSettings } from "./account";
 import React, {
   createContext,
   useCallback,
@@ -178,7 +179,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setMarket(marketRef.current);
       } else if (
         session &&
-        (event === "SIGNED_IN" || event === "INITIAL_SESSION")
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED" || event === "MFA_CHALLENGE_VERIFIED")
       ) {
         if (authUserId.current !== session.user.id) {
           authUserId.current = session.user.id;
@@ -256,6 +257,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     market.sessions.filter(
       (s) =>
         user.role === "student" &&
+        readAccountSettings(market.accountSettings?.[user.id]).lessonReminders &&
         actorId &&
         market.enrollments.some(
           (e) =>
@@ -445,7 +447,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
   const signOut = useCallback(async () => {
     if (supabase) {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) throw new Error(error.message);
     }
     epoch.current++;

@@ -15,7 +15,6 @@
       "package": "uz.darsino.app",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
@@ -49,6 +48,15 @@
           "photosPermission": "Profilingizga rasm qo‘yish uchun O‘qi ilovasiga rasmlaringizdan tanlashga ruxsat bering.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O‘qi ID kartasidagi QR kodni o‘qish uchun kameraga ruxsat bering.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
         }
       ]
     ],

@@ -1,20 +1,19 @@
+import { LocalizedPressable as Pressable, LocalizedTextInput as TextInput } from "../i18n/native";
+import { localizedChildren, useI18n } from "../i18n";
 import React, { type ReactNode } from "react";
 import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
-  type ViewStyle,
-} from "react-native";
+  type ViewStyle} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 import { StatusBar } from "expo-status-bar";
@@ -55,6 +54,7 @@ export function AppText({
   color = C.ink,
   style,
   numberOfLines,
+  localize = true,
   ...rest
 }: {
   children?: ReactNode;
@@ -62,6 +62,7 @@ export function AppText({
   color?: string;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  localize?: boolean;
 } & Pick<
   React.ComponentProps<typeof Text>,
   | "onPress"
@@ -70,13 +71,15 @@ export function AppText({
   | "testID"
   | "selectable"
 >) {
+  const { language, t } = useI18n();
   return (
     <Text
       {...rest}
+      accessibilityLabel={rest.accessibilityLabel ? t(rest.accessibilityLabel) : undefined}
       numberOfLines={numberOfLines}
       style={[textVariants[variant], { color }, style]}
     >
-      {children}
+      {localize ? localizedChildren(children, language) : children}
     </Text>
   );
 }

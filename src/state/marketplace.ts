@@ -1,3 +1,5 @@
+import { applyAccountCommand } from "./accountMarket";
+import { canContactMessage } from "./account";
 import {
   dmId,
   timeLabel,
@@ -55,6 +57,8 @@ export function applyMarketCommand(
   const m: Marketplace = JSON.parse(JSON.stringify(source));
   const actor = m.users.find((u) => u.id === actorId);
   ensure(actor, "Avval hisobingizga kiring.");
+  const accountResult = applyAccountCommand(m, actorId, c, now);
+  if (accountResult) return accountResult;
   const tutor = m.tutorProfiles.find((p) => p.userId === actorId);
   const teacher = () =>
     ensure(
@@ -429,8 +433,14 @@ export function applyMarketCommand(
           ),
           "O‘quvchi allaqachon guruhda.",
         );
+        const previous = m.enrollments.find(
+          (e) => e.offeringId === g.id && e.studentId === r.studentId,
+        );
+        m.enrollments = m.enrollments.filter(
+          (e) => !(e.offeringId === g.id && e.studentId === r.studentId),
+        );
         m.enrollments.push({
-          id: uid("enrollment"),
+          id: previous?.id || uid("enrollment"),
           offeringId: g.id,
           studentId: r.studentId,
           active: true,
@@ -503,8 +513,8 @@ export function applyMarketCommand(
       );
       ensure(
         enrollment &&
-          (enrollment.active || previous) &&
-          paymentMonth(new Date(enrollment.createdAt)) <= c.month,
+          (previous || (enrollment.active &&
+          paymentMonth(new Date(enrollment.createdAt)) <= c.month)),
         "O‘quvchi bu oyda guruhda qatnashmaydi.",
       );
       const amount = previous?.amount ?? group.price;
@@ -641,17 +651,14 @@ export function applyMarketCommand(
         text.length > 0 && text.length <= 2000,
         "Xabar 1–2000 belgi bo‘lsin.",
       );
-      const [kind, studentId, tutorId] = c.conversationId.split(":");
+      const [kind, studentId, tutorId, extra] = c.conversationId.split(":");
+      const recipientId = actorId === studentId ? tutorId : studentId;
+      const recipient = m.users.find((u) => u.id === recipientId);
       ensure(
-        kind === "dm" && (actorId === studentId || actorId === tutorId),
-        "Suhbatda qatnashish huquqingiz yo‘q.",
-      );
-      ensure(
-        m.users.some((u) => u.id === studentId && u.role === "student") &&
-          m.tutorProfiles.some(
-            (p) => p.userId === tutorId && p.verification === "approved",
-          ),
-        "Suhbat ishtirokchilari topilmadi.",
+        kind === "dm" && !extra && studentId !== tutorId &&
+          (actorId === studentId || actorId === tutorId) &&
+          recipient && canContactMessage(m, actor, recipient),
+        "Bu foydalanuvchiga yozish cheklangan.",
       );
       m.messages.push({
         id: uid("message"),

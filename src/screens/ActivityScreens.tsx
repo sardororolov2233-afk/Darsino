@@ -1,3 +1,4 @@
+import { readAccountSettings } from "../state/account";
 import { StudentPayments } from "../components/GroupPayments";
 import {
   FilterOptions,
@@ -224,7 +225,11 @@ function StudentLessonCard({ session }: { session: LessonSession }) {
           loading={action.busy}
           onPress={() =>
             action.run(
-              () => scheduleReminder(session),
+              () => {
+                if (!readAccountSettings(market.accountSettings?.[user.id]).lessonReminders)
+                  throw new Error("Avval sozlamalarda dars eslatmalarini yoqing.");
+                return scheduleReminder(session);
+              },
               () => action.setSuccess("Eslatma yoqildi."),
             )
           }
@@ -555,7 +560,9 @@ export function ConversationScreen({
         ) : undefined
       }
     >
-      <Header title={name} onBack={() => navigation.goBack()} />
+      <Header title={name} onBack={() => navigation.goBack()} right={
+        <Button title="Kontaktlar" icon="users" variant="soft" onPress={() => navigation.navigate("Contacts")} />
+      } />
       <AppText variant="caption" color={C.muted}>
         Dars va guruh bo‘yicha suhbat
       </AppText>
@@ -621,6 +628,7 @@ export function NotificationsScreen() {
           style={{ flex: 1 }}
         />
       </View>
+      <Button title="Takliflar" icon="user-plus" variant="soft" onPress={() => navigation.navigate("Invitations")} />
       <Feedback {...action} />
       {notifications.map((n) => (
         <Card key={n.id} style={{ borderColor: n.read ? C.border : C.gold }}>
@@ -724,241 +732,7 @@ export function ReviewScreen({
     </Screen>
   );
 }
-export function ProfileScreen() {
-  const {
-      user,
-      mode,
-      market,
-      tutors,
-      favorites,
-      signOut,
-      storageError,
-      syncError,
-    } = useApp(),
-    navigation = useAppNavigation(),
-    action = useAction();
-  const [saved, setSaved] = useState(false),
-    [logout, setLogout] = useState(false);
-  const tutor = market.tutorProfiles.find((p) => p.userId === user.id);
-  const learning = useLearning();
-  const stats = learningStats(learning.data);
-  return (
-    <Screen
-      top={
-        user.role === "student" ? (
-          <OqiHeader />
-        ) : user.role === "tutor" ? (
-          <TeacherHeader />
-        ) : undefined
-      }
-    >
-      <Header
-        title="Profil"
-        right={
-          <Button
-            title="Tahrirlash"
-            variant="soft"
-            onPress={() => navigation.navigate("EditProfile")}
-            style={{ minHeight: 44 }}
-          />
-        }
-      />
-      <Card style={{ alignItems: "center", padding: 24 }}>
-        <AvatarEditor />
-        <AppText variant="title">{user.name || "Ismingizni kiriting"}</AppText>
-        <AppText
-          variant="caption"
-          color={C.muted}
-          style={{ textAlign: "center" }}
-        >
-          {user.interests.join(" · ")}
-        </AppText>
-        <Chip
-          label={
-            user.role === "student"
-              ? "O‘quvchi"
-              : user.role === "tutor"
-                ? "Repetitor"
-                : "Moderator"
-          }
-          tone="gold"
-        />
-        <AppText variant="caption" color={C.muted}>
-          📍 {user.area || "Chilonzor"}, {user.city || "Toshkent"}
-        </AppText>
-      </Card>
-      <Button
-        title="Ruxsatlar va xotira"
-        icon="shield"
-        variant="soft"
-        onPress={() => navigation.navigate("Permissions")}
-      />
-      {user.role === "tutor" ? (
-        <>
-          <Button
-            title="Dars manzilini belgilash"
-            icon="map-pin"
-            variant="soft"
-            onPress={() => navigation.navigate("TutorLocation")}
-          />
-          <TeacherProfileSummary />
-        </>
-      ) : null}
-      {user.role === "student" ? (
-        <>
-          <View style={uiStyles.row}>
-            {[
-              { title: "Umumiy ball", value: `${stats.xp} XP` },
-              {
-                title: "Bilim Radari",
-                value: "Tez kunda",
-              },
-              {
-                title: "Uzluksiz o‘qish",
-                value: `${stats.streak} kun`,
-              },
-            ].map((item) => (
-              <Card
-                key={item.title}
-                style={{ flex: 1, paddingHorizontal: 4, alignItems: "center" }}
-              >
-                <AppText
-                  variant="label"
-                  style={{ color: C.navy, fontFamily: font.bold }}
-                >
-                  {item.value}
-                </AppText>
-                <AppText
-                  variant="caption"
-                  color={C.muted}
-                  style={{ fontSize: 10, textAlign: "center" }}
-                >
-                  {item.title}
-                </AppText>
-              </Card>
-            ))}
-          </View>
-          <Card style={{ backgroundColor: C.purpleSoft }}>
-            <Chip label="Tez kunda" tone="purple" />
-            <AppText variant="heading">
-              Bilim radari tez kunda ishga tushadi
-            </AppText>
-            <Button
-              title="Bilim radari va testlar"
-              variant="soft"
-              icon="target"
-              onPress={() => navigation.navigate("Main", { screen: "Radar" })}
-            />
-          </Card>
-          <Button
-            title="Suhbatlarim"
-            icon="message-circle"
-            variant="outline"
-            onPress={() => navigation.navigate("Chats")}
-          />
-          {learning.data.followedClubs.length ? (
-            <Card>
-              <AppText variant="heading">Kuzatayotgan klublarim</AppText>
-              {clubs
-                .filter((c) => learning.data.followedClubs.includes(c.id))
-                .map((c) => (
-                  <View key={c.id} style={uiStyles.row}>
-                    <Icon name={c.icon} size={16} color={c.color} />
-                    <AppText variant="caption">{c.title}</AppText>
-                  </View>
-                ))}
-            </Card>
-          ) : null}
-          <Card>
-            <AppText variant="heading">O‘qish maqsadi</AppText>
-            <AppText>{user.goal}</AppText>
-            <View style={uiStyles.wrap}>
-              {user.interests.map((s) => (
-                <Chip key={s} label={s} tone="purple" />
-              ))}
-            </View>
-          </Card>
-          <Button
-            title={`Saqlanganlar · ${favorites.length}`}
-            icon="heart"
-            variant="outline"
-            onPress={() => setSaved((v) => !v)}
-          />
-          {saved
-            ? tutors
-                .filter((t) => favorites.includes(t.id))
-                .map((t) => <TutorCard key={t.id} tutor={t} />)
-            : null}
-          {saved && !favorites.length ? (
-            <AppText color={C.muted}>
-              Yoqtirgan ustozlaringizni qidiruvdagi yurakcha bilan saqlang.
-            </AppText>
-          ) : null}
-        </>
-      ) : user.role === "tutor" ? (
-        <Card>
-          <Chip
-            label={verificationLabel[tutor?.verification || "draft"]}
-            tone={tutor?.verification === "approved" ? "green" : "gold"}
-          />
-          {tutor?.moderationNote ? (
-            <AppText color={C.muted}>{tutor.moderationNote}</AppText>
-          ) : null}
-          <Button
-            title="Repetitor profilini tahrirlash"
-            variant="soft"
-            onPress={() => navigation.navigate("TutorProfile")}
-          />
-        </Card>
-      ) : null}
-      <Button
-        title="Bildirishnomalar"
-        icon="bell"
-        variant="outline"
-        onPress={() => navigation.navigate("Notifications")}
-      />
-      {user.role === "tutor" ? <TeacherFinance /> : null}
-      <AppText variant="caption" color={C.muted}>
-        {mode === "demo"
-          ? "Sinov rejimi · ma’lumotlar shu qurilmada saqlanadi. Boshqa rolni tekshirish uchun hisobdan chiqib, o‘sha akkaunt emaili bilan kiring."
-          : "Supabase ulangan · ma’lumotlar akkauntingiz bilan sinxronlanadi."}
-      </AppText>
-      <Feedback
-        error={
-          storageError
-            ? "Ma’lumotni qurilmaga saqlashda xato. Sahifani yopishdan oldin saqlash imkoniyatini tekshiring."
-            : syncError || action.error
-        }
-      />
-      {logout ? (
-        <Card>
-          <AppText variant="heading">Hisobdan chiqasizmi?</AppText>
-          <View style={uiStyles.row}>
-            <Button
-              title="Qolish"
-              variant="outline"
-              onPress={() => setLogout(false)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              title="Chiqishni tasdiqlash"
-              loading={action.busy}
-              onPress={() => action.run(signOut)}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </Card>
-      ) : (
-        <Button
-          title="Hisobdan chiqish"
-          icon="log-out"
-          variant="soft"
-          onPress={() => setLogout(true)}
-        />
-      )}
-    </Screen>
-  );
-}
+export { CompactProfileScreen as ProfileScreen } from "./CompactProfileScreen";
 export function EditProfileScreen() {
   const { user, command } = useApp(),
     navigation = useAppNavigation(),

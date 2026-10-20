@@ -37,7 +37,14 @@ export function groupPaymentRows(
       .map((p) => [p.studentId, p]),
   );
   const users = new Map(market.users.map((u) => [u.id, u]));
-  return market.enrollments
+  const unique = new Map<string, Marketplace["enrollments"][number]>();
+  for (const e of market.enrollments) {
+    if (e.offeringId !== offeringId) continue;
+    const prior = unique.get(e.studentId);
+    if (!prior || (e.active && !prior.active) ||
+      (e.active === prior.active && e.createdAt > prior.createdAt)) unique.set(e.studentId, e);
+  }
+  return [...unique.values()]
     .filter((e) => {
       const recorded = payments.has(e.studentId);
       return (

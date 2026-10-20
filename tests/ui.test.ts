@@ -263,6 +263,7 @@ async function app(saved?: string, photoBrowserStubs = false) {
     )
       await click("Orqaga");
     await click(find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
+    await click("Sozlamalar");
     await click("Hisobdan chiqish");
     await click("Chiqishni tasdiqlash");
     await wait(() => find("O‘quvchi"), "signed out");
@@ -446,6 +447,7 @@ test(
         "profile tab loaded",
       );
       await ui.click(ui.find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
+      await ui.click("Tahrirlash");
       const choose = async () => {
         await ui.click(
           ui.find("Rasmni o‘zgartirish")
@@ -496,6 +498,7 @@ test(
         "profile tab loaded",
       );
       await ui.click(ui.find("Kabinet", "tab") ? "Kabinet" : "Profil", "tab");
+      await ui.click("Tahrirlash");
       await ui.click("Rasmni olib tashlash");
       await ui.wait(
         () => ui.text("Profil rasmi olib tashlandi."),

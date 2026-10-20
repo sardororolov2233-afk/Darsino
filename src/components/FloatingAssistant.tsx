@@ -1,3 +1,4 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -5,12 +6,10 @@ import {
   Modal,
   PanResponder,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
-  type ViewStyle,
-} from "react-native";
+  type ViewStyle} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Crypto from "expo-crypto";

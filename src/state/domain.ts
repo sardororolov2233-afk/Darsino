@@ -1,3 +1,4 @@
+import type { AccountCommand, AccountSettings, Contact, ContactRequest, UserBlock, GroupInvitation, AccountReport } from "./account";
 import type { StudyGroup, Tutor } from "../data/catalog";
 
 export type Role = "student" | "tutor" | "moderator";
@@ -5,6 +6,7 @@ export type VerificationStatus = "draft" | "pending" | "approved" | "rejected";
 export type RequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 export type User = {
   id: string;
+  publicId?: string;
   name: string;
   phone: string;
   email?: string;
@@ -170,6 +172,12 @@ export type Marketplace = {
   tutorDocuments?: TutorDocument[];
   lessonFiles?: LessonFile[];
   payments?: MonthlyPayment[];
+  accountSettings?: Record<string, AccountSettings>;
+  contacts?: Contact[];
+  contactRequests?: ContactRequest[];
+  blocks?: UserBlock[];
+  groupInvitations?: GroupInvitation[];
+  accountReports?: AccountReport[];
 };
 export type Filters = {
   subject: string;
@@ -205,6 +213,7 @@ export type RequestInput = Omit<
   "id" | "studentId" | "status" | "note" | "createdAt"
 >;
 export type MarketCommand =
+  | AccountCommand
   | {
       type: "profile";
       profile: ProfileInput;

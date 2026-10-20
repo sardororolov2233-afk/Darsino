@@ -84,6 +84,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
   await expect(
     page.getByText("Kuzatayotgan klublarim", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Sozlamalar", exact: true }).click();
   await page
     .getByRole("button", { name: "Hisobdan chiqish", exact: true })
     .click();
