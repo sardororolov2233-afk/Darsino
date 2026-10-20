@@ -10,11 +10,9 @@ import {
   uiStyles,
 } from "../components/ui";
 import { OqiHeader } from "../components/OqiHeader";
-import { RadarChart } from "../components/RadarChart";
 import { Feedback } from "../components/feedback";
 import { useApp } from "../state/AppContext";
 import { useLearning } from "../state/LearningContext";
-import { learningStats } from "../state/learning";
 import { useAppNavigation } from "../navigation";
 import { dateLabel, timeLabel } from "../state/domain";
 import { TutorCard, GroupCard } from "./DiscoveryScreens";
@@ -27,51 +25,44 @@ const subjects = [
     icon: "triangle" as const,
     emoji: "📐",
     color: "#EEF2FF",
-    count: 142,
   },
   {
     name: "Fizika",
     icon: "sun" as const,
     emoji: "⚛️",
     color: "#F3EFFE",
-    count: 86,
   },
   {
     name: "Ingliz tili",
     icon: "globe" as const,
     emoji: "🇬🇧",
     color: "#FFF7E5",
-    count: 215,
   },
   {
     name: "Kimyo",
     icon: "droplet" as const,
     emoji: "🧪",
     color: "#E8FAF2",
-    count: 64,
   },
   {
     name: "Dasturlash",
     icon: "code" as const,
     emoji: "💻",
     color: "#E7F6FD",
-    count: 118,
   },
   {
     name: "Tarix",
     icon: "columns" as const,
     emoji: "🏛️",
     color: "#FFF0F3",
-    count: 73,
   },
 ];
 
 export function HomeScreen() {
   const { user, market, tutors, groups, setFilters, mode, syncError } =
     useApp();
-  const { data, error } = useLearning();
+  const { error } = useLearning();
   const navigation = useAppNavigation();
-  const stats = learningStats(data);
   const ids = new Set(
     market.enrollments
       .filter((e) => e.studentId === user.id && e.active)
@@ -149,47 +140,24 @@ export function HomeScreen() {
         />
       </Card>
 
-      {/* 3. Bilim Radari & Rivojlanish (Dual Radar Preview) */}
-      <Card>
-        <View style={uiStyles.between}>
-          <View style={uiStyles.row}>
-            <Icon name="activity" color={C.green} />
-            <AppText variant="heading">Bilim Radari & Rivojlanish</AppText>
-          </View>
-          <Chip
-            label={stats.score !== null ? `${stats.score}%` : "84% (A’lo)"}
-            tone="purple"
-          />
+      <Card style={{ backgroundColor: C.purpleSoft }}>
+        <View style={uiStyles.row}>
+          <Icon name="target" color={C.purple} />
+          <AppText variant="heading" style={{ flex: 1 }}>
+            Bilim radari
+          </AppText>
+          <Chip label="Tez kunda" tone="purple" />
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View style={{ flex: 1.1 }}>
-            <RadarChart skills={stats.skills} compact />
-          </View>
-          <View style={{ flex: 1, gap: 8 }}>
-            <View style={uiStyles.row}>
-              <Icon name="trending-up" color={C.green} size={15} />
-              <AppText
-                variant="caption"
-                style={{ fontFamily: font.bold, color: C.green }}
-              >
-                +14% haftalik o‘sish
-              </AppText>
-            </View>
-            <AppText variant="caption" color={C.muted}>
-              ⚠️ Kuchsiz: Fizika (Optika)
-            </AppText>
-            <AppText variant="caption" color={C.muted}>
-              ⭐ Kuchli: Algebra (Logarifm)
-            </AppText>
-            <Button
-              title="Batafsil tahlil →"
-              icon="target"
-              variant="soft"
-              style={{ minHeight: 40, paddingHorizontal: 8 }}
-              onPress={() => navigation.navigate("Main", { screen: "Radar" })}
-            />
-          </View>
-        </View>
+        <AppText color={C.muted}>
+          Bilim radari tez kunda ishga tushadi. Hozir ustoz yuborgan testlarni
+          bajarishingiz mumkin.
+        </AppText>
+        <Button
+          title="Radar va testlar"
+          icon="arrow-up-right"
+          variant="soft"
+          onPress={() => navigation.navigate("Main", { screen: "Radar" })}
+        />
       </Card>
 
       {/* 4. Fanlar Olami (6 Categories from Prototype) */}
@@ -241,7 +209,12 @@ export function HomeScreen() {
               {s.name}
             </AppText>
             <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-              {s.count} ustoz
+              {
+                tutors.filter((t) =>
+                  (t.subjects || [t.subject]).includes(s.name),
+                ).length
+              }{" "}
+              ustoz
             </AppText>
           </Pressable>
         ))}
@@ -289,10 +262,11 @@ export function HomeScreen() {
               variant="caption"
               style={{ fontFamily: font.bold, color: C.navy }}
             >
-              Chilonzor, Toshkent
+              {user.area}, {user.city}
             </AppText>
             <AppText variant="caption" color={C.muted}>
-              12 ta ustoz yaqin atrofingizda
+              {tutors.filter((t) => t.area === user.area).length} ustoz sizning
+              hududingizda
             </AppText>
           </View>
         </View>

@@ -25,7 +25,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
             size={18}
           />
           <AppText variant="label" color={color}>
-            Radar topshirig‘i
+            Test topshirig‘i
           </AppText>
         </View>
         <AppText color={color}>{payload.title}</AppText>

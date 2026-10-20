@@ -25,7 +25,7 @@ export type RootStackParamList = {
   Chats: undefined;
   Quiz: { id: string; invitationMessageId?: string };
   Applications: { offeringId?: string } | undefined;
-  AssignDiagnostic: { offeringId?: string } | undefined;
+  AssignDiagnostic: { offeringId?: string; studentId?: string } | undefined;
   PlanRoom: { roomId: string };
   CreateClub: undefined;
   OpenLesson: { id: string };

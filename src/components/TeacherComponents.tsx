@@ -1,6 +1,8 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import Svg, { Polygon, Line, Text as SvgText } from "react-native-svg";
+import { RadarChart } from "./RadarChart";
+import { FilterSelect } from "./FilterControls";
+import { monthLabel, paymentMonth, paymentSummary } from "../state/payments";
 import type Feather from "@expo/vector-icons/Feather";
 import { Brand } from "./Brand";
 import { AppText, Button, Card, Chip, Icon, uiStyles } from "./ui";
@@ -10,7 +12,7 @@ import { useAppNavigation } from "../navigation";
 import { C, font } from "../theme";
 import { assessmentSummary } from "../state/assessments";
 import { isClubOffering, teacherOverview } from "../state/teacher";
-import type { Offering } from "../state/domain";
+import { dateLabel, timeLabel, type Offering } from "../state/domain";
 import { formatPrice } from "../data/catalog";
 
 export function TeacherHeader() {
@@ -31,23 +33,15 @@ export function TeacherHeader() {
           onPress={() => navigation.popTo("Main", { screen: "Home" })}
           style={styles.brandButton}
         >
-          <Brand width={96} light />
+          <Brand width={80} light />
         </Pressable>
-        <View style={styles.roleBadge}>
-          <AppText
-            variant="caption"
-            style={{ fontFamily: font.extra, fontSize: 10, color: "#0B1E47" }}
-          >
-            USTOZ PRO
-          </AppText>
-        </View>
         <View style={{ flex: 1 }} />
         <Button
           title="Test berish"
           icon="target"
           variant="gold"
           onPress={() => navigation.navigate("AssignDiagnostic")}
-          style={{ minHeight: 36, paddingHorizontal: 10, borderRadius: 12 }}
+          style={{ minHeight: 44, paddingHorizontal: 10, borderRadius: 12 }}
         />
         <Pressable
           accessibilityRole="button"
@@ -62,11 +56,22 @@ export function TeacherHeader() {
       <View style={uiStyles.between}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <AppText variant="label" color={C.white} numberOfLines={1}>
-            {user.name || "Aliyev Temur"}
+            {user.name || "Ismingizni kiriting"}
           </AppText>
           <AppText variant="caption" color="#C6D5F1" numberOfLines={1}>
-            {profile?.subjects.join(" · ") || "Matematika"} • ⭐ 4.95
+            {profile?.subjects.join(" · ") || "Mutaxassislikni kiriting"}
           </AppText>
+        </View>
+        <View style={styles.row}>
+          <Chip label="Ustoz" tone="gold" />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Chatni ochish"
+            onPress={() => navigation.navigate("Chats")}
+            style={styles.action}
+          >
+            <Icon name="message-circle" color={C.white} size={18} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -95,8 +100,9 @@ export function TeacherMetric({
   return (
     <Card
       style={{
-        flexBasis: "47%",
+        flexBasis: "46%",
         flexGrow: 1,
+        minWidth: 0,
         padding: 13,
         gap: 6,
         backgroundColor: dark ? C.navy : C.white,
@@ -123,11 +129,11 @@ export function TeacherMetric({
           <Icon name={icon} color={dark ? C.mint : C.purple} size={16} />
         </View>
       </View>
-      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+      <View style={{ gap: 6 }}>
         <AppText
           variant="title"
           color={dark ? C.mint : C.ink}
-          style={{ fontSize: 20, fontFamily: font.extra }}
+          style={{ fontSize: 18, fontFamily: font.extra }}
         >
           {value}
         </AppText>
@@ -178,224 +184,58 @@ export function TeacherRadar({
   onSelect?: (id: string) => void;
   compact?: boolean;
 }) {
-  const { market, user } = useApp();
-  const navigation = useAppNavigation();
+  const { market, user } = useApp(),
+    navigation = useAppNavigation();
   const classes = market.offerings.filter((g) => g.tutorId === user.id);
-  const selectedGroup = classes.find((g) => g.id === offeringId);
-  const currentRadarPoints =
-    selectedGroup?.radarPoints || "100,22 166,64 140,138 60,138 34,64";
-
+  const summary = assessmentSummary(market, user.id, offeringId);
   return (
-    <Card style={{ borderRadius: 24, padding: 16 }}>
-      <View style={[uiStyles.between, { flexWrap: "wrap", marginBottom: 4 }]}>
-        <View style={{ flex: 1, minWidth: 160 }}>
-          <AppText variant="heading" style={{ fontSize: 14 }}>
-            🎯 O‘quvchilar O‘zlashtirish Radari
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            Oxirgi diagnostik test natijalari bo‘yicha mavzular tahlili
-          </AppText>
-        </View>
-        <Button
-          title="+ Test tayinlash"
-          variant="soft"
-          style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10 }}
-          onPress={() =>
-            navigation.navigate(
-              "AssignDiagnostic",
-              offeringId === "all" ? {} : { offeringId },
-            )
-          }
-        />
-      </View>
-
+    <Card>
+      <AppText variant="heading">O‘quvchilar test tahlili</AppText>
       {onSelect ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
-        >
-          <Chip
-            label="Barcha guruhlar (72)"
-            selected={offeringId === "all"}
-            onPress={() => onSelect("all")}
-          />
-          {classes.map((g) => (
-            <Chip
-              key={g.id}
-              label={`${g.title.split(" ")[0]} (${g.mastery || 88}%)`}
-              selected={offeringId === g.id}
-              onPress={() => onSelect(g.id)}
-            />
-          ))}
-        </ScrollView>
+        <FilterSelect
+          label="Tahlil uchun guruh"
+          value={offeringId}
+          onChange={onSelect}
+          options={[
+            { value: "all", label: "Barcha guruhlar" },
+            ...classes.map((g) => ({ value: g.id, label: g.title })),
+          ]}
+        />
       ) : null}
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-          marginTop: 8,
-        }}
-      >
-        <View
-          style={{
-            width: 155,
-            height: 140,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Svg viewBox="0 0 200 170" width="100%" height="100%">
-            <Polygon
-              points="100,15 172,62 145,145 55,145 28,62"
-              fill="#F8FAFC"
-              stroke="#CBD5E1"
-              strokeWidth="1.5"
+      {summary.total ? (
+        <>
+          <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
+            <AppText variant="title" color={C.green}>
+              {summary.score}%
+            </AppText>
+            <Chip
+              label={`${summary.results.length} ta ulashilgan natija`}
+              tone="purple"
             />
-            <Polygon
-              points="100,40 148,72 130,126 70,126 52,72"
-              fill="none"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Line
-              x1="100"
-              y1="88"
-              x2="100"
-              y2="15"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Line
-              x1="100"
-              y1="88"
-              x2="172"
-              y2="62"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Line
-              x1="100"
-              y1="88"
-              x2="145"
-              y2="145"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Line
-              x1="100"
-              y1="88"
-              x2="55"
-              y2="145"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Line
-              x1="100"
-              y1="88"
-              x2="28"
-              y2="62"
-              stroke="#E2E8F0"
-              strokeWidth="1"
-            />
-            <Polygon
-              points={currentRadarPoints}
-              fill="rgba(16, 185, 129, 0.25)"
-              stroke="#10B981"
-              strokeWidth="2.5"
-            />
-            <SvgText
-              x="100"
-              y="11"
-              textAnchor="middle"
-              fill="#334155"
-              fontSize="9"
-              fontWeight="bold"
-            >
-              Algebra
-            </SvgText>
-            <SvgText
-              x="175"
-              y="65"
-              textAnchor="start"
-              fill="#475569"
-              fontSize="8"
-              fontWeight="bold"
-            >
-              Geometriya
-            </SvgText>
-            <SvgText
-              x="145"
-              y="158"
-              textAnchor="middle"
-              fill="#475569"
-              fontSize="8"
-              fontWeight="bold"
-            >
-              Logarifm
-            </SvgText>
-            <SvgText
-              x="55"
-              y="158"
-              textAnchor="middle"
-              fill="#E11D48"
-              fontSize="8"
-              fontWeight="bold"
-            >
-              Trigonometriya
-            </SvgText>
-            <SvgText
-              x="25"
-              y="65"
-              textAnchor="end"
-              fill="#475569"
-              fontSize="8"
-              fontWeight="bold"
-            >
-              Mantiq
-            </SvgText>
-          </Svg>
-        </View>
-
-        <View style={{ flex: 1, gap: 7 }}>
-          {[
-            { topic: "Algebra & Tenglamalar", pct: 94, color: C.accent },
-            { topic: "Logarifm & Hosila", pct: 88, color: C.purple },
-            { topic: "Planimetriya", pct: 82, color: "#3B82F6" },
-            { topic: "Trigonometriya (Zaif)", pct: 68, color: "#E11D48" },
-          ].map((item) => (
-            <View key={item.topic} style={{ gap: 2 }}>
-              <View style={uiStyles.between}>
-                <AppText
-                  variant="caption"
-                  style={{ fontSize: 10, fontFamily: font.bold, flex: 1 }}
-                  numberOfLines={1}
-                >
-                  {item.topic}
-                </AppText>
-                <AppText
-                  variant="caption"
-                  style={{ fontSize: 10, fontFamily: font.extra }}
-                >
-                  {item.pct}%
-                </AppText>
-              </View>
-              <View style={styles.track}>
-                <View
-                  style={{
-                    height: 5,
-                    width: `${item.pct}%`,
-                    backgroundColor: item.color,
-                    borderRadius: 3,
-                  }}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
-      </View>
+          </View>
+          {!compact ? <RadarChart skills={summary.skills} /> : null}
+          <AppText variant="caption" color={C.muted}>
+            {summary.total} savoldan {summary.correct} tasi to‘g‘ri. Har bir
+            o‘quvchining guruhdagi oxirgi ulashilgan natijasi hisoblanadi.
+          </AppText>
+        </>
+      ) : (
+        <AppText color={C.muted}>
+          Hali natijalar ulashilmagan. O‘quvchilarga test yuboring; ulashilgan
+          javoblar shu yerda ko‘rinadi.
+        </AppText>
+      )}
+      <Button
+        title="Test tayinlash"
+        icon="send"
+        variant="soft"
+        onPress={() =>
+          navigation.navigate(
+            "AssignDiagnostic",
+            offeringId === "all" ? {} : { offeringId },
+          )
+        }
+      />
     </Card>
   );
 }
@@ -407,209 +247,108 @@ export function TeacherGroupCard({
   group: Offering;
   onManage?: () => void;
 }) {
-  const navigation = useAppNavigation();
-  const studentsCount = (group as any).studentsCount || group.students || 14;
-  const maxQuota = (group as any).maxQuota || group.capacity || 20;
-  const fillPct = Math.min(100, Math.round((studentsCount / maxQuota) * 100));
-
+  const { market } = useApp(),
+    navigation = useAppNavigation();
+  const active = market.enrollments.filter(
+    (e) => e.offeringId === group.id && e.active,
+  ).length;
+  const total = group.enrolledCount ?? active + group.reservedSeats;
+  const fill = Math.min(100, Math.round((100 * total) / group.capacity));
+  const next = market.sessions
+    .filter(
+      (s) => s.offeringId === group.id && Date.parse(s.endsAt) > Date.now(),
+    )
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
   return (
-    <Card style={{ borderRadius: 24, padding: 16, gap: 10 }}>
-      <View style={[uiStyles.between, { alignItems: "flex-start" }]}>
-        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-          <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-            <View
-              style={[
-                styles.pill,
-                {
-                  backgroundColor:
-                    group.mode === "Onlayn" || group.mode === "Online"
-                      ? "#F3EFFE"
-                      : "#EEF2FF",
-                },
-              ]}
-            >
-              <AppText
-                variant="caption"
-                style={{
-                  fontSize: 10,
-                  fontFamily: font.extra,
-                  color: C.purple,
-                }}
-              >
-                {group.mode}
-              </AppText>
-            </View>
-            <View
-              style={[
-                styles.pill,
-                {
-                  backgroundColor:
-                    (group.isOpenForEnrollment ?? group.published)
-                      ? "#ECFDF5"
-                      : "#F1F5F9",
-                },
-              ]}
-            >
-              <AppText
-                variant="caption"
-                style={{
-                  fontSize: 10,
-                  fontFamily: font.bold,
-                  color:
-                    (group.isOpenForEnrollment ?? group.published)
-                      ? C.green
-                      : C.muted,
-                }}
-              >
-                {(group.isOpenForEnrollment ?? group.published)
-                  ? "● Qabul ochiq"
-                  : "Qabul to‘lgan"}
-              </AppText>
-            </View>
-          </View>
-          <AppText variant="heading" style={{ fontSize: 14 }}>
-            {group.title}
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
-            📅 {group.days} | {group.time}
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
-            📍 {group.room || group.location}
-          </AppText>
-        </View>
-
-        <View style={{ alignItems: "flex-end", gap: 2 }}>
-          <View style={styles.masteryPill}>
-            <AppText
-              variant="caption"
-              style={{ fontSize: 11, fontFamily: font.extra, color: C.green }}
-            >
-              Radar: {group.mastery || 89}%
-            </AppText>
-          </View>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            {group.monthlyFee || formatPrice(group.price)}
-          </AppText>
-        </View>
+    <Card>
+      <View style={uiStyles.wrap}>
+        <Chip label={group.mode} tone="purple" />
+        <Chip
+          label={group.published ? "Qabul ochiq" : "Qabul yopiq"}
+          tone={group.published ? "green" : undefined}
+        />
+        {isClubOffering(group) ? <Chip label="Klub" tone="gold" /> : null}
       </View>
-
-      <View style={{ gap: 4 }}>
-        <View style={uiStyles.between}>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 11 }}>
-            O‘quvchilar kvotasi: {studentsCount} / {maxQuota} nafar
-          </AppText>
-          <AppText
-            variant="caption"
-            style={{ fontSize: 11, fontFamily: font.bold, color: C.purple }}
-          >
-            {fillPct}% to‘lgan
-          </AppText>
-        </View>
-        <View style={styles.track}>
-          <View
-            style={{
-              height: 6,
-              width: `${fillPct}%`,
-              backgroundColor: C.accent,
-              borderRadius: 3,
-            }}
-          />
-        </View>
-      </View>
-
-      <View
-        style={[
-          uiStyles.between,
-          { paddingTop: 8, borderTopWidth: 1, borderTopColor: C.border },
-        ]}
-      >
-        <AppText
-          variant="caption"
-          color={C.muted}
-          style={{ flex: 1, fontSize: 10 }}
-          numberOfLines={1}
-        >
-          Keyingi dars:{" "}
-          <AppText
-            variant="caption"
-            style={{ fontFamily: font.bold, fontSize: 10 }}
-          >
-            {group.nextTopic || "Logarifmik tengsizliklar"}
-          </AppText>
+      <AppText variant="heading">{group.title}</AppText>
+      <AppText variant="caption" color={C.muted}>
+        {group.days} · {group.time}
+      </AppText>
+      <AppText variant="caption" color={C.muted}>
+        {group.location}
+      </AppText>
+      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
+        <AppText variant="label">{formatPrice(group.price)} / oy</AppText>
+        <AppText variant="caption" color={C.muted}>
+          {total}/{group.capacity} o‘rin
         </AppText>
-        <Button
-          title="Boshqarish"
-          icon="arrow-up-right"
-          variant="soft"
-          style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 12 }}
-          onPress={
-            onManage ||
-            (() => navigation.navigate("ManageClass", { id: group.id }))
-          }
+      </View>
+      <View style={styles.track}>
+        <View
+          style={{
+            height: 6,
+            width: `${fill}%`,
+            backgroundColor: C.accent,
+            borderRadius: 3,
+          }}
         />
       </View>
+      <AppText variant="caption" color={C.muted}>
+        {active} faol o‘quvchi
+        {group.reservedSeats
+          ? ` · ${group.reservedSeats} katalogda band o‘rin`
+          : ""}
+      </AppText>
+      <AppText variant="caption" color={C.muted}>
+        {next
+          ? `Keyingi dars: ${dateLabel(next.startsAt)} · ${timeLabel(next.startsAt)}`
+          : "Kelgusi dars belgilanmagan"}
+      </AppText>
+      <Button
+        title="Boshqarish"
+        accessibilityLabel={`${group.title.replace(/\s+guruhi$/i, "")} guruhini boshqarish`}
+        icon="arrow-up-right"
+        variant="soft"
+        onPress={
+          onManage ||
+          (() => navigation.navigate("ManageClass", { id: group.id }))
+        }
+      />
     </Card>
   );
 }
 
 export function TeacherFinance() {
-  const { data, error } = useTeacher();
-  const cost = data.roomPlans.reduce(
-    (sum, plan) => sum + plan.estimatedCost,
-    0,
-  );
-  const navigation = useAppNavigation();
-
+  const { data } = useTeacher(),
+    { market, user } = useApp(),
+    navigation = useAppNavigation();
+  const month = paymentMonth(),
+    summary = paymentSummary(market, user.id, month);
+  const cost = data.roomPlans
+    .filter((p) => paymentMonth(new Date(p.startsAt)) === month)
+    .reduce((sum, p) => sum + p.estimatedCost, 0);
   return (
-    <Card
-      style={{
-        backgroundColor: C.navy,
-        borderColor: C.navy,
-        padding: 18,
-        borderRadius: 24,
-        gap: 10,
-      }}
-    >
-      <View style={uiStyles.between}>
-        <View style={{ gap: 2 }}>
-          <AppText
-            variant="caption"
-            color="#C6D5F1"
-            style={{ fontSize: 10, fontFamily: font.bold }}
-          >
-            USTOZ HAMYONI (OKTABR OYI)
-          </AppText>
-          <AppText
-            variant="title"
-            color={C.mint}
-            style={{ fontSize: 22, fontFamily: font.extra }}
-          >
-            24 850 000 so‘m
-          </AppText>
-        </View>
-        <Button
-          title="Kartaga yechish"
-          variant="gold"
-          onPress={() => {}}
-          style={{ minHeight: 38, paddingHorizontal: 12, borderRadius: 12 }}
-        />
-      </View>
-      <View
-        style={[
-          uiStyles.between,
-          { paddingTop: 8, borderTopWidth: 1, borderTopColor: "#FFFFFF15" },
-        ]}
-      >
-        <AppText variant="caption" color="#D0DEF5" style={{ fontSize: 11 }}>
-          O‘quv xonalari ijarasi xarajati:
-        </AppText>
-        <AppText
-          variant="caption"
-          style={{ fontSize: 11, fontFamily: font.bold, color: C.amber }}
-        >
-          -{cost ? formatPrice(cost) : "1 850 000 so‘m"}
-        </AppText>
-      </View>
+    <Card style={{ backgroundColor: C.navy, borderColor: C.navy }}>
+      <AppText variant="caption" color="#C6D5F1">
+        Oylik hisobot · {monthLabel(month)}
+      </AppText>
+      <AppText variant="title" color={C.mint}>
+        {formatPrice(summary.received)}
+      </AppText>
+      <AppText variant="caption" color={C.white}>
+        To‘langan · {summary.paidCount} o‘quvchi
+      </AppText>
+      <AppText variant="caption" color="#C6D5F1">
+        To‘lov qoldig‘i: {formatPrice(summary.outstanding)}
+      </AppText>
+      <AppText variant="caption" color="#C6D5F1">
+        Xona rejalari xarajati: {formatPrice(cost)} · taxminiy
+      </AppText>
+      <Button
+        title="Guruhlar va to‘lovlar"
+        variant="gold"
+        icon="credit-card"
+        onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+      />
     </Card>
   );
 }
@@ -617,66 +356,43 @@ export function TeacherFinance() {
 export function TeacherProfileSummary() {
   const { market, user } = useApp();
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
-
+  const overview = teacherOverview(market, user.id),
+    reviews = market.reviews.filter((r) => r.tutorId === user.id);
+  const rating = reviews.length
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(
+        1,
+      )
+    : "—";
   return (
-    <Card
-      style={{ borderRadius: 24, padding: 18, alignItems: "center", gap: 10 }}
-    >
-      <View style={styles.topBadge}>
-        <AppText
-          variant="caption"
-          style={{ color: "#0B1E47", fontSize: 9, fontFamily: font.extra }}
-        >
-          TOP 1%
-        </AppText>
-      </View>
-      <AppText variant="title" style={{ fontSize: 18, textAlign: "center" }}>
-        {user.name || "Aliyev Temur"}
+    <Card style={{ alignItems: "center" }}>
+      <Chip
+        label={
+          profile?.verification === "approved"
+            ? "Tasdiqlangan ustoz"
+            : "Profil tekshiruvi"
+        }
+        tone="gold"
+      />
+      <AppText variant="heading" style={{ textAlign: "center" }}>
+        {user.name}
       </AppText>
       <AppText
         variant="caption"
         color={C.purple}
-        style={{ fontFamily: font.bold, textAlign: "center", fontSize: 11 }}
+        style={{ textAlign: "center" }}
       >
-        {profile?.specialty ||
-          "Matematika, Mantiq & SAT Math Mentori (7 yil tajriba)"}
+        {profile?.specialty || "Mutaxassislik kiritilmagan"}
       </AppText>
-
-      <View
-        style={[
-          uiStyles.row,
-          {
-            width: "100%",
-            paddingTop: 12,
-            borderTopWidth: 1,
-            borderTopColor: C.border,
-          },
-        ]}
-      >
-        <View style={{ flex: 1, alignItems: "center", gap: 2 }}>
-          <AppText variant="title" style={{ fontSize: 15 }}>
-            ⭐ 4.95
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            214 ta sharh
-          </AppText>
-        </View>
-        <View style={{ flex: 1, alignItems: "center", gap: 2 }}>
-          <AppText variant="title" color={C.green} style={{ fontSize: 15 }}>
-            96%
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            Grand/Talaba bo‘lgan
-          </AppText>
-        </View>
-        <View style={{ flex: 1, alignItems: "center", gap: 2 }}>
-          <AppText variant="title" color={C.purple} style={{ fontSize: 15 }}>
-            72 nafar
-          </AppText>
-          <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
-            Faol o‘quvchi
-          </AppText>
-        </View>
+      <View style={uiStyles.wrap}>
+        <Chip label={`Reyting ${rating} · ${reviews.length} sharh`} />
+        <Chip
+          label={`${overview.studentIds.size} faol o‘quvchi`}
+          tone="green"
+        />
+        <Chip
+          label={`${overview.classes.length} guruh va dars`}
+          tone="purple"
+        />
       </View>
     </Card>
   );

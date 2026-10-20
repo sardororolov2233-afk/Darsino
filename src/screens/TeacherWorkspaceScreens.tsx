@@ -1,3 +1,9 @@
+import {
+  FilterPanel,
+  FilterSelect,
+  FilterOptions,
+  filterChoices,
+} from "../components/FilterControls";
 import React, { useState, useRef } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
@@ -14,13 +20,7 @@ import {
   uid,
   dmId,
 } from "../state/domain";
-import {
-  rooms,
-  formatPrice,
-  type StudyRoom,
-  INITIAL_BOOKINGS,
-  INITIAL_TEACHER_CLUBS,
-} from "../data/catalog";
+import { rooms, formatPrice, type StudyRoom } from "../data/catalog";
 import { diagnostics } from "../data/learning";
 import {
   encodeAssessment,
@@ -111,7 +111,7 @@ function RoomCard({ room }: { room: StudyRoom }) {
           </AppText>
         </View>
         <Button
-          title="Bron qilish"
+          title="Reja tuzish"
           accessibilityLabel={`${room.title}: xona rejasini tuzish`}
           variant="gold"
           icon="calendar"
@@ -143,73 +143,41 @@ export function TeacherRoomsScreen() {
         va boshqarish.
       </AppText>
 
-      {/* Prototype Active Bookings Banner */}
-      <Card
-        style={{
-          backgroundColor: "#F0FDF4",
-          borderColor: "#86EFAC",
-          borderWidth: 1,
+      <FilterOptions
+        label="Ko‘rinish"
+        options={filterChoices(["Ro‘yxat", "Xarita"])}
+        value={view}
+        onChange={setView}
+      />
+      <FilterPanel
+        count={Number(district !== "Barchasi") + Number(capacity !== 0)}
+        onReset={() => {
+          setDistrict("Barchasi");
+          setCapacity(0);
         }}
       >
-        <View style={uiStyles.between}>
-          <View style={uiStyles.row}>
-            <Icon name="check-circle" color={C.green} size={18} />
-            <AppText variant="label" style={{ color: C.green }}>
-              Faol band qilingan xonalar ({INITIAL_BOOKINGS.length})
-            </AppText>
-          </View>
-          <Chip label="Tasdiqlangan ✓" tone="green" />
-        </View>
-        <AppText variant="heading">{INITIAL_BOOKINGS[0].roomName}</AppText>
-        <AppText variant="caption" color={C.muted}>
-          Guruh: {INITIAL_BOOKINGS[0].groupName}
-        </AppText>
-        <AppText variant="caption" color={C.muted}>
-          📅 {INITIAL_BOOKINGS[0].date} | ⏰ {INITIAL_BOOKINGS[0].timeSlot}
-        </AppText>
-        <AppText variant="label" style={{ color: C.navy, marginTop: 4 }}>
-          {INITIAL_BOOKINGS[0].totalPrice}
-        </AppText>
-      </Card>
-
-      <View style={uiStyles.wrap}>
-        {["Ro‘yxat", "Xarita"].map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            icon={v === "Xarita" ? "map" : "list"}
-            selected={view === v}
-            onPress={() => setView(v)}
-          />
-        ))}
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 6 }}
-      >
-        {["Barchasi", "Chilonzor", "Yunusobod", "Mirobod", "Shayxontohur"].map(
-          (d) => (
-            <Chip
-              key={d}
-              label={d}
-              icon="map-pin"
-              selected={district === d}
-              onPress={() => setDistrict(d)}
-            />
-          ),
-        )}
-      </ScrollView>
-      <View style={uiStyles.wrap}>
-        {[0, 10, 16, 25].map((n) => (
-          <Chip
-            key={n}
-            label={n ? `Min. ${n} o‘rin` : "Barcha sig‘imlar"}
-            selected={capacity === n}
-            onPress={() => setCapacity(n)}
-          />
-        ))}
-      </View>
+        <FilterSelect
+          label="Hudud"
+          value={district}
+          onChange={setDistrict}
+          options={filterChoices([
+            "Barchasi",
+            ...new Set(rooms.map((r) => r.district || r.area)),
+          ])}
+        />
+        <FilterOptions
+          label="Xona sig‘imi"
+          value={String(capacity)}
+          onChange={(v) => setCapacity(Number(v))}
+          options={[0, 10, 16, 25].map((n) => ({
+            value: String(n),
+            label: n ? `Kamida ${n} o‘rin` : "Barcha sig‘imlar",
+          }))}
+        />
+      </FilterPanel>
+      <AppText variant="caption" color={C.muted}>
+        {list.length} xona topildi · {data.roomPlans.length} saqlangan reja
+      </AppText>
       {view === "Xarita" && list.length ? (
         <Card>
           <AppText variant="caption" color={C.muted}>
@@ -262,8 +230,8 @@ export function TeacherRoomsScreen() {
                 onPress={() => setActiveId(r.id)}
                 style={{
                   position: "absolute",
-                  left: r.area === "Yunusobod" ? "61%" : "27%",
-                  top: r.area === "Yunusobod" ? "20%" : "60%",
+                  left: `${8 + (rooms.findIndex((room) => room.id === r.id) % 3) * 31}%`,
+                  top: `${10 + Math.floor(rooms.findIndex((room) => room.id === r.id) / 3) * (58 / Math.max(1, Math.ceil(rooms.length / 3) - 1))}%`,
                   width: 44,
                   height: 44,
                   borderWidth: 3,
@@ -438,12 +406,16 @@ export function PlanRoomScreen({
 export function TeacherClubsScreen() {
   const { market, user, requests } = useApp();
   const navigation = useAppNavigation();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(""),
+    [status, setStatus] = useState("Barchasi");
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
   const userClubs = market.offerings.filter(
     (g) =>
       g.tutorId === user.id &&
       isClubOffering(g) &&
+      (status === "Barchasi" ||
+        (status === "Ochiq" && g.published) ||
+        (status === "Yopiq" && !g.published)) &&
       matchesSearch(`${g.title} ${g.subject}`, query),
   );
   return (
@@ -472,68 +444,15 @@ export function TeacherClubsScreen() {
         onChangeText={setQuery}
       />
 
-      {/* Prototype clubs */}
-      {INITIAL_TEACHER_CLUBS.map((c) => (
-        <Card key={c.id}>
-          <View style={uiStyles.between}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                flex: 1,
-              }}
-            >
-              <AppText style={{ fontSize: 22 }}>{c.icon}</AppText>
-              <View style={{ flex: 1 }}>
-                <AppText variant="heading">{c.title}</AppText>
-                <AppText variant="caption" color={C.muted}>
-                  {c.type}
-                </AppText>
-              </View>
-            </View>
-            <Chip label={c.badge} tone="gold" />
-          </View>
-          <View style={{ gap: 4, marginVertical: 4 }}>
-            <AppText variant="caption" color={C.muted}>
-              ⏰ {c.schedule}
-            </AppText>
-            <AppText variant="caption" color={C.muted}>
-              📍 {c.location}
-            </AppText>
-            <AppText variant="caption" color={C.muted}>
-              👥 {c.membersCount} nafar a’zo • {c.pendingRequests} ta yangi
-              ariza
-            </AppText>
-            <AppText
-              variant="caption"
-              style={{ fontFamily: font.bold, color: C.navy }}
-            >
-              💵 {c.fee}
-            </AppText>
-          </View>
-          <View style={uiStyles.row}>
-            <Button
-              title={`Arizalar (${c.pendingRequests})`}
-              icon="inbox"
-              variant="outline"
-              style={{ flex: 1 }}
-              onPress={() =>
-                navigation.navigate("Applications", { offeringId: c.id })
-              }
-            />
-            <Button
-              title="Guruhga xabar"
-              icon="send"
-              variant="soft"
-              style={{ flex: 1 }}
-              onPress={() => navigation.navigate("Chats")}
-            />
-          </View>
-        </Card>
-      ))}
-
-      {/* Dynamically created clubs */}
+      <FilterOptions
+        label="Klub holati"
+        value={status}
+        onChange={setStatus}
+        options={filterChoices(["Barchasi", "Ochiq", "Yopiq"])}
+      />
+      <AppText variant="caption" color={C.muted}>
+        {userClubs.length} ta klub
+      </AppText>
       {userClubs.map((g) => (
         <View key={g.id} style={{ gap: 8 }}>
           <TeacherGroupCard group={g} />
@@ -547,6 +466,13 @@ export function TeacherClubsScreen() {
           />
         </View>
       ))}
+      {!userClubs.length ? (
+        <EmptyState
+          title="Klub topilmadi"
+          subtitle="Yangi klub oching yoki qidiruv va holat filtrini o‘zgartiring."
+          icon="award"
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -716,17 +642,25 @@ export function AssignDiagnosticScreen({
     [sent, setSent] = useState(0),
     [finished, setFinished] = useState(false);
   const inviteIds = useRef(new Map<string, string>());
-  const members = [
+  const delivered = useRef(new Set<string>());
+  const [recipient, setRecipient] = useState(route.params?.studentId || "all");
+  const allMembers = [
     ...new Set(
       market.enrollments
         .filter((e) => e.active && e.offeringId === offeringId)
         .map((e) => e.studentId),
     ),
   ];
+  const members = allMembers.filter(
+    (id) => recipient === "all" || id === recipient,
+  );
   const test = diagnostics.find((t) => t.id === testId)!;
   return (
     <Screen>
-      <Header title="Guruhga radar testi" onBack={() => navigation.goBack()} />
+      <Header
+        title="O‘quvchilarga test yuborish"
+        onBack={() => navigation.goBack()}
+      />
       <AppText color={C.muted}>
         Test chat orqali har bir faol o‘quvchiga yuboriladi. O‘quvchi natijani
         o‘zi ulashadi.
@@ -735,43 +669,53 @@ export function AssignDiagnosticScreen({
         label="Test topshirig‘i nomi"
         value={title}
         onChangeText={setTitle}
-        editable={!action.busy && !finished}
+        editable={!action.busy && !finished && sent === 0}
         maxLength={120}
       />
-      <AppText variant="label">Guruhni tanlang</AppText>
-      <View style={uiStyles.wrap}>
-        {groups.map((g) => (
-          <Chip
-            key={g.id}
-            label={g.title}
-            selected={offeringId === g.id}
-            onPress={
-              !action.busy && !finished
-                ? () => {
-                    setOfferingId(g.id);
-                    setSent(0);
-                  }
-                : undefined
-            }
-          />
-        ))}
-      </View>
-      <AppText variant="label">Testni tanlang</AppText>
-      {diagnostics.map((t) => (
-        <Chip
-          key={t.id}
-          label={`${t.title} · ${t.questions.length} savol`}
-          selected={testId === t.id}
-          onPress={
-            !action.busy && !finished
-              ? () => {
-                  setTestId(t.id);
-                  setSent(0);
-                }
-              : undefined
-          }
-        />
-      ))}
+      <FilterSelect
+        label="Guruhni tanlang"
+        value={offeringId}
+        onChange={(id) => {
+          setOfferingId(id);
+          setRecipient("all");
+          setSent(0);
+        }}
+        disabled={action.busy || finished || sent > 0}
+        options={groups.map((g) => ({ value: g.id, label: g.title }))}
+      />
+      <FilterSelect
+        label="Kimga yuboriladi"
+        value={recipient}
+        onChange={(id) => {
+          setRecipient(id);
+          setSent(0);
+        }}
+        disabled={action.busy || finished || sent > 0}
+        options={[
+          {
+            value: "all",
+            label: `Barcha faol o‘quvchilar · ${allMembers.length}`,
+          },
+          ...allMembers.map((id) => ({
+            value: id,
+            label:
+              market.users.find((u) => u.id === id)?.name || "Ism kiritilmagan",
+          })),
+        ]}
+      />
+      <FilterSelect
+        label="Testni tanlang"
+        value={testId}
+        onChange={(id) => {
+          setTestId(id);
+          setSent(0);
+        }}
+        disabled={action.busy || finished || sent > 0}
+        options={diagnostics.map((t) => ({
+          value: t.id,
+          label: `${t.title} · ${t.questions.length} savol`,
+        }))}
+      />
       <Card>
         <AppText variant="heading">{members.length} faol o‘quvchi</AppText>
         <AppText variant="caption" color={C.muted}>
@@ -828,11 +772,13 @@ export function AssignDiagnosticScreen({
                     p.id === invite.id
                   );
                 });
-                if (!exists)
+                if (!exists && !delivered.current.has(invite.id)) {
                   await sendMessage(
                     dmId(studentId, user.id),
                     encodeAssessment(invite),
                   );
+                  delivered.current.add(invite.id);
+                }
                 count++;
                 setSent(count);
               }

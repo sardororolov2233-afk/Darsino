@@ -143,6 +143,16 @@ export type AppNotification = {
   createdAt: string;
   offeringId?: string;
 };
+export type MonthlyPayment = {
+  offeringId: string;
+  studentId: string;
+  month: string;
+  amount: number;
+  paid: boolean;
+  paidAt: string | null;
+  remindedAt: string | null;
+  updatedAt: string;
+};
 export type Marketplace = {
   version: 2;
   users: User[];
@@ -159,6 +169,7 @@ export type Marketplace = {
   files?: FileAsset[];
   tutorDocuments?: TutorDocument[];
   lessonFiles?: LessonFile[];
+  payments?: MonthlyPayment[];
 };
 export type Filters = {
   subject: string;
@@ -226,6 +237,19 @@ export type MarketCommand =
   | { type: "message"; conversationId: string; text: string }
   | { type: "favorite"; id: string }
   | { type: "read-notifications" }
+  | {
+      type: "payment";
+      offeringId: string;
+      studentId: string;
+      month: string;
+      paid: boolean;
+    }
+  | {
+      type: "payment-reminder";
+      offeringId: string;
+      month: string;
+      studentId?: string;
+    }
   | { type: "remove-participant"; offeringId: string; studentId: string }
   | {
       type: "update-session";
@@ -274,17 +298,33 @@ export const nextDates = (count = 7, from = new Date()) =>
   Array.from({ length: count }, (_, i) =>
     localDate(new Date(from.getTime() + (i + 1) * 86400000)),
   );
-export const dateLabel = (value: string) =>
-  new Intl.DateTimeFormat("uz-UZ", {
-    timeZone: "Asia/Tashkent",
-    day: "numeric",
-    month: "long",
-  }).format(new Date(value.length === 10 ? `${value}T12:00:00+05:00` : value));
+export const UZ_MONTHS = [
+  "yanvar",
+  "fevral",
+  "mart",
+  "aprel",
+  "may",
+  "iyun",
+  "iyul",
+  "avgust",
+  "sentabr",
+  "oktabr",
+  "noyabr",
+  "dekabr",
+];
+// Keep Uzbek month names consistent on native/browser builds with reduced ICU data.
+export const dateLabel = (value: string) => {
+  const date = localDate(
+    new Date(value.length === 10 ? `${value}T12:00:00+05:00` : value),
+  );
+  return `${Number(date.slice(8, 10))}-${UZ_MONTHS[Number(date.slice(5, 7)) - 1]}`;
+};
 export const timeLabel = (value: string) =>
-  new Intl.DateTimeFormat("uz-UZ", {
+  new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Tashkent",
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   }).format(new Date(value));
 export function toLessonTime(date: string, time: string, minutes = 60) {
   if (

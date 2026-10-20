@@ -1,3 +1,9 @@
+import { StudentPayments } from "../components/GroupPayments";
+import {
+  FilterOptions,
+  FilterPanel,
+  filterChoices,
+} from "../components/FilterControls";
 import React, { useMemo, useState } from "react";
 import { Linking, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -283,16 +289,12 @@ export function LessonsScreen() {
   return (
     <Screen top={<OqiHeader />}>
       <Header title="Darslar va klublar" />
-      <View style={uiStyles.wrap}>
-        {["Darslarim", "Video darslar", "Klublar"].map((s) => (
-          <Chip
-            key={s}
-            label={s}
-            selected={section === s}
-            onPress={() => setSection(s)}
-          />
-        ))}
-      </View>
+      <FilterOptions
+        label="Ta’lim bo‘limlari"
+        options={filterChoices(["Darslarim", "Video darslar", "Klublar"])}
+        value={section}
+        onChange={setSection}
+      />
       {section === "Darslarim" ? (
         <ScheduleContent />
       ) : (
@@ -330,48 +332,51 @@ function ScheduleContent() {
       <AppText color={C.muted}>
         Tasdiqlangan darslar, jadval va ariza holatlari.
       </AppText>
-      <View style={uiStyles.wrap}>
-        {["Jadval", "Guruhlar", "Arizalar"].map((t) => (
-          <Chip
-            key={t}
-            label={t === "Arizalar" ? `Arizalar · ${pending}` : t}
-            selected={tab === t}
-            onPress={() => setTab(t)}
-          />
-        ))}
-      </View>
+      <FilterOptions
+        label="Darslar bo‘limi"
+        options={["Jadval", "Guruhlar", "To‘lovlar", "Arizalar"].map(
+          (value) => ({
+            value,
+            label: value === "Arizalar" ? `Arizalar · ${pending}` : value,
+          }),
+        )}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "To‘lovlar" ? <StudentPayments /> : null}
       {tab === "Jadval" ? (
         <>
-          <View style={uiStyles.wrap}>
-            <Chip
-              label="Kelgusi darslar"
-              selected={!history}
-              onPress={() => {
-                setHistory(false);
+          <FilterPanel
+            count={Number(history) + Number(day !== "Barchasi")}
+            onReset={() => {
+              setHistory(false);
+              setDay("Barchasi");
+            }}
+          >
+            <FilterOptions
+              label="Dars holati"
+              value={history ? "past" : "next"}
+              onChange={(v) => {
+                setHistory(v === "past");
                 setDay("Barchasi");
               }}
+              options={[
+                { value: "next", label: "Kelgusi darslar" },
+                { value: "past", label: "O‘tgan darslar" },
+              ]}
             />
-            <Chip
-              label="O‘tgan darslar"
-              selected={history}
-              onPress={() => {
-                setHistory(true);
-                setDay("Barchasi");
-              }}
-            />
-          </View>
-          {!history ? (
-            <View style={uiStyles.wrap}>
-              {["Barchasi", ...dates].map((d) => (
-                <Chip
-                  key={d}
-                  label={d === "Barchasi" ? d : dateLabel(d)}
-                  selected={day === d}
-                  onPress={() => setDay(d)}
-                />
-              ))}
-            </View>
-          ) : null}
+            {!history ? (
+              <FilterOptions
+                label="Dars kuni"
+                value={day}
+                onChange={setDay}
+                options={["Barchasi", ...dates].map((d) => ({
+                  value: d,
+                  label: d === "Barchasi" ? d : dateLabel(d),
+                }))}
+              />
+            ) : null}
+          </FilterPanel>
           {sessions.map((s) => (
             <StudentLessonCard key={s.id} session={s} />
           ))}
@@ -422,7 +427,7 @@ function ScheduleContent() {
             />
           ) : null}
         </>
-      ) : (
+      ) : tab === "Arizalar" ? (
         <>
           {ownRequests.map((r) => (
             <RequestCard key={r.id} request={r} />
@@ -434,7 +439,7 @@ function ScheduleContent() {
             />
           ) : null}
         </>
-      )}
+      ) : null}
     </>
   );
 }
@@ -760,20 +765,20 @@ export function ProfileScreen() {
       />
       <Card style={{ alignItems: "center", padding: 24 }}>
         <AvatarEditor />
-        <AppText variant="title">{user.name || "Jasurbek Rahimov"}</AppText>
+        <AppText variant="title">{user.name || "Ismingizni kiriting"}</AppText>
         <AppText
           variant="caption"
           color={C.muted}
           style={{ textAlign: "center" }}
         >
-          Abituriyent & Matematika ishqibozi
+          {user.interests.join(" · ")}
         </AppText>
         <Chip
           label={
             user.role === "student"
-              ? "O‘quvchi Pro ⭐"
+              ? "O‘quvchi"
               : user.role === "tutor"
-                ? "Repetitor Pro"
+                ? "Repetitor"
                 : "Moderator"
           }
           tone="gold"
@@ -803,14 +808,14 @@ export function ProfileScreen() {
         <>
           <View style={uiStyles.row}>
             {[
-              { title: "Umumiy ball", value: `⚡ ${stats.xp || 1450} XP` },
+              { title: "Umumiy ball", value: `${stats.xp} XP` },
               {
                 title: "Bilim Radari",
-                value: `🎯 ${stats.score !== null ? `${stats.score}%` : "84%"}`,
+                value: "Tez kunda",
               },
               {
                 title: "Uzluksiz o‘qish",
-                value: `🔥 ${stats.streak || 14} kun`,
+                value: `${stats.streak} kun`,
               },
             ].map((item) => (
               <Card
@@ -833,19 +838,13 @@ export function ProfileScreen() {
               </Card>
             ))}
           </View>
-          <Card>
-            <AppText variant="heading">Yutuqlar va Nishonlar</AppText>
-            <View style={uiStyles.wrap}>
-              <Chip icon="award" label="🏆 Olimpiada 1-bosqich" tone="gold" />
-              <Chip icon="zap" label="⚡ Radar Chempioni (80%+)" tone="green" />
-              <Chip
-                icon="book-open"
-                label="📚 Kitobxon Zakovat a’zosi"
-                tone="purple"
-              />
-            </View>
+          <Card style={{ backgroundColor: C.purpleSoft }}>
+            <Chip label="Tez kunda" tone="purple" />
+            <AppText variant="heading">
+              Bilim radari tez kunda ishga tushadi
+            </AppText>
             <Button
-              title="Bilim radarimni ko‘rish →"
+              title="Bilim radari va testlar"
               variant="soft"
               icon="target"
               onPress={() => navigation.navigate("Main", { screen: "Radar" })}

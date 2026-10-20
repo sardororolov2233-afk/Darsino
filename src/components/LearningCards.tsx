@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import type { Diagnostic, OpenLesson } from "../data/learning";
 import { useAppNavigation } from "../navigation";
 import { useLearning } from "../state/LearningContext";
+import { scoreAttempt } from "../state/learning";
 import { clubs } from "../data/learning";
 import { useAction, Feedback } from "./feedback";
 import { AppText, Button, Card, Chip, Icon, uiStyles } from "./ui";
@@ -10,7 +11,8 @@ import { C, font } from "../theme";
 export function DiagnosticCard({ test }: { test: Diagnostic }) {
   const navigation = useAppNavigation();
   const { data } = useLearning();
-  const done = data.attempts.some((a) => a.testId === test.id);
+  const latest = data.attempts.filter((a) => a.testId === test.id).at(-1);
+  const done = !!latest;
   return (
     <Card style={styles.test}>
       <View style={uiStyles.row}>
@@ -26,7 +28,11 @@ export function DiagnosticCard({ test }: { test: Diagnostic }) {
       </View>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
         <Chip
-          label={done ? "Natija radarda" : "Har bir to‘g‘ri javob +20 XP"}
+          label={
+            latest
+              ? `${Math.round((100 * scoreAttempt(latest)) / test.questions.length)}% to‘g‘ri`
+              : "Hali test ishlanmagan"
+          }
           tone="green"
         />
         <Button

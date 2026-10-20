@@ -1,3 +1,4 @@
+import { diagnostics } from "../src/data/learning";
 import { completeStudentSetup } from "./onboardingHelpers";
 import { test, expect, type Page } from "@playwright/test";
 async function login(page: Page, email: string) {
@@ -26,11 +27,11 @@ test("diagnostic results and followed clubs persist and remain private to each a
   await login(page, "oqi@example.com");
   await page.getByRole("tab", { name: "Radar", exact: true }).click();
   await expect(
-    page.getByText("Hali test ishlanmagan", { exact: true }),
+    page.getByText("Bilim radari tez kunda ishga tushadi", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", {
-      name: "Matematika: bilimlarni tekshirish: testni boshlash",
+      name: `${diagnostics[0].title}: testni boshlash`,
       exact: true,
     })
     .click();
@@ -60,7 +61,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
+  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
   await page.getByRole("button", { name: "Klublar", exact: true }).click();
   await page
     .getByRole("button", { name: "Klubni kuzatish", exact: true })
@@ -77,7 +78,9 @@ test("diagnostic results and followed clubs persist and remain private to each a
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page
+    .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+    .click();
   await expect(
     page.getByText("Kuzatayotgan klublarim", { exact: true }),
   ).toBeVisible();
@@ -90,9 +93,11 @@ test("diagnostic results and followed clubs persist and remain private to each a
   await login(page, "other-oqi@example.com");
   await page.getByRole("tab", { name: "Radar", exact: true }).click();
   await expect(
-    page.getByText("Hali test ishlanmagan", { exact: true }),
+    page.getByText("Bilim radari tez kunda ishga tushadi", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page
+    .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
+    .click();
   await expect(
     page.getByText("Kuzatayotgan klublarim", { exact: true }),
   ).toHaveCount(0);

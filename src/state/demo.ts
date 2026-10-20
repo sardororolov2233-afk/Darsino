@@ -24,6 +24,7 @@ export function emptyMarketplace(): Marketplace {
     attendance: [],
     reviews: [],
     notifications: [],
+    payments: [],
     favorites: {},
   };
 }

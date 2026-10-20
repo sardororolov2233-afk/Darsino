@@ -7,6 +7,13 @@ import {
   type TutorInput,
 } from "./domain";
 
+import {
+  canRemind,
+  monthLabel,
+  paymentMonth,
+  validPaymentMonth,
+} from "./payments";
+
 function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -478,6 +485,114 @@ export function applyMarketCommand(
         ),
         { sessionId: s.id, studentId: c.studentId, status: c.status },
       ];
+      break;
+    }
+    case "payment": {
+      teacher();
+      const group = owned(c.offeringId);
+      ensure(validPaymentMonth(c.month), "Hisobot oyi noto‘g‘ri.");
+      ensure(typeof c.paid === "boolean", "To‘lov holati noto‘g‘ri.");
+      const previous = m.payments?.find(
+        (p) =>
+          p.offeringId === group.id &&
+          p.studentId === c.studentId &&
+          p.month === c.month,
+      );
+      const enrollment = m.enrollments.find(
+        (e) => e.offeringId === group.id && e.studentId === c.studentId,
+      );
+      ensure(
+        enrollment &&
+          (enrollment.active || previous) &&
+          paymentMonth(new Date(enrollment.createdAt)) <= c.month,
+        "O‘quvchi bu oyda guruhda qatnashmaydi.",
+      );
+      const amount = previous?.amount ?? group.price;
+      ensure(
+        Number.isFinite(amount) && amount > 0 && amount <= 100000000,
+        "Bepul guruh uchun to‘lov belgilanmaydi.",
+      );
+      if (previous?.paid === c.paid || (!previous && !c.paid)) break;
+      const payment = {
+        offeringId: group.id,
+        studentId: c.studentId,
+        month: c.month,
+        amount,
+        paid: c.paid,
+        paidAt: c.paid ? now.toISOString() : null,
+        remindedAt: previous?.remindedAt ?? null,
+        updatedAt: now.toISOString(),
+      };
+      m.payments = [
+        ...(m.payments || []).filter(
+          (p) =>
+            p.offeringId !== group.id ||
+            p.studentId !== c.studentId ||
+            p.month !== c.month,
+        ),
+        payment,
+      ];
+      notify(
+        c.studentId,
+        c.paid ? "To‘lov qayd etildi" : "To‘lov belgisi o‘zgartirildi",
+        `${group.title} · ${monthLabel(c.month)} · ${amount.toLocaleString("uz-UZ")} so‘m. ${c.paid ? "Ustoz to‘ladi deb belgiladi." : "Ustoz to‘lov belgisini bekor qildi."}`,
+        group.id,
+      );
+      break;
+    }
+    case "payment-reminder": {
+      teacher();
+      const group = owned(c.offeringId);
+      ensure(validPaymentMonth(c.month), "Hisobot oyi noto‘g‘ri.");
+      const members = m.enrollments.filter(
+        (e) =>
+          e.offeringId === group.id &&
+          e.active &&
+          paymentMonth(new Date(e.createdAt)) <= c.month &&
+          (!c.studentId || e.studentId === c.studentId),
+      );
+      ensure(members.length, "Faol o‘quvchi topilmadi.");
+      let sent = 0;
+      for (const e of members) {
+        const previous = m.payments?.find(
+          (p) =>
+            p.offeringId === group.id &&
+            p.studentId === e.studentId &&
+            p.month === c.month,
+        );
+        const amount = previous?.amount ?? group.price;
+        if (amount <= 0 || !canRemind(previous, now)) continue;
+        const payment = {
+          offeringId: group.id,
+          studentId: e.studentId,
+          month: c.month,
+          amount,
+          paid: false,
+          paidAt: null,
+          remindedAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+        m.payments = [
+          ...(m.payments || []).filter(
+            (p) =>
+              p.offeringId !== group.id ||
+              p.studentId !== e.studentId ||
+              p.month !== c.month,
+          ),
+          payment,
+        ];
+        notify(
+          e.studentId,
+          "Oylik to‘lov eslatmasi",
+          `${group.title} · ${monthLabel(c.month)} uchun ${amount.toLocaleString("uz-UZ")} so‘m to‘lovni amalga oshirishingizni so‘raymiz. To‘lagan bo‘lsangiz, ustozingizga xabar bering.`,
+          group.id,
+        );
+        sent++;
+      }
+      ensure(
+        sent,
+        "Yuboriladigan eslatma yo‘q. To‘lov qilingan yoki oxirgi 24 soatda eslatilgan.",
+      );
       break;
     }
     case "review": {

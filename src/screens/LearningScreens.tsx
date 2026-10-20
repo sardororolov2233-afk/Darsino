@@ -14,7 +14,11 @@ import {
   uiStyles,
 } from "../components/ui";
 import { OqiHeader } from "../components/OqiHeader";
-import { RadarChart } from "../components/RadarChart";
+import {
+  FilterSelect,
+  FilterOptions,
+  filterChoices,
+} from "../components/FilterControls";
 import {
   ClubCard,
   DiagnosticCard,
@@ -64,18 +68,15 @@ export function LearningLibrary({
         <>
           <LessonMaterials videosOnly />
           <AppText variant="heading">Ochiq manbalar</AppText>
-          <View style={uiStyles.wrap}>
-            {["Barchasi", ...new Set(openLessons.map((l) => l.subject))].map(
-              (s) => (
-                <Chip
-                  key={s}
-                  label={s}
-                  selected={subject === s}
-                  onPress={() => setSubject(s)}
-                />
-              ),
-            )}
-          </View>
+          <FilterOptions
+            label="Dars fani"
+            options={filterChoices([
+              "Barchasi",
+              ...new Set(openLessons.map((l) => l.subject)),
+            ])}
+            value={subject}
+            onChange={setSubject}
+          />
           {openLessons
             .filter((l) => subject === "Barchasi" || l.subject === subject)
             .map((l) => (
@@ -89,166 +90,96 @@ export function LearningLibrary({
   );
 }
 export function RadarScreen() {
-  const { data, error } = useLearning();
-  const [subject, setSubject] = useState("Umumiy");
-  const stats = learningStats(data, subject);
-  const sortedSkills = SKILLS.filter((s) => stats.skills[s].total).sort(
-    (a, b) =>
-      stats.skills[a].correct / stats.skills[a].total -
-      stats.skills[b].correct / stats.skills[b].total,
-  );
-  const displayXp = stats.xp > 0 ? stats.xp : 1450;
-  const displayStreak = stats.streak > 0 ? stats.streak : 14;
-  const displayScore = stats.score !== null ? `${stats.score}%` : "84%";
-
+  const { market, user } = useApp();
+  const navigation = useAppNavigation();
+  const [subject, setSubject] = useState("Barchasi");
+  const incoming = market.messages.flatMap((message) => {
+    const invite = validInvitation(market, message);
+    return invite?.studentId === user.id ? [{ message, invite }] : [];
+  });
   return (
     <Screen top={<OqiHeader />}>
-      <View style={uiStyles.between}>
-        <View style={{ flex: 1 }}>
-          <AppText variant="title">Bilim Radari va Tahlil</AppText>
-          <AppText variant="caption" color={C.muted}>
-            Sun’iy intellekt asosida bilimlaringiz xaritasi va zaif nuqtalar
-            diagnostikasi
-          </AppText>
-        </View>
-        <Chip icon="zap" label={`⚡ ${displayXp} XP`} tone="green" />
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 6 }}
-      >
-        {["Umumiy", "Matematika", "Fizika", "Ingliz tili"].map((s) => (
-          <Chip
-            key={s}
-            label={s}
-            selected={subject === s}
-            onPress={() => setSubject(s)}
-          />
-        ))}
-      </ScrollView>
-      <Card style={{ alignItems: "stretch", padding: 18 }}>
-        <View style={uiStyles.between}>
-          <AppText variant="label">Ko‘p qirrali bilim darajasi</AppText>
-          <Chip label={`Umumiy o‘zlashtirish: ${displayScore}`} tone="purple" />
-        </View>
-        <RadarChart skills={stats.skills} />
-        <AppText
-          variant="caption"
-          color={C.muted}
-          style={{ textAlign: "center" }}
-        >
-          {stats.total
-            ? `${stats.total} savoldan ${stats.correct} tasi to‘g‘ri. Har bir testning oxirgi urinishi hisoblanadi.`
-            : "5 ta asosiy yo‘nalish bo‘yicha tahlil. Har bir test natijasi avtomatik aks etadi."}
-        </AppText>
-      </Card>
-
-      {/* AI Recommendation Banner from Prototype */}
+      <AppText variant="title">Bilim radari</AppText>
       <Card
         style={{
-          backgroundColor: "#F5F3FF",
-          borderColor: "#DDD6FE",
-          borderWidth: 1,
+          alignItems: "center",
+          paddingVertical: 28,
+          backgroundColor: C.purpleSoft,
+          gap: 14,
         }}
       >
-        <View style={uiStyles.row}>
-          <Icon name="award" color="#7C3AED" size={20} />
-          <AppText variant="label" style={{ color: "#7C3AED" }}>
-            AI TAVSIYA VA ANALITIKA
-          </AppText>
-        </View>
-        <AppText variant="caption" color={C.navy} style={{ lineHeight: 18 }}>
-          💡 Fizikadan Optika va Dinamika bo‘yicha zaifliklar aniqlandi. Ushbu
-          mavzularda 2 ta qisqa dars va diagnostik test tavsiya etiladi.
-        </AppText>
-        <Button
-          title="Tavsiya etilgan testni boshlash (+120 XP)"
-          variant="gold"
-          onPress={() => {
-            const phys =
-              diagnostics.find((d) => d.subject === "Fizika") || diagnostics[0];
-            if (phys) setSubject("Fizika");
+        <View
+          style={{
+            width: 76,
+            height: 76,
+            borderRadius: 24,
+            backgroundColor: C.white,
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        />
+        >
+          <Icon name="target" size={38} color={C.purple} />
+        </View>
+        <Chip label="Tez kunda" tone="purple" icon="clock" />
+        <AppText variant="heading" style={{ textAlign: "center" }}>
+          Bilim radari tez kunda ishga tushadi
+        </AppText>
+        <AppText color={C.muted} style={{ textAlign: "center" }}>
+          Bilimlaringiz xaritasi va rivojlanish tahlili ustida ishlayapmiz.
+          Hozir ustoz yuborgan testlarni bajarish va natijani ulashish mumkin.
+        </AppText>
       </Card>
-
-      <View style={uiStyles.row}>
-        {[
-          { label: "XP ball", value: displayXp, icon: "zap" as const },
-          {
-            label: "Uzluksiz o‘qish",
-            value: `${displayStreak} kun`,
-            icon: "trending-up" as const,
-          },
-          {
-            label: "Test ishlangan",
-            value: stats.completedTests || 3,
-            icon: "check-circle" as const,
-          },
-        ].map((m) => (
-          <Card
-            key={m.label}
-            style={{
-              flex: 1,
-              alignItems: "center",
-              paddingHorizontal: 5,
-              gap: 4,
-            }}
-          >
-            <Icon name={m.icon} color={C.green} size={18} />
-            <AppText variant="title">{m.value}</AppText>
-            <AppText
-              variant="caption"
-              color={C.muted}
-              style={{ textAlign: "center", fontSize: 10 }}
-            >
-              {m.label}
+      <AppText variant="heading">
+        Ustoz yuborgan testlar · {incoming.length}
+      </AppText>
+      {incoming
+        .slice(-10)
+        .reverse()
+        .map(({ message, invite }) => (
+          <Card key={message.id}>
+            <AppText variant="label">{invite.title}</AppText>
+            <AppText variant="caption" color={C.muted}>
+              {market.offerings.find((g) => g.id === invite.offeringId)?.title}
             </AppText>
+            <Button
+              title="Testni ishlash"
+              icon="play"
+              variant="gold"
+              onPress={() =>
+                navigation.navigate("Quiz", {
+                  id: invite.testId,
+                  invitationMessageId: message.id,
+                })
+              }
+            />
           </Card>
         ))}
-      </View>
-      {sortedSkills.length ? (
-        <Card>
-          <AppText variant="heading">Kuchsiz tomon tahlili</AppText>
-          <AppText color={C.muted}>
-            {sortedSkills[0]} yo‘nalishidagi savollarni qayta ko‘rib chiqing.
-            Har bir javobdan keyin batafsil tushuntirish va formulalar beriladi.
-          </AppText>
-        </Card>
+      {!incoming.length ? (
+        <AppText color={C.muted}>
+          Ustozingiz test yuborganda shu yerda va suhbatda ko‘rinadi.
+        </AppText>
       ) : null}
-      <AppText variant="heading">Diagnostik Testlar</AppText>
+      <Button
+        title="Suhbatlarim"
+        icon="message-circle"
+        variant="soft"
+        onPress={() => navigation.navigate("Chats")}
+      />
+      <AppText variant="heading">Mustaqil bilim diagnostikasi</AppText>
+      <FilterSelect
+        label="Test fani"
+        value={subject}
+        onChange={setSubject}
+        options={filterChoices([
+          "Barchasi",
+          ...new Set(diagnostics.map((t) => t.subject)),
+        ])}
+      />
       {diagnostics
-        .filter((t) => subject === "Umumiy" || t.subject === subject)
+        .filter((t) => subject === "Barchasi" || t.subject === subject)
         .map((t) => (
           <DiagnosticCard key={t.id} test={t} />
         ))}
-      {data.attempts.length ? (
-        <Card>
-          <AppText variant="heading">So‘nggi natijalar</AppText>
-          {[...data.attempts]
-            .reverse()
-            .slice(0, 5)
-            .map((a) => {
-              const test = diagnostics.find((t) => t.id === a.testId)!;
-              return (
-                <View key={a.id} style={uiStyles.between}>
-                  <AppText variant="caption" style={{ flex: 1 }}>
-                    {test.subject}
-                  </AppText>
-                  <AppText variant="label" color={C.green}>
-                    {scoreAttempt(a)}/{test.questions.length}
-                  </AppText>
-                </View>
-              );
-            })}
-        </Card>
-      ) : null}
-      <Feedback error={error} />
-      <AppText variant="caption" color={C.muted}>
-        Bu qisqa mashqlar sertifikat yoki IELTS prognozi emas. Radar, XP va
-        o‘quv progressi shu qurilmada, akkauntingiz uchun saqlanadi.
-      </AppText>
     </Screen>
   );
 }
@@ -275,7 +206,7 @@ export function QuizScreen({
         <Header title="Test" onBack={() => navigation.goBack()} />
         <EmptyState
           title="Test topilmadi"
-          subtitle="Radardan boshqa testni tanlang."
+          subtitle="Diagnostika bo‘limidan boshqa testni tanlang."
         />
       </Screen>
     );
@@ -319,8 +250,8 @@ export function QuizScreen({
             </AppText>
             <AppText variant="heading">Natijangiz saqlandi!</AppText>
             <AppText color={C.muted} style={{ textAlign: "center" }}>
-              Bilim radaringiz yangilandi. XP har bir testdagi eng yaxshi
-              natijangizdan hisoblanadi.
+              Test natijangiz saqlandi. Ustoz topshirig‘i bo‘lsa, quyidagi tugma
+              bilan natijani ulashing.
             </AppText>
           </Card>
           {invite &&
@@ -476,7 +407,7 @@ export function QuizScreen({
             onPress={() => (checked ? advance() : setChecked(true))}
           />
           <AppText variant="caption" color={C.muted}>
-            Testni tugatib natijani saqlasangiz, u radaringizga qo‘shiladi.
+            Test yakunida natijani saqlash va ustozingizga ulashish mumkin.
           </AppText>
         </>
       )}

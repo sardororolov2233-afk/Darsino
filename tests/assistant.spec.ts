@@ -103,7 +103,7 @@ test("teacher opens location and material controls while the student assistant s
     );
   }, demoMarketplace());
   await page.goto("/");
-  await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page.getByRole("tab", { name: "Kabinet", exact: true }).click();
   await expect(page.getByTestId("floating-assistant")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Dars manzilini belgilash", exact: true })
@@ -127,6 +127,7 @@ test("teacher opens location and material controls while the student assistant s
     .getByRole("button", { name: /ni boshqarish$/ })
     .first()
     .click();
+  await page.getByRole("button", { name: "Materiallar", exact: true }).click();
   await page
     .getByRole("textbox", { name: "Material sarlavhasi" })
     .fill("Birinchi video");
