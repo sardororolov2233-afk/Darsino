@@ -5,7 +5,11 @@ import React, {
   useRef,
   useState,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AppState } from "react-native";
+import {
+  readPrivateWorkspace,
+  updatePrivateWorkspace,
+} from "../services/privateWorkspace";
 import { useApp } from "./AppContext";
 import {
   emptyTeacherWorkspace,
@@ -50,7 +54,7 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
     queue.current
       .catch(() => {})
       .then(() =>
-        AsyncStorage.getItem(`@oqi/teacher-v1:${encodeURIComponent(account)}`),
+        readPrivateWorkspace("teacher", account, readTeacherWorkspace),
       )
       .then((raw) => {
         if (!active) return;
@@ -77,6 +81,49 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
       active = false;
     };
   }, [account]);
+  useEffect(() => {
+    if (!account) return;
+    let active = true;
+    const sync = () => {
+      queue.current = queue.current
+        .catch(() => {})
+        .then(async () => {
+          if (!active || identity.current !== account || !current.current.ready)
+            return;
+          try {
+            const raw = await readPrivateWorkspace(
+              "teacher",
+              account,
+              readTeacherWorkspace,
+            );
+            if (!active || identity.current !== account) return;
+            current.current = {
+              account,
+              data: readTeacherWorkspace(raw),
+              ready: true,
+              error: "",
+            };
+            setSnapshot(current.current);
+          } catch (e) {
+            if (!active || identity.current !== account) return;
+            current.current = {
+              ...current.current,
+              error: e instanceof Error ? e.message : "Sinxronlashda xato.",
+            };
+            setSnapshot(current.current);
+          }
+        });
+    };
+    const timer = setInterval(sync, 30000);
+    const listener = AppState.addEventListener("change", (state) => {
+      if (state === "active") sync();
+    });
+    return () => {
+      active = false;
+      clearInterval(timer);
+      listener.remove();
+    };
+  }, [account]);
   const update = (change: (data: TeacherWorkspace) => TeacherWorkspace) => {
     const target = account;
     const pending = queue.current
@@ -89,10 +136,11 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
           !current.current.ready
         )
           throw new Error("Ustoz ma’lumotlari yuklanishini kuting.");
-        const data = change(current.current.data);
-        await AsyncStorage.setItem(
-          `@oqi/teacher-v1:${encodeURIComponent(target)}`,
-          JSON.stringify(data),
+        const data = await updatePrivateWorkspace(
+          "teacher",
+          target,
+          readTeacherWorkspace,
+          change,
         );
         if (identity.current !== target) return;
         current.current = { account: target, data, ready: true, error: "" };

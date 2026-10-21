@@ -1,5 +1,9 @@
+import {
+  LocalizedPressable as Pressable,
+  LocalizedTextInput as TextInput,
+} from "../i18n/native";
 import React from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useAppNavigation } from "../navigation";
 import { useApp } from "../state/AppContext";
 import { initials } from "../state/model";

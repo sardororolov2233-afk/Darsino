@@ -753,6 +753,16 @@ export function ManageClassScreen({
           navigation.navigate("Applications", { offeringId: group.id })
         }
       />
+      {group.type === "group" ? (
+        <Button
+          title="O‘quvchini guruhga taklif qilish"
+          icon="user-plus"
+          variant="soft"
+          onPress={() =>
+            navigation.navigate("InviteToGroup", { offeringId: group.id })
+          }
+        />
+      ) : null}
       <FilterOptions
         label="Guruh bo‘limlari"
         options={filterChoices([

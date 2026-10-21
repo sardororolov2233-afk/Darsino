@@ -51,6 +51,7 @@ async function logout(page: Page) {
   await page
     .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })
     .click();
+  await page.getByRole("button", { name: "Sozlamalar", exact: true }).click();
   await page
     .getByRole("button", { name: "Hisobdan chiqish", exact: true })
     .click();

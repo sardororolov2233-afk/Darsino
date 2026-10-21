@@ -1,3 +1,4 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import {
   FilterPanel,
   FilterSelect,
@@ -5,7 +6,7 @@ import {
   filterChoices,
 } from "../components/FilterControls";
 import React, { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import {
   AppText,
   Button,

@@ -12,7 +12,12 @@ export function AssessmentMessage({ message }: { message: Message }) {
   const navigation = useAppNavigation();
   const payload = parseAssessment(message.text);
   const color = message.mine ? C.white : C.ink;
-  if (!payload) return <AppText color={color}>{message.text}</AppText>;
+  if (!payload)
+    return (
+      <AppText localize={false} color={color}>
+        {message.text}
+      </AppText>
+    );
   if (payload.kind === "invite") {
     const invite = validInvitation(market, message);
     const test = diagnostics.find((t) => t.id === payload.testId)!;
@@ -28,7 +33,9 @@ export function AssessmentMessage({ message }: { message: Message }) {
             Test topshirig‘i
           </AppText>
         </View>
-        <AppText color={color}>{payload.title}</AppText>
+        <AppText localize={false} color={color}>
+          {payload.title}
+        </AppText>
         <AppText variant="caption" color={message.mine ? "#CAD8F1" : C.muted}>
           {test.subject} · {test.questions.length} savol · {test.minutes} daqiqa
         </AppText>

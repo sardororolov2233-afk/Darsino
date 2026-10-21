@@ -21,6 +21,10 @@ export function subscribeToMarketplace(
     ["darsino_notifications", `user_id=eq.${userId}`],
     ["darsino_messages", `recipient_id=eq.${userId}`],
     ["darsino_enrollments", `student_id=eq.${userId}`],
+    ["darsino_group_invitations", `student_id=eq.${userId}`],
+    ["darsino_group_invitations", `tutor_id=eq.${userId}`],
+    ["darsino_contact_requests", `recipient_id=eq.${userId}`],
+    ["darsino_contact_requests", `sender_id=eq.${userId}`],
   ];
   for (const [table, filter] of filters) {
     for (const event of ["INSERT", "UPDATE"] as const)

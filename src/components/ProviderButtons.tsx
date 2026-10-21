@@ -1,5 +1,6 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import * as Apple from "expo-apple-authentication";
 import { AppText } from "./ui";

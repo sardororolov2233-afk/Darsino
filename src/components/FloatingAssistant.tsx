@@ -1,3 +1,4 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -5,7 +6,6 @@ import {
   Modal,
   PanResponder,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,

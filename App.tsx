@@ -1,4 +1,26 @@
-import React from "react";
+import { I18nProvider, useI18n } from "./src/i18n";
+import { LocaleBridge } from "./src/state/LocaleBridge";
+import { MfaGate } from "./src/components/TwoFactor";
+import { GroupInvitationBanner } from "./src/components/GroupInvitationBanner";
+import { ConnectionLinkHandler } from "./src/components/ConnectionLinkHandler";
+import {
+  SettingsScreen,
+  LanguageSettingsScreen,
+  PrivacySettingsScreen,
+  SecuritySettingsScreen,
+  NotificationSettingsScreen,
+  DataSettingsScreen,
+  SupportScreen,
+  AccountReportsScreen,
+} from "./src/screens/SettingsScreens";
+import {
+  ProfileIdScreen,
+  ScanContactScreen,
+  ContactsScreen,
+  InvitationsScreen,
+  InviteToGroupScreen,
+} from "./src/screens/ConnectionScreens";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -6,7 +28,11 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  DefaultTheme,
+  useNavigationContainerRef,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -95,6 +121,7 @@ const theme = {
 };
 function MainTabs() {
   const { user, requests } = useApp();
+  const { t } = useI18n();
   const studentTabs = [
     {
       name: "Home",
@@ -207,8 +234,8 @@ function MainTabs() {
           name={tab.name}
           component={tab.component}
           options={{
-            title: tab.title,
-            tabBarAccessibilityLabel: tab.title,
+            title: t(tab.title),
+            tabBarAccessibilityLabel: t(tab.title),
             tabBarBadge:
               tab.name === "Applications" &&
               requests.some((r) => r.status === "pending")
@@ -247,6 +274,8 @@ function MainTabs() {
 }
 function Navigator() {
   const { ready, signedIn, authenticated, user } = useApp();
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+  const [navigationReady, setNavigationReady] = useState(false);
   if (!ready)
     return (
       <View style={styles.loading}>
@@ -258,86 +287,146 @@ function Navigator() {
       </View>
     );
   return (
-    <NavigationContainer theme={theme}>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: C.background },
-          animation: "slide_from_right",
-        }}
-      >
-        {!signedIn && !authenticated ? (
-          <Stack.Group navigationKey="auth">
-            <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="SignIn" component={SignInScreen} />
-            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
-          </Stack.Group>
-        ) : !signedIn ? (
-          <Stack.Group navigationKey="onboarding">
-            <Stack.Screen name="Setup" component={SetupScreen} />
-          </Stack.Group>
-        ) : (
-          <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
-            <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen name="Permissions" component={PermissionScreen} />
-            <Stack.Screen
-              name="TutorLocation"
-              component={TutorLocationScreen}
-            />
-            <Stack.Screen
-              name="MaterialViewer"
-              component={MaterialViewerScreen}
-            />
-            <Stack.Screen name="Materials" component={MaterialsScreen} />
-            <Stack.Screen name="Tutors" component={SearchScreen} />
-            <Stack.Screen name="Chats" component={ChatsScreen} />
-            <Stack.Screen name="Applications" component={ApplicationsScreen} />
-            <Stack.Screen
-              name="AssignDiagnostic"
-              component={AssignDiagnosticScreen}
-              options={{ presentation: "modal" }}
-            />
-            <Stack.Screen
-              name="PlanRoom"
-              component={PlanRoomScreen}
-              options={{ presentation: "modal" }}
-            />
-            <Stack.Screen name="CreateClub" component={CreateClubScreen} />
-            <Stack.Screen name="Quiz" component={QuizScreen} />
-            <Stack.Screen name="OpenLesson" component={OpenLessonScreen} />
-            <Stack.Screen
-              name="Filters"
-              component={FiltersScreen}
-              options={{ presentation: "modal" }}
-            />
-            <Stack.Screen name="Tutor" component={TutorScreen} />
-            <Stack.Screen name="Groups" component={GroupsScreen} />
-            <Stack.Screen name="Group" component={GroupScreen} />
-            <Stack.Screen name="Events" component={EventsScreen} />
-            <Stack.Screen name="Event" component={EventScreen} />
-            <Stack.Screen name="Rooms" component={RoomsScreen} />
-            <Stack.Screen name="Room" component={RoomScreen} />
-            <Stack.Screen name="Request" component={RequestScreen} />
-            <Stack.Screen name="Conversation" component={ConversationScreen} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-            <Stack.Screen name="TutorProfile" component={TutorProfileScreen} />
-            <Stack.Screen
-              name="CreateOffering"
-              component={CreateOfferingScreen}
-            />
-            <Stack.Screen name="ManageClass" component={ManageClassScreen} />
-            <Stack.Screen
-              name="ModerateTutor"
-              component={ModerateTutorScreen}
-            />
-            <Stack.Screen
-              name="Notifications"
-              component={NotificationsScreen}
-            />
-            <Stack.Screen name="Review" component={ReviewScreen} />
-          </Stack.Group>
-        )}
-      </Stack.Navigator>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => setNavigationReady(true)}
+      theme={theme}
+    >
+      <View style={{ flex: 1 }}>
+        <ConnectionLinkHandler
+          signedIn={signedIn}
+          ready={navigationReady}
+          onOpen={(id) => navigationRef.navigate("Contacts", { query: id })}
+        />
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: C.background },
+            animation: "slide_from_right",
+          }}
+        >
+          {!signedIn && !authenticated ? (
+            <Stack.Group navigationKey="auth">
+              <Stack.Screen name="Welcome" component={WelcomeScreen} />
+              <Stack.Screen name="SignIn" component={SignInScreen} />
+              <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+            </Stack.Group>
+          ) : !signedIn ? (
+            <Stack.Group navigationKey="onboarding">
+              <Stack.Screen name="Setup" component={SetupScreen} />
+            </Stack.Group>
+          ) : (
+            <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
+              <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen name="Settings" component={SettingsScreen} />
+              <Stack.Screen
+                name="LanguageSettings"
+                component={LanguageSettingsScreen}
+              />
+              <Stack.Screen
+                name="PrivacySettings"
+                component={PrivacySettingsScreen}
+              />
+              <Stack.Screen
+                name="SecuritySettings"
+                component={SecuritySettingsScreen}
+              />
+              <Stack.Screen
+                name="NotificationSettings"
+                component={NotificationSettingsScreen}
+              />
+              <Stack.Screen
+                name="DataSettings"
+                component={DataSettingsScreen}
+              />
+              <Stack.Screen name="Support" component={SupportScreen} />
+              <Stack.Screen name="ProfileId" component={ProfileIdScreen} />
+              <Stack.Screen name="ScanContact" component={ScanContactScreen} />
+              <Stack.Screen name="Contacts" component={ContactsScreen} />
+              <Stack.Screen name="Invitations" component={InvitationsScreen} />
+              <Stack.Screen
+                name="InviteToGroup"
+                component={InviteToGroupScreen}
+              />
+              <Stack.Screen
+                name="AccountReports"
+                component={AccountReportsScreen}
+              />
+
+              <Stack.Screen name="Permissions" component={PermissionScreen} />
+              <Stack.Screen
+                name="TutorLocation"
+                component={TutorLocationScreen}
+              />
+              <Stack.Screen
+                name="MaterialViewer"
+                component={MaterialViewerScreen}
+              />
+              <Stack.Screen name="Materials" component={MaterialsScreen} />
+              <Stack.Screen name="Tutors" component={SearchScreen} />
+              <Stack.Screen name="Chats" component={ChatsScreen} />
+              <Stack.Screen
+                name="Applications"
+                component={ApplicationsScreen}
+              />
+              <Stack.Screen
+                name="AssignDiagnostic"
+                component={AssignDiagnosticScreen}
+                options={{ presentation: "modal" }}
+              />
+              <Stack.Screen
+                name="PlanRoom"
+                component={PlanRoomScreen}
+                options={{ presentation: "modal" }}
+              />
+              <Stack.Screen name="CreateClub" component={CreateClubScreen} />
+              <Stack.Screen name="Quiz" component={QuizScreen} />
+              <Stack.Screen name="OpenLesson" component={OpenLessonScreen} />
+              <Stack.Screen
+                name="Filters"
+                component={FiltersScreen}
+                options={{ presentation: "modal" }}
+              />
+              <Stack.Screen name="Tutor" component={TutorScreen} />
+              <Stack.Screen name="Groups" component={GroupsScreen} />
+              <Stack.Screen name="Group" component={GroupScreen} />
+              <Stack.Screen name="Events" component={EventsScreen} />
+              <Stack.Screen name="Event" component={EventScreen} />
+              <Stack.Screen name="Rooms" component={RoomsScreen} />
+              <Stack.Screen name="Room" component={RoomScreen} />
+              <Stack.Screen name="Request" component={RequestScreen} />
+              <Stack.Screen
+                name="Conversation"
+                component={ConversationScreen}
+              />
+              <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+              <Stack.Screen
+                name="TutorProfile"
+                component={TutorProfileScreen}
+              />
+              <Stack.Screen
+                name="CreateOffering"
+                component={CreateOfferingScreen}
+              />
+              <Stack.Screen name="ManageClass" component={ManageClassScreen} />
+              <Stack.Screen
+                name="ModerateTutor"
+                component={ModerateTutorScreen}
+              />
+              <Stack.Screen
+                name="Notifications"
+                component={NotificationsScreen}
+              />
+              <Stack.Screen name="Review" component={ReviewScreen} />
+            </Stack.Group>
+          )}
+        </Stack.Navigator>
+        {signedIn && navigationReady ? (
+          <GroupInvitationBanner
+            onOpen={() => navigationRef.navigate("Invitations")}
+          />
+        ) : null}
+      </View>
     </NavigationContainer>
   );
 }
@@ -355,16 +444,21 @@ export default function App() {
         <SafeAreaProvider>
           <StatusBar style="dark" />
           {fontsLoaded || fontError ? (
-            <AppProvider>
-              <LearningProvider>
-                <TeacherProvider>
-                  <View style={{ flex: 1 }}>
-                    <Navigator />
-                    <FloatingAssistant />
-                  </View>
-                </TeacherProvider>
-              </LearningProvider>
-            </AppProvider>
+            <I18nProvider>
+              <MfaGate>
+                <AppProvider>
+                  <LocaleBridge />
+                  <LearningProvider>
+                    <TeacherProvider>
+                      <View style={{ flex: 1 }}>
+                        <Navigator />
+                        <FloatingAssistant />
+                      </View>
+                    </TeacherProvider>
+                  </LearningProvider>
+                </AppProvider>
+              </MfaGate>
+            </I18nProvider>
           ) : (
             <View style={styles.loading}>
               <Image

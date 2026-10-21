@@ -71,8 +71,9 @@ test("student assistant drags, restores its position, supports keyboard chat and
     .getByRole("button", { name: "AI chatni yopish", exact: true })
     .click();
   await page.getByRole("tab", { name: "Profil", exact: true }).click();
+  await page.getByRole("button", { name: "Sozlamalar", exact: true }).click();
   await page
-    .getByRole("button", { name: "Ruxsatlar va xotira", exact: true })
+    .getByRole("button", { name: "Ilova ruxsatlari", exact: true })
     .click();
   await expect(
     page.getByText("Rasmlar va fayllar", { exact: true }),

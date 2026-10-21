@@ -1,5 +1,6 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useState } from "react";
-import { Linking, Pressable, ScrollView, View } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAppNavigation, type RootStackParamList } from "../navigation";
 import {

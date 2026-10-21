@@ -1,5 +1,6 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { AppText, Button, Card, Chip, Icon, uiStyles } from "./ui";
 import { C } from "../theme";
 

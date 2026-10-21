@@ -1,5 +1,6 @@
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { RadarChart } from "./RadarChart";
 import { FilterSelect } from "./FilterControls";
 import { monthLabel, paymentMonth, paymentSummary } from "../state/payments";
