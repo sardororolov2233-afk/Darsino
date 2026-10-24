@@ -3,9 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 
 // Only the managed schemas' database surface is simulated. No binary Storage HTTP
 // server, SMS provider or Realtime WebSocket is running in these tests.
-export async function supabaseFixture() {
-  const db = new PGlite();
-  await db.exec(`
+export const managedSchemaSql = `
     create role anon; create role authenticated; create role service_role;
     create schema auth;
     create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz default now(),email text default (gen_random_uuid()::text||'@example.test'),email_confirmed_at timestamptz default now(),raw_user_meta_data jsonb default '{}');
@@ -16,7 +14,11 @@ export async function supabaseFixture() {
     alter table storage.objects enable row level security;
     grant usage on schema storage,auth to anon,authenticated;
     grant all on storage.objects to anon,authenticated;
-  `);
+  `;
+
+export async function supabaseFixture() {
+  const db = new PGlite();
+  await db.exec(managedSchemaSql);
   return db;
 }
 

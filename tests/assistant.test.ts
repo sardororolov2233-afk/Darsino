@@ -128,7 +128,9 @@ test("assistant refuses exhausted quotas, reuses a completed request, and redact
   const quota = createAssistantHandler(
     dependencies({
       begin: async () => {
-        throw new Error("24 soatlik limit tugadi.");
+        throw Object.assign(new Error("24 soatlik limit tugadi."), {
+          code: "OQ429",
+        });
       },
       generate,
     }),

@@ -1,5 +1,7 @@
 # Darsino — Supabase bazasi va Storage
 
+2026-10-24: [Retry, jadval tranzaksiyalari, sessiya, avatar va fayl kvotasi yangilanishlari](../docs/backend-hardening.md). Mavjud AI xizmatini yangilashda Edge adapteri SQL migratsiyasidan avval deploy qilinadi.
+
 2026-10-16: O‘qi uchun ustoz koordinatalari, GPS yaqinlik qidiruvi, MP4/WebM materiallari va shaxsiy AI chat qo‘shildi. [Yangi backend sozlamalari](../docs/backend.md) SQL va Edge Function’ni ishga tushirish tartibini beradi.
 
 Bu paket repodagi Expo ilovasiga mos: email kodi, Google yoki Apple orqali kirish, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
@@ -24,10 +26,10 @@ SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti
 
 4. Ilovani qayta boshlang: `npm run web` yoki `npx expo start --clear`. Ochiq terminal ishlab turgan bo‘lsa, uni to‘xtatib qayta ishga tushiring.
 5. Moderator uchun alohida email bilan email kodi, Google yoki Apple orqali ilovaga kiring. Supabase Authentication → Users’dan shu akkaunt UUID’sini oling. [admin/01_assign_moderator.sql](admin/01_assign_moderator.sql) ichidagi `target uuid := null` o‘rniga shu UUID’ni yozib, SQL Editor’da alohida bajaring. O‘zgartirilmagan fayl ataylab xato bilan to‘xtaydi; hech kimga tasodifan rol bermaydi.
-6. [admin/02_healthcheck.sql](admin/02_healthcheck.sql) ni bajaring: 16 ta Darsino jadvalida RLS, 5 ta private bucket, 7 ta Storage policy, Auth trigger va Realtime’dagi 3 ta jadval ko‘rinadi. `*_core` hamda `owned_file` funksiyalarida `authenticated_allowed=false` bo‘lishi kerak.
+6. [admin/02_healthcheck.sql](admin/02_healthcheck.sql) ni bajaring: ilova jadvallarida RLS, 5 ta private bucket, 7 ta Storage policy, Auth trigger, Realtime’dagi 5 ta jadval va kvota/retry diagnostikasi ko‘rinadi. `*_core` hamda `owned_file` funksiyalarida `authenticated_allowed=false` bo‘lishi kerak.
 7. Haqiqiy ikki akkaunt bilan tekshiring: repetitor ro‘yxatdan o‘tadi → moderator tasdiqlaydi → repetitor dars yaratadi → o‘quvchi ariza yuboradi → ustoz tasdiqlaydi → «Darslarim»da guruh paydo bo‘ladi. Live bazaga demo ustozlar yoki soxta Auth akkauntlari kiritilmaydi.
 
-SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` beshta migratsiyani tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
+SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` hali bajarilmagan migratsiyalarni tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
 
 001–004 oldin bajarilgan bazaga [202610150001_free_clubs.sql](migrations/202610150001_free_clubs.sql) faylini SQL Editor’da qo‘llang yoki yangilangan umumiy setup faylini qayta bajaring. Migratsiya faqat `O‘qi klubi` belgili guruhga nol narxga ruxsat beradi; oddiy dars narxi, ustoz tekshiruvi va ariza tasdig‘i saqlanadi. Qayta bajarish va mavjud a’zolikni saqlash test qilingan. Bu migratsiya live loyihaga hali qo‘llanmagan.
 
@@ -63,7 +65,7 @@ SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link
 
 Profil va e’lonning matnli maydonlari mavjud ilova kontraktini saqlash uchun `data jsonb` ichida qolgan; egalar, vaqtlar, rollar, arizalar va a’zolik alohida ustunlar / tashqi kalitlar orqali boshqariladi. Katalog boshlang‘ich qiymatlari mavjud UI satrlariga mos. UI hozir mavjud ro‘yxatlarini ishlatadi; `darsino_get_catalog()` yangi boshqariladigan forma uchun tayyor.
 
-Xona band qilish va to‘lovlar oldingi talabga ko‘ra keyingi versiyada; bu paketda ular uchun ishlamaydigan jadvallar yaratilmaydi.
+Xona band qilish va onlayn to‘lov shlyuzi keyingi versiyada. Guruhlarning oylik to‘lovini ustoz qayd etishi mavjud; bu bank tranzaksiyasi yoki pul yechish emas.
 
 ## 3. Storage bucketlari
 
@@ -79,7 +81,7 @@ Barchasi **private**. Faylning oddiy public URL’i ishlatilmaydi.
 
 SVG, HTML va bajariladigan fayllarga ruxsat yo‘q. Fayl yo‘lini server yaratadi: `<owner_uuid>/<file_uuid>.<mime_extension>`. Asl fayl nomi faqat ko‘rsatish uchun metadata’da saqlanadi. Yuklangan obyekt ustiga yozish taqiqlangan; yangilash uchun yangi fayl yuklanadi va bog‘lanish almashtiriladi. Qayta tekshiruvga yuborilgan repetitor hujjati profilni `pending` holatiga qaytaradi.
 
-Bir akkauntda 1000 ta o‘chirilmagan fayl, oxirgi soatda ko‘pi bilan 20 ta ochiq yuklash rezervi va deklaratsiya qilingan hajmlar uchun 2 GiB rezerv limiti bor. Bu loyiha billing / global Storage kvotasi o‘rnini bosmaydi. MIME va hajm tekshiruvi fayl ichidagi zararli kontentni skanerlash emas; kerak bo‘lsa alohida skaner xizmati ulanadi.
+Bir akkauntda 1000 ta o‘chirilmagan fayl, oxirgi soatda ko‘pi bilan 20 ta ochiq yuklash rezervi va 2 GiB rezerv limiti bor. Pending fayl bucket maksimal hajmini egallaydi; metadata tasdiqlangach haqiqiy hajmga tushadi. O‘chirish tugaguncha mavjud rezerv saqlanadi. Bu loyiha billing / global Storage kvotasi o‘rnini bosmaydi. MIME va hajm tekshiruvi fayl ichidagi zararli kontentni skanerlash emas; kerak bo‘lsa alohida skaner xizmati ulanadi.
 
 ## 4. Fayl API’sidan foydalanish
 
@@ -130,10 +132,10 @@ Signed URL maxfiy havola sifatida ko‘riladi: uni DB, log yoki doimiy keshga yo
 
 - Auth trigger profilni `student` sifatida yaratadi va tasdiqlangan emailni sinxronlaydi. User metadata’dagi `role` qabul qilinmaydi. Tasdiqlanmagan email yoki administrator `darsino_profiles.is_suspended=true` qilgan akkaunt RPC / fayllardan foydalana olmaydi.
 - `darsino_snapshot()` va `darsino_mutate(command)` mavjud ilova kontraktini saqlaydi. Qo‘shimcha `files`, `tutorDocuments`, `lessonFiles`, `avatarFileId`, `coverFileId`, `attachmentIds`, faqat o‘z foydalanuvchisida `email` keladi; snapshotda signed URL saqlanmaydi.
-- Barcha 16 jadvalda RLS yoqilgan. Klient to‘g‘ridan-to‘g‘ri yozmaydi. Faqat notifications, messages va enrollments jadvallarida akkauntga tegishli `SELECT` bor; bu Realtime uchun. Qolgan ma’lumotlar vakolatlarni tekshiradigan RPC orqali olinadi.
+- Barcha ilova jadvallarida RLS yoqilgan. Klient to‘g‘ridan-to‘g‘ri yozmaydi. Faqat notifications, messages va enrollments jadvallarida akkauntga tegishli `SELECT` bor; bu Realtime uchun. Qolgan ma’lumotlar vakolatlarni tekshiradigan RPC orqali olinadi.
 - `darsino_snapshot_core`, `darsino_mutate_core` va ichki yordamchilarning bajarilish ruxsati klientdan olib tashlangan. Moderator roli faqat administrator SQL orqali beriladi.
 - Storage’da ruxsat beruvchi policy bilan birga 4 ta restrictive guard bor. Boshqa ilovaning keng policy’si Darsino bucketlarini ochib yubormaydi; bu guardlar boshqa bucketlarning o‘z ruxsatlarini o‘zgartirmaydi. Data API exposed schemas ro‘yxatiga `auth` yoki `storage`ni qo‘shmang.
-- `supabase_realtime` publication’iga faqat `darsino_notifications`, `darsino_messages`, `darsino_enrollments` qo‘shiladi. Ilova tegishli user filtrlari bilan INSERT / UPDATE’ni kuzatadi, yaqin voqealarni birlashtirib snapshotni qayta oladi; payloadni to‘g‘ridan-to‘g‘ri state’ga yozmaydi. Logout’da kanal yopiladi. WebSocket uzilsa 15 soniyalik polling va qo‘lda yangilash qoladi.
+- `supabase_realtime` publication’iga `darsino_notifications`, `darsino_messages`, `darsino_enrollments`, `darsino_group_invitations` va `darsino_contact_requests` qo‘shiladi. Ilova tegishli user filtrlari bilan INSERT / UPDATE’ni kuzatadi, yaqin voqealarni birlashtirib snapshotni qayta oladi; payloadni to‘g‘ridan-to‘g‘ri state’ga yozmaydi. Logout’da kanal yopiladi. WebSocket uzilsa 15 soniyalik polling va qo‘lda yangilash qoladi.
 - SQL masofaviy mobil push yetkazib berishni yoqmaydi. Hozirgi ilovada in-app bildirishnomalar va foydalanuvchi yoqqan mahalliy dars eslatmalari bor.
 
 ## 6. Migratsiyalar va tekshirish
@@ -145,7 +147,7 @@ Signed URL maxfiy havola sifatida ko‘riladi: uni DB, log yoki doimiy keshga yo
 | `migrations/202610140003_api_realtime.sql`      | Fayl bog‘lash, snapshot, katalog, moderator hujjat qarori va Realtime                                              |
 | `migrations/202610140004_email_social_auth.sql` | Email/Google/Apple kirishi, telefon talabini olib tashlash va email maxfiyligi                                     |
 | `migrations/202610150001_free_clubs.sql`        | Tasdiqlangan ustozning belgilangan guruh klubini bepul e’lon qilishi; mavjud qabul va ruxsat qoidalari saqlanadi   |
-| `Darsino_Supabase_setup.sql`                    | Beshta migratsiyadan generatsiya qilinadigan SQL Editor fayli                                                      |
+| `Darsino_Supabase_setup.sql`                    | Barcha migratsiyalardan generatsiya qilinadigan SQL Editor fayli                                                   |
 | `admin/01_assign_moderator.sql`                 | Aniq tasdiqlangan akkauntga moderator berish                                                                       |
 | `admin/02_healthcheck.sql`                      | Faqat o‘qiydigan sozlama va qolib ketgan rezerv diagnostikasi                                                      |
 
@@ -154,7 +156,9 @@ npm ci
 npm run supabase:bundle
 npm run supabase:check
 npm run typecheck
+npm run typecheck:edge
 npm test
+npm run test:postgres
 npm run test:ui
 npm run export:all
 npm run format:check
@@ -167,3 +171,9 @@ Rasmiy manbalar: [Email OTP](https://supabase.com/docs/guides/auth/auth-email-pa
 ## Guruhlarning oylik to‘lovlari
 
 Mavjud bazaga `migrations/202610200001_group_payments.sql` qo‘llanadi; yangi bazalar uchun `Darsino_Supabase_setup.sql` qayta generatsiya qilingan. `darsino_payments` yozuvlari guruh, o‘quvchi va oy bo‘yicha noyob. Faqat guruh egasi bo‘lgan tasdiqlangan ustoz to‘lovni belgilaydi yoki eslatadi. Snapshot ustozga o‘z guruhlarini, o‘quvchiga faqat o‘z to‘lovlarini beradi. To‘g‘ridan-to‘g‘ri jadvalga yozish taqiqlangan. Eslatmalar mavjud Realtime bildirishnomalar oqimiga kiradi; masofaviy push/SMS/email provayderi talab qilinmaydi.
+
+## 2026-10-24 backend yangilanishi
+
+`202610230001_backend_access.sql`–`202610230006_storage_lifecycle.sql` migratsiyalari maxfiylik, sessiya revokatsiyasi, bloklangan arizalar, parallel jadval, AI retry, Storage kvotasi va upload/o‘chirish lock’larini kuchaytiradi. Yangi `darsino_mutation_receipts` jadvali private; intent digestlari saqlanadi, klientga to‘g‘ridan-to‘g‘ri ochilmaydi. Matn/fayl xabarlari bitta notification triggeridan foydalanadi. O‘rnatish tartibi, receipt tozalash va chegaralar [backend mustahkamlash yo‘riqnomasida](../docs/backend-hardening.md).
+
+`npm run test:postgres` Docker ichida beshta haqiqiy ko‘p ulanishli poygani tekshiradi. PGlite testlaridan farqli ravishda mustaqil PostgreSQL sessiyalari va aniq lock barrierlari ishlatiladi. Bu jonli Supabase HTTP, binary Storage yoki Realtime serverining to‘liq testi emas.
