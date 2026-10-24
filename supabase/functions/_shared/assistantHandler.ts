@@ -1,6 +1,7 @@
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type Reservation = {
   conversationId: string;
+  status?: "reserved" | "pending" | "completed" | "failed" | "expired";
   messages?: ChatMessage[];
   reply?: string;
 };
@@ -109,10 +110,33 @@ export function createAssistantHandler(deps: AssistantDependencies) {
         message.trim(),
       );
     } catch (e) {
-      const text = e instanceof Error ? e.message : "Savol yuborilmadi.";
-      const status = /limit|daqiqa|kuting|bajarilmoqda/.test(text) ? 429 : 403;
-      return json(status, { error: text });
+      // Database transport errors and implementation details are never public.
+      // Only these explicit SQLSTATEs identify safe, expected domain failures.
+      const code = e && typeof e === "object" && "code" in e ? e.code : null;
+      if (code === "OQ400")
+        return json(400, { error: "Savol 1–2000 belgidan iborat bo‘lsin." });
+      if (code === "OQ403")
+        return json(403, {
+          error: "AI yordamchidan foydalanish huquqingiz yo‘q.",
+        });
+      if (code === "OQ429")
+        return json(429, {
+          error: "AI so‘rov limiti tugadi. Birozdan keyin qayta urining.",
+        });
+      return json(503, {
+        error: "Savolni hozir yuborib bo‘lmadi. Qayta urinib ko‘ring.",
+      });
     }
+    if (reservation.status === "pending")
+      return json(429, {
+        error: "Bu so‘rov bajarilmoqda. Biroz kutib, qayta urining.",
+        code: "request_pending",
+      });
+    if (reservation.status === "failed" || reservation.status === "expired")
+      return json(409, {
+        error: "Avvalgi so‘rov yakunlanmadi. Savolingizni qayta yuboring.",
+        code: "request_failed",
+      });
     if (reservation.reply)
       return json(200, {
         conversationId: reservation.conversationId,

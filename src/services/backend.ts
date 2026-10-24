@@ -5,6 +5,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { createChunkedStorage } from "./secureStorage";
+import { executeMutation } from "./mutations";
+import { bindActorClient } from "./actorClient";
 import type { MarketCommand, Marketplace, User } from "../state/domain";
 
 // Polyfill WebCrypto subtle.digest so Supabase Auth uses S256 PKCE without warnings
@@ -78,6 +80,12 @@ export function requireBackend() {
     throw new Error(backend.error || "Server bilan ulanish sozlanmagan.");
   return supabase;
 }
+export async function requireActorBackend(actorId: string) {
+  const client = requireBackend();
+  return bindActorClient(client, actorId, (options) =>
+    createClient(url!, key!, options),
+  );
+}
 export type Snapshot = { market: Marketplace; user: User; id?: string };
 export async function fetchSnapshot(): Promise<Snapshot> {
   const { data, error } = await requireBackend().rpc("darsino_snapshot");
@@ -87,10 +95,14 @@ export async function fetchSnapshot(): Promise<Snapshot> {
 export async function mutateBackend(
   command: MarketCommand,
   actorId: string,
+  isCurrent?: () => boolean,
+  onAttempt?: () => void,
 ): Promise<Snapshot> {
-  const { data, error } = await requireBackend().rpc("darsino_mutate", {
-    command: { ...command, actorId },
+  return executeMutation<Snapshot>(command, actorId, {
+    createId: () => Crypto.randomUUID(),
+    isCurrent,
+    onAttempt,
+    send: (payload) =>
+      requireBackend().rpc("darsino_mutate", { command: payload }),
   });
-  if (error) throw new Error(error.message);
-  return data as Snapshot;
 }

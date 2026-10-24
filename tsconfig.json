@@ -1,6 +1,13 @@
 {
   "extends": "expo/tsconfig.base",
-  "exclude": ["node_modules", "supabase/functions"],
+  "exclude": [
+    "node_modules",
+    "supabase/functions",
+    "dist",
+    ".expo",
+    "test-results",
+    "playwright-report"
+  ],
   "compilerOptions": {
     "strict": true,
     "types": ["react", "react-native", "node"]

@@ -35,6 +35,7 @@ import {
   fetchSnapshot,
   mutateBackend,
   requireBackend,
+  requireActorBackend,
   supabase,
   type Snapshot,
 } from "../services/backend";
@@ -56,6 +57,7 @@ import {
   type SocialProvider,
 } from "../services/auth";
 import { createFileService } from "../services/files";
+import { createSnapshotGate } from "../services/snapshotGate";
 import type { AvatarPhoto } from "../services/avatar";
 
 const storageKey = "@darsino/marketplace-v2";
@@ -112,6 +114,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     mutationQueue = useRef<Promise<unknown>>(Promise.resolve()),
     writes = useRef<Promise<unknown>>(Promise.resolve());
   const reminderJobs = useRef<Promise<unknown>>(Promise.resolve());
+  const snapshotGate = useRef(createSnapshotGate());
   const authUserId = useRef<string | null>(null);
   marketRef.current = market;
   userRef.current = user;
@@ -127,46 +130,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const refresh = useCallback(async () => {
     if (backendMode === "demo" || !actorRef.current) return;
-    const generation = epoch.current,
-      currentRevision = revision.current;
-    const snapshot = await fetchSnapshot();
-    if (!snapshot.user.onboarded)
-      snapshot.user.role =
-        userRef.current.role === "tutor" ? "tutor" : "student";
-    if (generation === epoch.current && currentRevision === revision.current)
-      adopt(snapshot);
+    const actor = actorRef.current;
+    const ticket = snapshotGate.current.begin({
+      epoch: epoch.current,
+      revision: revision.current,
+    });
+    try {
+      const snapshot = await fetchSnapshot();
+      if (!snapshot.user.onboarded)
+        snapshot.user.role =
+          userRef.current.role === "tutor" ? "tutor" : "student";
+      if (
+        snapshot.user.id === actor &&
+        snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        adopt(snapshot);
+    } catch (error) {
+      if (
+        !snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        return;
+      setSyncError(
+        error instanceof Error ? error.message : "Sinxronlashda xato.",
+      );
+      throw error;
+    }
   }, [adopt]);
   const loadLiveAccount = useCallback(async () => {
-    const generation = epoch.current,
-      currentRevision = revision.current;
-    const { data, error } = await requireBackend().auth.getSession();
-    if (error) throw error;
-    if (!data.session) return;
-    const snapshot = await fetchSnapshot();
-    if (!snapshot.user.onboarded) {
-      const requestedRole = await AsyncStorage.getItem(pendingRoleKey);
-      snapshot.user.role = requestedRole === "tutor" ? "tutor" : "student";
-      const name =
-        data.session.user.user_metadata?.full_name ||
-        data.session.user.user_metadata?.name;
-      if (!snapshot.user.name && typeof name === "string")
-        snapshot.user.name = name.slice(0, 100);
+    const ticket = snapshotGate.current.begin({
+      epoch: epoch.current,
+      revision: revision.current,
+    });
+    try {
+      const { data, error } = await requireBackend().auth.getSession();
+      if (error) throw error;
+      if (!data.session) return;
+      const snapshot = await fetchSnapshot();
+      if (!snapshot.user.onboarded) {
+        const requestedRole = await AsyncStorage.getItem(pendingRoleKey);
+        snapshot.user.role = requestedRole === "tutor" ? "tutor" : "student";
+        const name =
+          data.session.user.user_metadata?.full_name ||
+          data.session.user.user_metadata?.name;
+        if (!snapshot.user.name && typeof name === "string")
+          snapshot.user.name = name.slice(0, 100);
+      }
+      if (
+        snapshot.user.id === data.session.user.id &&
+        snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        adopt(snapshot);
+    } catch (error) {
+      if (
+        !snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        return;
+      setSyncError(
+        error instanceof Error ? error.message : "Akkauntni yuklab bo‘lmadi.",
+      );
+      throw error;
     }
-    if (
-      generation === epoch.current &&
-      currentRevision === revision.current &&
-      snapshot.user.id === data.session.user.id
-    )
-      adopt(snapshot);
   }, [adopt]);
   useEffect(() => {
     let live = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const client = supabase;
-    const hydrate = () =>
-      loadLiveAccount().catch((error) => {
-        if (live) setSyncError(error.message);
-      });
+    const hydrate = () => loadLiveAccount().catch(() => {});
     const auth = client?.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         epoch.current++;
@@ -177,6 +218,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setActorId(null);
         setCurrentUser(userRef.current);
         setMarket(marketRef.current);
+        setSyncError("");
+        setCurrentFilters({ ...defaultFilters });
       } else if (
         session &&
         (event === "SIGNED_IN" ||
@@ -189,8 +232,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           epoch.current++;
           actorRef.current = null;
           marketRef.current = emptyMarketplace();
+          userRef.current = { ...blankUser };
           setActorId(null);
+          setCurrentUser(userRef.current);
           setMarket(marketRef.current);
+          setSyncError("");
+          setCurrentFilters({ ...defaultFilters });
         }
         // Do not await Supabase methods inside its Auth callback (SDK lock).
         if (!actorRef.current)
@@ -206,7 +253,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (live) void hydrate();
           },
           (error) => {
-            if (live) setSyncError(error.message);
+            if (live && !actorRef.current) setSyncError(error.message);
           },
         )
       : undefined;
@@ -227,11 +274,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (live) await loadLiveAccount();
       }
     };
+    const initialEpoch = epoch.current;
     initialize()
       .catch((e) => {
         if (live) {
           if (backendMode === "demo") setStorageError(true);
-          else setSyncError(e.message);
+          else if (epoch.current === initialEpoch) setSyncError(e.message);
         }
       })
       .finally(() => {
@@ -282,7 +330,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const client = supabase;
     if (!client || !actorId) return;
     const sync = () => {
-      refresh().catch((e) => setSyncError(e.message));
+      void refresh().catch(() => {});
     };
     const timer = setInterval(sync, 15000);
     const stopRealtime = subscribeToMarketplace(client, actorId, sync);
@@ -318,9 +366,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             adopt({ market: result.market, user: account });
             return result.id;
           }
-          const result = await mutateBackend(value, current);
+          let ticket: ReturnType<typeof snapshotGate.current.begin> | undefined;
+          const result = await mutateBackend(
+            value,
+            current,
+            () => generation === epoch.current && actorRef.current === current,
+            () => {
+              ticket = snapshotGate.current.begin({
+                epoch: epoch.current,
+                revision: revision.current,
+              });
+            },
+          );
+          if (generation !== epoch.current || actorRef.current !== current)
+            throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+          const apply =
+            ticket &&
+            snapshotGate.current.accept(ticket, {
+              epoch: epoch.current,
+              revision: revision.current,
+            });
+          // Invalidate reads started during this command, including when its
+          // own response loses to an already settled, newer refresh.
           revision.current++;
-          if (generation === epoch.current) adopt(result);
+          if (result.user.id !== current)
+            throw new Error("Server boshqa akkaunt ma’lumotini qaytardi.");
+          if (apply) adopt(result);
           return result.id;
         });
       mutationQueue.current = operation;
@@ -408,7 +479,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             });
             return;
           }
-          const files = createFileService(requireBackend());
+          const client = await requireActorBackend(actor);
+          if (generation !== epoch.current || actor !== actorRef.current)
+            throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
+          const files = createFileService(client);
           const previous = userRef.current.avatarFileId;
           const asset = photo
             ? await files.upload({
@@ -421,14 +495,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (generation !== epoch.current || actor !== actorRef.current)
             throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
           await files.setAvatar(asset?.id || null);
+          if (generation !== epoch.current || actor !== actorRef.current)
+            throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
           revision.current++;
+          const ticket = snapshotGate.current.begin({
+            epoch: epoch.current,
+            revision: revision.current,
+          });
           const snapshot = await fetchSnapshot();
-          if (generation === epoch.current && snapshot.user.id === actor)
+          if (
+            generation === epoch.current &&
+            actorRef.current === actor &&
+            snapshot.user.id === actor &&
+            snapshotGate.current.accept(ticket, {
+              epoch: epoch.current,
+              revision: revision.current,
+            })
+          )
             adopt(snapshot);
           if (
             previous &&
             previous !== asset?.id &&
-            generation === epoch.current
+            generation === epoch.current &&
+            actor === actorRef.current
           )
             await files.remove(previous).catch(() => {}); // Already detached; cleanup may be retried later.
         });

@@ -1719,4 +1719,551 @@ do $$ declare t text; begin
 end $$;
 notify pgrst,'reload schema';
 
+-- Source: 202610230001_backend_access.sql
+-- Close account privacy and contact-policy bypasses without changing existing data.
+
+create or replace function public.darsino_session_secure() returns boolean
+language plpgsql stable security definer set search_path='' as $$
+declare
+  claims jsonb:=coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb;
+  has_mfa boolean:=false; session_exists boolean; session_id uuid;
+begin
+  if auth.uid() is null or jsonb_typeof(claims)<>'object' then return false; end if;
+  if to_regclass('auth.mfa_factors') is not null then
+    execute 'select exists(select 1 from auth.mfa_factors where user_id=$1 and status=''verified'' and factor_type=''totp'')'
+      into has_mfa using auth.uid();
+  end if;
+  if has_mfa and coalesce(claims->>'aal','aal1')<>'aal2' then return false; end if;
+  -- Managed Auth always has sessions. Only lightweight database fixtures omit it.
+  -- A missing claim must not turn off the revoked-session check in production.
+  if to_regclass('auth.sessions') is not null then
+    session_id:=nullif(claims->>'session_id','')::uuid;
+    if session_id is null then return false; end if;
+    execute 'select exists(select 1 from auth.sessions where id=$1 and user_id=$2)'
+      into session_exists using session_id,auth.uid();
+    if not session_exists then return false; end if;
+  end if;
+  return true;
+exception when invalid_text_representation then return false;
+end $$;
+
+create or replace function public.darsino_can_read_file(file uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+  select public.darsino_authenticated() and exists(
+    select 1 from public.darsino_files f where f.id=file and
+      case when f.purpose='avatar' then
+        f.state<>'deleted' and (f.owner_id=auth.uid() or
+          (f.state='ready' and
+            exists(select 1 from public.darsino_profiles p where p.id=f.owner_id and p.avatar_file_id=f.id and not p.is_suspended) and
+            public.darsino_policy_allows(f.owner_id,'avatarVisibility',auth.uid()) and
+            (public.darsino_contacts_linked(f.owner_id,auth.uid()) or
+             exists(select 1 from public.darsino_tutors where user_id=f.owner_id and verification='approved') or
+             public.darsino_can_read_file_account_base(file))))
+      else public.darsino_can_read_file_account_base(file) end)
+$$;
+
+do $$ begin
+  if to_regprocedure('public.darsino_mutate_access_base(jsonb)') is null then
+    alter function public.darsino_mutate(jsonb) rename to darsino_mutate_access_base;
+  end if;
+end $$;
+
+create or replace function public.darsino_mutate(command jsonb) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare me uuid:=public.darsino_account_id(); peer uuid; op text:=command->>'type';
+begin
+  perform public.darsino_assert(command->>'actorId'=me::text,'Akkaunt o‘zgardi. Amalni qayta boshlang.');
+  if op='request' then
+    peer:=(command->'request'->>'tutorId')::uuid;
+    perform public.darsino_assert(not public.darsino_blocked(me,peer),'Bu foydalanuvchi bilan aloqa cheklangan.');
+  elsif op='decide' and command->>'decision'='approved' then
+    select student_id into peer from public.darsino_applications
+      where id=(command->>'requestId')::uuid and tutor_id=me;
+    perform public.darsino_assert(not public.darsino_blocked(me,peer),'Bu foydalanuvchi bilan aloqa cheklangan.');
+  end if;
+  return public.darsino_mutate_access_base(command);
+end $$;
+
+create or replace function public.darsino_send_file_message(p_file_id uuid,p_text text default '') returns uuid
+language plpgsql security definer set search_path='' as $$
+declare me uuid:=public.darsino_account_id(); f public.darsino_files; message uuid; recipient uuid; clean text;
+begin
+  f:=public.darsino_owned_file(p_file_id,'chat');
+  select message_id into message from public.darsino_message_files where file_id=f.id;
+  -- Upload retries return the existing send without another debit or notification.
+  if message is not null then return message; end if;
+  perform public.darsino_assert(public.darsino_can_message(f.conversation_id),'Suhbatga yozish huquqi yo‘q.');
+  recipient:=case when split_part(f.conversation_id,':',2)::uuid=me then split_part(f.conversation_id,':',3)::uuid else split_part(f.conversation_id,':',2)::uuid end;
+  clean:=coalesce(nullif(trim(p_text),''),f.original_name);
+  perform public.darsino_assert(char_length(clean) between 1 and 2000,'Xabar uzunligi noto‘g‘ri.');
+  perform public.darsino_account_rate('message',60,60);
+  insert into public.darsino_messages(conversation_id,sender_id,recipient_id,text)
+    values(f.conversation_id,me,recipient,clean) returning id into message;
+  insert into public.darsino_message_files(message_id,file_id) values(message,f.id);
+  -- A later notification trigger owns delivery when that feature is installed.
+  if to_regprocedure('public.darsino_notify_new_message(uuid)') is null then
+    insert into public.darsino_notifications(user_id,title,body) values(recipient,'Yangi fayl',f.original_name);
+  end if;
+  return message;
+end $$;
+
+revoke all on function public.darsino_mutate_access_base(jsonb),public.darsino_can_read_file(uuid),
+  public.darsino_session_secure() from public,anon,authenticated;
+revoke all on function public.darsino_mutate(jsonb),public.darsino_send_file_message(uuid,text) from public,anon,authenticated;
+grant execute on function public.darsino_mutate(jsonb),public.darsino_send_file_message(uuid,text) to authenticated;
+notify pgrst,'reload schema';
+
+-- Source: 202610230002_scheduling.sql
+-- Serialize changes to each tutor/student calendar, preserve private invite schedules,
+-- and avoid profile/application/offering lock inversions across different actors.
+
+-- Actor serialization does not modify profile primary keys. NO KEY UPDATE keeps
+-- serialization while allowing concurrent FK KEY SHARE checks from notifications,
+-- applications and enrollments belonging to the other actor.
+do $schedule_core$
+declare signature text; definition text; old_lock text;
+begin
+  old_lock:='select * into actor from public.darsino_profiles where id=me for update;';
+  foreach signature in array array['public.darsino_mutate_core(jsonb)',
+    'public.darsino_account_command(jsonb)','public.darsino_record_payment(jsonb)'] loop
+    definition:=pg_get_functiondef(signature::regprocedure);
+    if position(old_lock in definition)>0 then
+      execute replace(definition,old_lock,
+        'select * into actor from public.darsino_profiles where id=me for no key update;');
+    elsif position('select * into actor from public.darsino_profiles where id=me for no key update;' in definition)=0 then
+      raise exception 'Unexpected actor lock in %; scheduling upgrade was not applied.',signature;
+    end if;
+  end loop;
+  definition:=pg_get_functiondef('public.darsino_mutate_core(jsonb)'::regprocedure);
+  -- The authenticated outer mutation wrapper always builds the final snapshot.
+  -- The private core needs to return only the command result ID, avoiding two
+  -- complete marketplace/file/message aggregations for every core command.
+  if position('return public.darsino_snapshot()||jsonb_build_object(''id'',new_id);' in definition)>0 then
+    execute replace(definition,
+      'return public.darsino_snapshot()||jsonb_build_object(''id'',new_id);',
+      'return jsonb_build_object(''id'',new_id); -- OQI_SINGLE_SNAPSHOT_V1');
+  elsif position('OQI_SINGLE_SNAPSHOT_V1' in definition)=0 then
+    raise exception 'Unexpected marketplace return; scheduling upgrade was not applied.';
+  end if;
+end $schedule_core$;
+
+create index if not exists darsino_active_student_calendar
+  on public.darsino_enrollments(student_id,offering_id) where active;
+
+create or replace function public.darsino_assert_student_available(
+  p_student uuid,p_starts_at timestamptz,p_ends_at timestamptz,
+  p_exclude_offering uuid default null,p_exclude_session uuid default null
+) returns void language plpgsql security definer set search_path='' as $$
+begin
+  perform public.darsino_assert(not exists(
+    select 1 from public.darsino_enrollments e
+    join public.darsino_sessions s on s.offering_id=e.offering_id
+    where e.student_id=p_student and e.active and s.ends_at>now()
+      and s.starts_at<p_ends_at and s.ends_at>p_starts_at
+      and (p_exclude_offering is null or s.offering_id<>p_exclude_offering)
+      and (p_exclude_session is null or s.id<>p_exclude_session)
+  ),'O‘quvchining bu vaqtda boshqa darsi bor. Boshqa vaqtni tanlang.');
+end $$;
+
+-- Rename once. Keep implementations separate from the public dispatch functions:
+-- replaying this migration after a later wrapper must preserve that later wrapper.
+do $$ begin
+  if to_regprocedure('public.darsino_mutate_schedule_base(jsonb)') is null then
+    alter function public.darsino_mutate(jsonb) rename to darsino_mutate_schedule_base;
+  end if;
+  if to_regprocedure('public.darsino_snapshot_schedule_base()') is null then
+    alter function public.darsino_snapshot() rename to darsino_snapshot_schedule_base;
+  end if;
+end $$;
+
+create or replace function public.darsino_mutate_scheduling(command jsonb) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare
+  me uuid:=public.darsino_account_id(); op text:=command->>'type'; owner_id uuid;
+  v_student_id uuid; v_offering_id uuid; v_session_id uuid; learner uuid; lesson record;
+  application public.darsino_applications; invitation public.darsino_group_invitations;
+  v_starts_at timestamptz; v_ends_at timestamptz; checking_group boolean:=false;
+begin
+  perform public.darsino_assert(command->>'actorId'=me::text,'Akkaunt o‘zgardi. Amalni qayta boshlang.');
+  if op='decide' and command->>'decision'='approved' then
+    select a.* into application from public.darsino_applications a
+      where a.id=(command->>'requestId')::uuid and a.tutor_id=me;
+    if found then
+      owner_id:=me; v_student_id:=application.student_id; v_offering_id:=application.offering_id;
+      v_starts_at:=application.starts_at; v_ends_at:=application.ends_at;
+      checking_group:=v_offering_id is not null;
+    end if;
+  elsif op='group-invite-decide' and command->'accept'='true'::jsonb then
+    select i.* into invitation from public.darsino_group_invitations i
+      where i.id=(command->>'invitationId')::uuid and i.student_id=me;
+    if found then
+      owner_id:=invitation.tutor_id; v_student_id:=me; v_offering_id:=invitation.offering_id;
+      checking_group:=true;
+    end if;
+  elsif op='update-session' then
+    select o.tutor_id,s.offering_id,s.id into owner_id,v_offering_id,v_session_id
+      from public.darsino_sessions s join public.darsino_offerings o on o.id=s.offering_id
+      where s.id=(command->>'sessionId')::uuid and o.tutor_id=me;
+    v_starts_at:=(command->>'startsAt')::timestamptz;
+    v_ends_at:=(command->>'endsAt')::timestamptz;
+  elsif op='offering' then
+    owner_id:=me;
+  elsif op='remove-participant' then
+    select o.tutor_id,o.id into owner_id,v_offering_id from public.darsino_offerings o
+      where o.id=(command->>'offeringId')::uuid and o.tutor_id=me;
+    v_student_id:=(command->>'studentId')::uuid;
+  end if;
+
+  if owner_id is not null then
+    -- Every membership/session writer takes owner first, then students in a
+    -- stable order. Different tutors only contend when they share a learner.
+    perform pg_advisory_xact_lock(hashtextextended('oqi:schedule:tutor:'||owner_id::text,0));
+    if op='update-session' then
+      -- Read after the tutor lock: a concurrently admitted learner cannot be
+      -- missed by the locks or by the conflict check for this schedule change.
+      for learner in select e.student_id from public.darsino_enrollments e
+        where e.offering_id=v_offering_id and e.active order by e.student_id loop
+        perform pg_advisory_xact_lock(hashtextextended('oqi:schedule:student:'||learner::text,0));
+      end loop;
+    elsif v_student_id is not null then
+      perform pg_advisory_xact_lock(hashtextextended('oqi:schedule:student:'||v_student_id::text,0));
+    end if;
+    -- Match the existing payment actor -> offering order. FK checks from the
+    -- opposite actor remain compatible with this non-key actor lock.
+    perform 1 from public.darsino_profiles p where p.id=me for no key update;
+    if v_offering_id is not null then
+      perform 1 from public.darsino_offerings o where o.id=v_offering_id for update;
+    end if;
+
+    if checking_group then
+      -- State may have changed while waiting; only still-pending admissions
+      -- need calendar validation. Delegated RPCs own authorization/transitions.
+      if (op='decide' and exists(select 1 from public.darsino_applications a where a.id=application.id and a.status='pending'))
+        or (op='group-invite-decide' and exists(select 1 from public.darsino_group_invitations i where i.id=invitation.id and i.status='pending')) then
+        for lesson in select s.starts_at,s.ends_at from public.darsino_sessions s
+          where s.offering_id=v_offering_id and s.ends_at>now() loop
+          perform public.darsino_assert_student_available(v_student_id,lesson.starts_at,lesson.ends_at,v_offering_id);
+        end loop;
+      end if;
+    elsif op='decide' and application.status='pending' then
+      perform public.darsino_assert_student_available(v_student_id,v_starts_at,v_ends_at);
+    elsif op='update-session' then
+      for learner in select e.student_id from public.darsino_enrollments e
+        where e.offering_id=v_offering_id and e.active order by e.student_id loop
+        perform public.darsino_assert_student_available(learner,v_starts_at,v_ends_at,null,v_session_id);
+      end loop;
+    end if;
+  end if;
+  return public.darsino_mutate_schedule_base(command);
+end $$;
+
+create or replace function public.darsino_snapshot_scheduling() returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare me uuid:=public.darsino_account_id(); result jsonb; market jsonb; invited_sessions jsonb;
+begin
+  result:=public.darsino_snapshot_schedule_base(); market:=result->'market';
+  select coalesce(jsonb_agg(jsonb_build_object('id',s.id,'offeringId',s.offering_id,
+    'title',o.data->>'title','startsAt',s.starts_at,'endsAt',s.ends_at,
+    'location',o.data->>'location','mode',o.data->>'mode') order by s.starts_at,s.id),'[]'::jsonb)
+    into invited_sessions
+    from public.darsino_sessions s join public.darsino_offerings o on o.id=s.offering_id
+    join public.darsino_tutors t on t.user_id=o.tutor_id
+    join public.darsino_profiles p on p.id=t.user_id
+    where s.ends_at>now() and t.verification='approved' and not p.is_suspended
+      and not public.darsino_blocked(me,t.user_id)
+      and exists(select 1 from public.darsino_group_invitations i
+        where i.offering_id=o.id and i.student_id=me and i.status='pending' and i.expires_at>now())
+      and not exists(select 1 from jsonb_array_elements(coalesce(market->'sessions','[]'::jsonb)) known
+        where known->>'id'=s.id::text);
+  market:=jsonb_set(market,'{sessions}',coalesce(market->'sessions','[]'::jsonb)||invited_sessions);
+  return result||jsonb_build_object('market',market);
+end $$;
+
+do $$ begin
+  -- A full installer replay may have just recreated an older public wrapper.
+  -- Refresh that known predecessor, while leaving any later wrapper untouched.
+  if to_regprocedure('public.darsino_mutate(jsonb)') is null or
+    (select prosrc from pg_proc where oid=to_regprocedure('public.darsino_mutate(jsonb)'))=
+    (select prosrc from pg_proc where oid='public.darsino_mutate_schedule_base(jsonb)'::regprocedure) then
+    execute $create$create or replace function public.darsino_mutate(command jsonb) returns jsonb
+      language sql security definer set search_path='' as 'select public.darsino_mutate_scheduling(command)'$create$;
+  end if;
+  if to_regprocedure('public.darsino_snapshot()') is null or
+    (select prosrc from pg_proc where oid=to_regprocedure('public.darsino_snapshot()'))=
+    (select prosrc from pg_proc where oid='public.darsino_snapshot_schedule_base()'::regprocedure) then
+    execute $create$create or replace function public.darsino_snapshot() returns jsonb
+      language sql security definer set search_path='' as 'select public.darsino_snapshot_scheduling()'$create$;
+  end if;
+end $$;
+
+revoke all on function public.darsino_assert_student_available(uuid,timestamptz,timestamptz,uuid,uuid),
+  public.darsino_mutate_schedule_base(jsonb),public.darsino_snapshot_schedule_base(),
+  public.darsino_mutate_scheduling(jsonb),public.darsino_snapshot_scheduling(),
+  public.darsino_mutate_core(jsonb),public.darsino_account_command(jsonb),public.darsino_record_payment(jsonb)
+  from public,anon,authenticated;
+revoke all on function public.darsino_mutate(jsonb),public.darsino_snapshot() from public,anon;
+grant execute on function public.darsino_mutate(jsonb),public.darsino_snapshot() to authenticated;
+notify pgrst,'reload schema';
+
+-- Source: 202610230003_ai_recovery.sql
+-- A retry must reuse a completed response, wait for a live request, or report a
+-- terminal failure. A failed request ID never starts another billable attempt.
+create or replace function public.oqi_ai_begin_request(p_request_id uuid,p_conversation_id uuid,p_message text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare me uuid; conversation uuid:=p_conversation_id; previous public.oqi_ai_requests;
+begin
+  begin
+    me:=public.darsino_account_id();
+  exception when sqlstate 'P0001' then
+    raise exception using errcode='OQ403',message='AI yordamchidan foydalanish huquqingiz yo‘q.';
+  end;
+  -- Serialize both the rolling quotas and all new attempts for this account.
+  perform 1 from public.darsino_profiles where id=me and role='student' and onboarded for update;
+  if not found then
+    raise exception using errcode='OQ403',message='AI yordamchi o‘quvchi akkaunti uchun.';
+  end if;
+  if p_request_id is null or coalesce(char_length(trim(p_message)),0) not between 1 and 2000 then
+    raise exception using errcode='OQ400',message='Savol 1–2000 belgidan iborat bo‘lsin.';
+  end if;
+  select * into previous from public.oqi_ai_requests where id=p_request_id for update;
+  if found then
+    if previous.user_id<>me then
+      raise exception using errcode='OQ403',message='So‘rov identifikatori band.';
+    end if;
+    if previous.status='completed' then
+      return jsonb_build_object('status','completed','conversationId',previous.conversation_id,
+        'reply',(select content from public.oqi_ai_messages where request_id=p_request_id and role='assistant'));
+    elsif previous.status='failed' then
+      return jsonb_build_object('status','failed','conversationId',previous.conversation_id);
+    elsif previous.created_at<=now()-interval '60 seconds' then
+      update public.oqi_ai_requests set status='failed',completed_at=now() where id=previous.id;
+      return jsonb_build_object('status','expired','conversationId',previous.conversation_id);
+    end if;
+    return jsonb_build_object('status','pending','conversationId',previous.conversation_id);
+  end if;
+  update public.oqi_ai_requests set status='failed',completed_at=now()
+    where user_id=me and status='pending' and created_at<=now()-interval '60 seconds';
+  if exists(select 1 from public.oqi_ai_requests where user_id=me and status='pending') then
+    raise exception using errcode='OQ429',message='Avvalgi javobni kuting.';
+  end if;
+  if (select count(*) from public.oqi_ai_requests where user_id=me and created_at>now()-interval '1 minute')>=5 then
+    raise exception using errcode='OQ429',message='Bir daqiqada 5 ta savol mumkin. Biroz kuting.';
+  end if;
+  if (select count(*) from public.oqi_ai_requests where user_id=me and created_at>now()-interval '24 hours')>=30 then
+    raise exception using errcode='OQ429',message='24 soatlik 30 ta savol limiti tugadi.';
+  end if;
+  if conversation is null then
+    insert into public.oqi_ai_conversations(user_id) values(me) returning id into conversation;
+  elsif not exists(select 1 from public.oqi_ai_conversations where id=conversation and user_id=me) then
+    raise exception using errcode='OQ403',message='Suhbat topilmadi.';
+  end if;
+  insert into public.oqi_ai_requests(id,user_id,conversation_id) values(p_request_id,me,conversation);
+  insert into public.oqi_ai_messages(conversation_id,request_id,role,content) values(conversation,p_request_id,'user',trim(p_message));
+  return jsonb_build_object('status','reserved','conversationId',conversation,'messages',coalesce((select jsonb_agg(jsonb_build_object('role',m.role,'content',m.content) order by m.id) from (
+    select m.* from public.oqi_ai_messages m join public.oqi_ai_requests r on r.id=m.request_id
+    where m.conversation_id=conversation and (r.status='completed' or r.id=p_request_id) order by m.id desc limit 15
+  ) m),'[]'::jsonb));
+end $$;
+
+revoke all on function public.oqi_ai_begin_request(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.oqi_ai_begin_request(uuid,uuid,text) to authenticated;
+
+-- Source: 202610230004_storage_limits.sql
+-- Storage can populate object metadata after reserving an upload. Charge the
+-- bucket's maximum before accepting bytes instead of trusting the client's size
+-- or depending on metadata being available in the Storage INSERT policy.
+alter table public.darsino_files add column if not exists reserved_size_bytes bigint;
+update public.darsino_files f set reserved_size_bytes=
+  case when f.state in ('pending','deleting') then
+    greatest(f.size_bytes,coalesce((select b.file_size_limit from storage.buckets b where b.id=f.bucket_id),f.size_bytes))
+  else f.size_bytes end
+where f.reserved_size_bytes is null;
+alter table public.darsino_files alter column reserved_size_bytes set not null;
+do $$ begin
+  if not exists(select 1 from pg_constraint where conrelid='public.darsino_files'::regclass and conname='darsino_files_reserved_size_valid') then
+    alter table public.darsino_files add constraint darsino_files_reserved_size_valid check(reserved_size_bytes>=size_bytes);
+  end if;
+end $$;
+
+create or replace function public.darsino_prepare_upload(
+  p_purpose text,p_original_name text,p_mime_type text,p_size_bytes bigint,
+  p_conversation_id text default null,p_offering_id uuid default null
+) returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  me uuid:=public.darsino_account_id(); f public.darsino_files; bucket text; lim bigint; ext text;
+  mime text:=lower(trim(p_mime_type));
+begin
+  -- Serialize allocation with other upload reservations for this account.
+  perform 1 from public.darsino_profiles where id=me for update;
+  perform public.darsino_assert(p_purpose in ('avatar','verification','chat','material','cover'),'Fayl maqsadi noto‘g‘ri.');
+  perform public.darsino_assert(char_length(trim(p_original_name)) between 1 and 180 and p_original_name !~ '[[:cntrl:]/\\]','Fayl nomi noto‘g‘ri.');
+  bucket:=case p_purpose when 'avatar' then 'darsino-avatars' when 'verification' then 'darsino-verifications'
+    when 'chat' then 'darsino-chat-files' when 'material' then 'darsino-lesson-materials' when 'cover' then 'darsino-group-covers' end;
+  select file_size_limit into lim from storage.buckets where id=bucket and mime=any(allowed_mime_types);
+  perform public.darsino_assert(lim is not null and p_size_bytes between 1 and lim,'Fayl turi yoki hajmi ruxsat etilmagan.');
+  perform public.darsino_assert((p_purpose='chat')=(p_conversation_id is not null) and (p_purpose in ('material','cover'))=(p_offering_id is not null),'Fayl bog‘lanishi noto‘g‘ri.');
+  if p_purpose='verification' then
+    perform public.darsino_assert(exists(select 1 from public.darsino_tutors where user_id=me),'Repetitor profilini to‘ldiring.');
+  elsif p_purpose='chat' then
+    perform public.darsino_assert(public.darsino_can_message(p_conversation_id),'Suhbatga yozish huquqi yo‘q.');
+  elsif p_purpose in ('material','cover') then
+    perform public.darsino_assert(exists(select 1 from public.darsino_offerings o join public.darsino_tutors t on t.user_id=o.tutor_id where o.id=p_offering_id and o.tutor_id=me and t.verification='approved'),'Faqat tasdiqlangan dars egasi fayl yuklaydi.');
+  end if;
+  perform public.darsino_assert((select count(*) from public.darsino_files where owner_id=me and state='pending' and created_at>now()-interval '1 hour')<20,'Yuklanayotgan fayllar soni ko‘p. Avval ularni yakunlang.');
+  perform public.darsino_assert((select count(*) from public.darsino_files where owner_id=me and state<>'deleted')<1000
+    and (select coalesce(sum(reserved_size_bytes),0) from public.darsino_files where owner_id=me and state<>'deleted')+lim<=2147483648,'Akkaunt fayl limiti tugadi.');
+  ext:=case mime when 'image/jpeg' then 'jpg' when 'image/png' then 'png' when 'image/webp' then 'webp' when 'application/pdf' then 'pdf' when 'video/mp4' then 'mp4' when 'video/webm' then 'webm'
+    when 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' then 'docx'
+    when 'application/vnd.openxmlformats-officedocument.presentationml.presentation' then 'pptx'
+    when 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' then 'xlsx' end;
+  f.id:=gen_random_uuid();
+  insert into public.darsino_files(id,owner_id,purpose,bucket_id,object_path,original_name,mime_type,size_bytes,reserved_size_bytes,conversation_id,offering_id)
+    values(f.id,me,p_purpose,bucket,me::text||'/'||f.id::text||'.'||ext,trim(p_original_name),mime,p_size_bytes,lim,p_conversation_id,p_offering_id) returning * into f;
+  return public.darsino_file_json(f);
+end $$;
+
+create or replace function public.darsino_finalize_upload(p_file_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare me uuid:=public.darsino_account_id(); f public.darsino_files; meta jsonb;
+begin
+  select * into f from public.darsino_files where id=p_file_id and owner_id=me for update;
+  perform public.darsino_assert(found and f.state in ('pending','ready'),'Yuklash topilmadi yoki o‘chirish boshlangan.');
+  select metadata into meta from storage.objects where bucket_id=f.bucket_id and name=f.object_path;
+  perform public.darsino_assert(found and (meta->>'size')::bigint=f.size_bytes and lower(meta->>'mimetype')=f.mime_type,'Storage fayli, MIME turi yoki haqiqiy hajmi mos emas.');
+  -- Release unused capacity only after the stored object has passed validation.
+  -- Deletion keeps this persisted charge until forget_file marks it deleted.
+  update public.darsino_files set state='ready',reserved_size_bytes=f.size_bytes,updated_at=now() where id=f.id returning * into f;
+  return public.darsino_file_json(f);
+end $$;
+
+comment on column public.darsino_files.reserved_size_bytes is 'Account quota charge: bucket maximum until Storage metadata is verified, then actual size; retained while deleting and excluded only when deleted.';
+
+-- Source: 202610230005_api_reliability.sql
+-- One command key represents one user intent, even if its HTTP response is lost.
+-- Receipts retain a fixed-size SHA-256 intent digest, no message bodies or JWTs;
+-- replies use current scoped state. Fresh keys have per-account write budgets.
+
+create table if not exists public.darsino_mutation_receipts (
+  actor_id uuid not null references public.darsino_profiles(id) on delete cascade,
+  idempotency_key uuid not null,
+  command_hash bytea not null check (octet_length(command_hash)=32),
+  result_id uuid,
+  created_at timestamptz not null default now(),
+  primary key(actor_id,idempotency_key)
+);
+create index if not exists darsino_mutation_receipts_created on public.darsino_mutation_receipts(created_at);
+alter table public.darsino_mutation_receipts enable row level security;
+revoke all on public.darsino_mutation_receipts from public,anon,authenticated;
+
+-- A single notification is generated for text and file messages alike.
+alter table public.darsino_notifications add column if not exists message_id uuid references public.darsino_messages(id) on delete cascade;
+create unique index if not exists darsino_notifications_message on public.darsino_notifications(message_id) where message_id is not null;
+create index if not exists darsino_messages_recipient_time on public.darsino_messages(recipient_id,created_at desc,id);
+create index if not exists darsino_messages_conversation_time on public.darsino_messages(conversation_id,created_at desc,id);
+create index if not exists darsino_notifications_unread on public.darsino_notifications(user_id,created_at desc) where not read;
+
+create or replace function public.darsino_notify_new_message(p_message_id uuid) returns void
+language sql security definer set search_path='' as $$
+  insert into public.darsino_notifications(user_id,title,body,message_id)
+  select m.recipient_id,'Yangi xabar',left(m.text,140),m.id
+  from public.darsino_messages m where m.id=p_message_id
+  on conflict(message_id) where message_id is not null do nothing
+$$;
+create or replace function public.darsino_message_notification() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+  perform public.darsino_notify_new_message(new.id);
+  return new;
+end $$;
+revoke all on function public.darsino_notify_new_message(uuid),public.darsino_message_notification() from public,anon,authenticated;
+drop trigger if exists darsino_message_notification on public.darsino_messages;
+create trigger darsino_message_notification after insert on public.darsino_messages
+for each row execute function public.darsino_message_notification();
+
+do $$ begin
+  if to_regprocedure('public.darsino_mutate_idempotent_base(jsonb)') is null then
+    alter function public.darsino_mutate(jsonb) rename to darsino_mutate_idempotent_base;
+  end if;
+end $$;
+create or replace function public.darsino_mutate(command jsonb) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare
+  me uuid:=public.darsino_account_id(); key uuid; intent jsonb; intent_hash bytea; result jsonb;
+  receipt public.darsino_mutation_receipts;
+begin
+  perform public.darsino_assert(jsonb_typeof(command)='object','So‘rov formati noto‘g‘ri.');
+  perform public.darsino_assert(command->>'actorId'=me::text,'Akkaunt o‘zgardi. Amalni qayta boshlang.');
+  perform public.darsino_assert(octet_length(command::text)<=65536,'So‘rov juda katta.');
+  -- Existing clients remain usable; upgraded clients supply a UUID per intent.
+  if not command ? 'idempotencyKey' then
+    return public.darsino_mutate_idempotent_base(command);
+  end if;
+  perform public.darsino_assert(jsonb_typeof(command->'idempotencyKey')='string' and
+    command->>'idempotencyKey' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    'So‘rov identifikatori noto‘g‘ri.');
+  key:=(command->>'idempotencyKey')::uuid;
+  intent:=command-'idempotencyKey';
+  intent_hash:=sha256(convert_to(intent::text,'UTF8'));
+  -- The lock serializes matching keys across independent API workers. It is
+  -- acquired before authority/scheduling row locks in the delegated command.
+  perform pg_advisory_xact_lock(hashtextextended('oqi.command:'||me::text||':'||key::text,0));
+  select * into receipt from public.darsino_mutation_receipts
+    where actor_id=me and idempotency_key=key;
+  if found then
+    if receipt.command_hash<>intent_hash then
+      raise exception 'So‘rov identifikatori boshqa amal uchun ishlatilgan.' using errcode='22023';
+    end if;
+    return public.darsino_snapshot()||jsonb_build_object('id',receipt.result_id);
+  end if;
+  -- Replays are free; only a genuinely new, successfully committed intent
+  -- consumes budget. A failed transaction rolls these counters back as well.
+  perform public.darsino_account_rate('mutation-minute',120,60);
+  perform public.darsino_account_rate('mutation-day',1000,86400);
+  result:=public.darsino_mutate_idempotent_base(intent);
+  insert into public.darsino_mutation_receipts(actor_id,idempotency_key,command_hash,result_id)
+    values(me,key,intent_hash,nullif(result->>'id','')::uuid);
+  return result;
+end $$;
+revoke all on function public.darsino_mutate_idempotent_base(jsonb) from public,anon,authenticated;
+revoke all on function public.darsino_mutate(jsonb) from public,anon;
+grant execute on function public.darsino_mutate(jsonb) to authenticated;
+
+-- Service/admin maintenance only. Never expire a key in its first 24 hours.
+create or replace function public.darsino_prune_mutation_receipts(p_before timestamptz default now()-interval '30 days') returns bigint
+language plpgsql security definer set search_path='' as $$
+declare removed bigint;
+begin
+  perform public.darsino_assert(p_before is not null and p_before<=now()-interval '24 hours','Oxirgi 24 soatdagi so‘rovlar saqlanishi kerak.');
+  delete from public.darsino_mutation_receipts where created_at<p_before;
+  get diagnostics removed=row_count;
+  return removed;
+end $$;
+revoke all on function public.darsino_prune_mutation_receipts(timestamptz) from public,anon,authenticated;
+grant execute on function public.darsino_prune_mutation_receipts(timestamptz) to service_role;
+notify pgrst,'reload schema';
+
+-- Source: 202610230006_storage_lifecycle.sql
+-- Keep the reservation alive through the Storage INSERT transaction. Otherwise
+-- deletion could observe no committed object, release its quota, and then leave
+-- an object orphaned when an already-authorized upload commits afterward.
+create or replace function public.darsino_storage_insert(bucket text,path text) returns boolean
+language plpgsql volatile security definer set search_path='' as $$
+declare f public.darsino_files;
+begin
+  if not public.darsino_authenticated() then return false; end if;
+  -- Filter ownership before acquiring a lock: guessing another account's object
+  -- path must not let an unauthorized caller block its upload or deletion.
+  select * into f from public.darsino_files
+    where bucket_id=bucket and object_path=path and owner_id=auth.uid()
+    for share;
+  if not found then return false; end if;
+  -- Check the locked row, including any state change committed while waiting.
+  -- Storage may write authoritative object metadata later in its upload flow.
+  return f.state='pending' and f.created_at>now()-interval '1 hour';
+end $$;
+
+revoke all on function public.darsino_storage_insert(text,text) from public,anon,authenticated;
+grant execute on function public.darsino_storage_insert(text,text) to anon,authenticated;
+comment on function public.darsino_storage_insert(text,text) is 'Storage INSERT authorization holds a shared reservation-row lock until upload transaction end, serializing deletion and quota release without depending on early object metadata.';
+
 commit;

@@ -58,7 +58,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/auth.test.ts tests/domain.test.ts tests/database.test.ts tests/storage.test.ts tests/supabaseClient.test.ts tests/persistence.test.ts tests/learning.test.ts tests/teacher.test.ts tests/teacherDatabase.test.ts tests/assistant.test.ts tests/backendFeatures.test.ts tests/onboarding.test.ts tests/payments.test.ts tests/account.test.ts tests/accountDatabase.test.ts tests/i18n.test.ts",
+    "test": "node --import tsx --test tests/auth.test.ts tests/domain.test.ts tests/database.test.ts tests/storage.test.ts tests/supabaseClient.test.ts tests/persistence.test.ts tests/learning.test.ts tests/teacher.test.ts tests/teacherDatabase.test.ts tests/assistant.test.ts tests/backendFeatures.test.ts tests/onboarding.test.ts tests/payments.test.ts tests/account.test.ts tests/accountDatabase.test.ts tests/i18n.test.ts tests/backendAccess.test.ts tests/backendScheduling.test.ts tests/assistantRecovery.test.ts tests/storageLimits.test.ts tests/backendCoordination.test.ts tests/apiReliability.test.ts tests/storageLifecycle.test.ts",
     "export:web": "expo export --platform web",
     "test:e2e": "playwright test",
     "export:all": "expo export --platform all --max-workers 1",
@@ -66,7 +66,8 @@
     "format:check": "prettier --check App.tsx src tests scripts README.md docs/*.md supabase/README.md package.json app.json tsconfig.json playwright.config.ts app.config.ts supabase/functions",
     "supabase:bundle": "node scripts/build-supabase.mjs",
     "supabase:check": "node scripts/build-supabase.mjs --check",
-    "typecheck:edge": "deno check --config supabase/functions/oqi-assistant/deno.json --node-modules-dir=manual --no-lock supabase/functions/oqi-assistant/index.ts"
+    "typecheck:edge": "deno check --config supabase/functions/oqi-assistant/deno.json --node-modules-dir=manual --no-lock supabase/functions/oqi-assistant/index.ts",
+    "test:postgres": "node --import tsx scripts/test-postgres.ts"
   },
   "private": true,
   "engines": {

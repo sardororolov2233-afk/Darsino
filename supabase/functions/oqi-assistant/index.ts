@@ -24,7 +24,10 @@ const handler = createAssistantHandler({
       p_conversation_id: conversationId,
       p_message: message,
     });
-    if (error) throw new Error(error.message);
+    if (error)
+      throw Object.assign(new Error("Assistant reservation failed"), {
+        code: error.code,
+      });
     return data;
   },
   async generate(messages) {

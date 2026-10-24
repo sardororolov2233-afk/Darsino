@@ -2,12 +2,14 @@
 
 O‘quvchi xaritada ustoz manzilini tanlaydi, guruh materialini ochadi yoki suriladigan AI belgisini bosib savol beradi. Mobil ilova Supabase Auth sessiyasi bilan RPC, private Storage va `oqi-assistant` Edge Function’ga ulanadi. Maxfiy AI kaliti ilovaga yuborilmaydi.
 
+2026-10-24 yangilanishi: [backend mustahkamlash](backend-hardening.md) retry, jadval tranzaksiyalari, maxfiylik, kvota va migratsiya tartibini belgilaydi. **Mavjud ishlayotgan AI xizmatida yangilangan Edge adapteri SQL migratsiyasidan avval deploy qilinadi.** Yangi loyihada SQL avval o‘rnatilib, xizmat Edge deploy’dan keyin ochiladi.
+
 ## Ishga tushirish
 
 1. `npm ci` bajaring. `.env.example` asosida `.env` yarating, `EXPO_PUBLIC_BACKEND_MODE=supabase`, loyiha URL’i va publishable/anon kalitini kiriting. `service_role` kalitini Expo sozlamalariga yozmang.
-2. Supabase SQL Editor’da `supabase/Darsino_Supabase_setup.sql` faylini bajaring. U yangi loyihani o‘rnatadi yoki mavjud Darsino ma’lumotlarini saqlab yangilaydi. Supabase CLI migrations bilan ishlayotgan bo‘lsangiz, ikkita yangi `202610160001_locations_ai.sql` va `202610160002_video_materials.sql` migratsiyasini qo‘llang. Ikkala usuldan bittasini tanlang.
+2. Yangi loyihada Supabase SQL Editor’da `supabase/Darsino_Supabase_setup.sql` faylini bajaring. CLI ishlatilsa `supabase/migrations/` ichidagi hali bajarilmagan fayllar tartib bilan qo‘llanadi. Mavjud AI xizmatida avval yangilangan Edge adapterini deploy qilib, keyin SQL’ni yangilang. Ikkala SQL o‘rnatish usulidan bittasini tanlang.
 3. Supabase Dashboard → Edge Functions → Secrets’da `AI_GATEWAY_API_KEY` va `AI_MODEL` qo‘shing. Kalitni chatga yoki gitga joylamang. `AI_MODEL` qiymatini [jonli katalog](https://ai-gateway.vercel.sh/v1/models) qaytargan aniq `provider/model` identifikatoridan tanlang. Model kodda qotirib qo‘yilmagan.
-4. Supabase CLI’da loyiha bilan autentifikatsiyadan o‘tib, repo ildizidan `supabase functions deploy oqi-assistant --project-ref YOUR_PROJECT_REF` bajaring. `supabase/config.toml` shu funksiyaning eski gateway JWT tekshiruvini o‘chiradi; funksiya o‘zi har so‘rovda `auth.getUser` bilan tokenni tekshiradi. `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` Supabase tomonidan server muhitiga taqdim etiladi. Yangi jadval funksiyalari deploydan oldin mavjud bo‘lishi kerak.
+4. Supabase CLI’da loyiha bilan autentifikatsiyadan o‘tib, repo ildizidan `supabase functions deploy oqi-assistant --project-ref YOUR_PROJECT_REF` bajaring. `supabase/config.toml` shu funksiyaning eski gateway JWT tekshiruvini o‘chiradi; funksiya o‘zi har so‘rovda `auth.getUser` bilan tokenni tekshiradi. `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` Supabase tomonidan server muhitiga taqdim etiladi. Yangi loyiha SQL va Edge tayyor bo‘lmaguncha foydalanuvchiga ochilmaydi; mavjud backend yangilanishida Edge avval qo‘llanadi.
 5. Android qurilmadagi xarita uchun `.env`ga `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY` kiriting va Google Maps SDK for Android’ni yoqing. Kalitni ilovaning package nomi va imzolash sertifikati bilan cheklang. iOS Apple Maps’dan, web OpenStreetMap embed’dan foydalanadi.
 6. Native paketlar qo‘shilgani sababli development/store build’ni qayta yarating. `npm start` yoki `npm run web` bilan ilovani ishga tushiring. Brauzer GPS’i uchun HTTPS yoki localhost kerak.
 

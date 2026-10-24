@@ -22,9 +22,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run typecheck:edge
       - run: npm test
+      - run: npm run test:postgres
       - run: npm run supabase:check
       - run: npm run test:ui
       - run: npx playwright install --with-deps chromium
