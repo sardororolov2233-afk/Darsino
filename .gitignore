@@ -45,3 +45,7 @@ yarn-error.*
 # Browser validation output
 /test-results/
 /playwright-report/
+
+# Supabase CLI local project linkage and branch state
+/supabase/.temp/
+/supabase/.branches/

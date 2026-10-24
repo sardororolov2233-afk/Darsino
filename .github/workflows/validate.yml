@@ -26,6 +26,7 @@ jobs:
         with:
           deno-version: v2.9.6
       - run: npm ci
+      - run: npm run format:check
       - run: npm run typecheck
       - run: npm run typecheck:edge
       - run: npm test

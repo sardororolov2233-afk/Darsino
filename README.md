@@ -25,6 +25,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_OR_ANON_KEY
 
 ## Backendni o‘rnatish
 
+- Belgilangan Supabase loyihasiga ulash: [CLI, preflight va deploy tartibi](docs/supabase-deployment.md).
 - Yangi loyiha: Supabase SQL Editor’da [generatsiya qilingan SQL](supabase/Darsino_Supabase_setup.sql) to‘liq bajariladi; keyin Auth/provider va Edge sozlamalari ulanadi.
 - Mavjud loyiha: [yangilash tartibi](docs/backend-hardening.md#yangilash-tartibi) bo‘yicha yangilangan AI Edge adapteri avval deploy qilinadi, keyin yangi migratsiyalar qo‘llanadi.
 - SQL bazasi va fayllar: [Supabase README](supabase/README.md).
