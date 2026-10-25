@@ -2,8 +2,8 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 export type RootStackParamList = {
   Welcome: undefined;
+  Providers: undefined;
   SignIn: undefined;
-  VerifyEmail: undefined;
   Setup: undefined;
   Main:
     | {

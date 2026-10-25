@@ -6,7 +6,7 @@ import {
   type Marketplace,
   type User,
 } from "./domain";
-export const DEMO_CODE = "421806";
+export const DEMO_PASSWORD = "Demo421806!";
 export const DEMO_TUTOR_PHONE = "+998901111111";
 export const DEMO_MODERATOR_PHONE = "+998900000001";
 export const DEMO_TUTOR_EMAIL = "dilnoza@darsino.demo";

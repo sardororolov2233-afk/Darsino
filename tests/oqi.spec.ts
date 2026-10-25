@@ -1,21 +1,9 @@
+import { authenticateDemo } from "./authHelpers";
 import { diagnostics } from "../src/data/learning";
 import { completeStudentSetup } from "./onboardingHelpers";
 import { test, expect, type Page } from "@playwright/test";
 async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Email orqali davom etish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
-    .fill(email);
-  await page
-    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("421806");
-  await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
+  await authenticateDemo(page, email);
   await completeStudentSetup(page, "Oqi Sinov");
 }
 test("diagnostic results and followed clubs persist and remain private to each account", async ({

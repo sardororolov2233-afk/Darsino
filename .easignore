@@ -1,0 +1,35 @@
+# EAS uses this file instead of .gitignore. Keep local credentials and generated
+# files out of the build archive; public build settings belong in EAS environments.
+.git/
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.kotlin/
+*.orig.*
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pfx
+*.key
+*.pem
+*.mobileprovision
+credentials.json
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+.env*
+!.env.example
+*.tsbuildinfo
+/ios/
+/android/
+/test-results/
+/playwright-report/
+/coverage/
+/.cache/
+/supabase/.temp/
+/supabase/.branches/

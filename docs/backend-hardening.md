@@ -2,6 +2,8 @@
 
 2026-10-24. Mavjud Supabase bazasi va frontend kontrakti saqlanadi. O‘zgarishlar oltita qo‘shimcha migratsiya, Edge adapteri va frontend xizmatlari orqali qo‘llanadi; eski migratsiyalar tahrirlanmagan.
 
+Keyingi [jonli tekshiruvda](supabase-live-verification.md) mavjud loyiha sxemasi yakuniy migratsiyalarga mosligi va Edge deploy tasdiqlandi. SQL qayta bajarilmadi. **2026-10-25 dan asosiy Auth oqimi email/parol bilan:** signup parolni takrorlashni talab qiladi, email kodi va signup SMTP talab qilinmaydi. Server avtomatik tasdiqlashga sozlanadi; yangi oqimning jonli natijalari hisobotda alohida ko‘rsatiladi.
+
 ## Nimalar yaxshilandi
 
 | Holat                                    | Yangi xatti-harakat                                                                                                                                                        |
@@ -90,4 +92,4 @@ npm run export:all
 
 `test:postgres` mustaqil ulanishlarda beshta vaziyatni sinaydi: boshqa-boshqa ustozlarning parallel tasdiqlashi, tasdiqlash va taklif qabul qilish, dars ko‘chirish va qabul, bir kalit bilan parallel xabar, hamda upload va o‘chirish. Poygalar lock barrier yoki `pg_blocking_pids` orqali haqiqatan parallel holatga olib kelinadi. Test konteyneri doim yakunda olib tashlanadi.
 
-Bu testlar database darajasida real PostgreSQL ishlatadi. Ular haqiqiy Supabase Auth/OAuth HTTP, Storage binary serveri, Realtime WebSocket yoki pullik AI provayderini ishga tushirmaydi. Production loyiha credential’lari bu ishda berilmagan va masofaviy baza o‘zgartirilmagan. Joriy snapshot hali to‘liq marketplace tarixini beradi; katta foydalanuvchi bazasi uchun cursor pagination alohida API versiyasida kiritilishi kerak. Yangi indekslar va bir marta snapshot yig‘ish mavjud kontraktning xarajatini kamaytiradi, yuklama sinovi o‘rnini bosmaydi.
+Bu lokal testlar database darajasida real PostgreSQL ishlatadi; haqiqiy Auth/OAuth HTTP, Storage binary serveri, Realtime WebSocket yoki pullik modelni ishga tushirmaydi. Keyingi jonli loyiha tekshiruvlari va hali bajarilmagan smoke testlar [alohida qayd etilgan](supabase-live-verification.md). Joriy snapshot hali to‘liq marketplace tarixini beradi; katta foydalanuvchi bazasi uchun cursor pagination alohida API versiyasida kiritilishi kerak. Yangi indekslar va bir marta snapshot yig‘ish mavjud kontraktning xarajatini kamaytiradi, yuklama sinovi o‘rnini bosmaydi.

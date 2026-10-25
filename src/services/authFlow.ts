@@ -4,30 +4,46 @@ export const normalizeEmail = (value: string) => value.trim().toLowerCase();
 export function validEmail(value: string) {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
-export function createEmailAuth(client: SupabaseClient) {
+function passwordAuthError(error: { code?: string; message: string }) {
+  if (error.code === "invalid_credentials")
+    return new Error("Email yoki parol noto‘g‘ri.");
+  if (error.code === "user_already_exists" || error.code === "email_exists")
+    return new Error(
+      "Bu email bilan akkaunt mavjud. Kirish bo‘limidan foydalaning.",
+    );
+  return new Error(error.message);
+}
+export function createPasswordAuth(client: SupabaseClient) {
   return {
-    async request(value: string) {
+    async signUp(value: string, password: string, confirmation: string) {
       const email = normalizeEmail(value);
       if (!validEmail(email))
         throw new Error("To‘g‘ri email manzilini kiriting.");
-      const { error } = await client.auth.signInWithOtp({
+      if (password.length < 8)
+        throw new Error("Parol kamida 8 ta belgidan iborat bo‘lsin.");
+      if (password !== confirmation)
+        throw new Error("Parollar mos kelmadi. Qayta tekshiring.");
+      // Passwords are opaque credentials: never trim or otherwise normalize.
+      const { data, error } = await client.auth.signUp({
         email,
-        options: { shouldCreateUser: true },
+        password,
       });
-      if (error) throw new Error(error.message);
+      if (error) throw passwordAuthError(error);
+      return data;
     },
-    async verify(email: string, token: string) {
-      if (!/^\d{6,8}$/.test(token))
-        throw new Error("Emaildagi 6–8 xonali kodni kiriting.");
-      const { error } = await client.auth.verifyOtp({
-        email: normalizeEmail(email),
-        token,
-        type: "email",
+    async signIn(value: string, password: string) {
+      const email = normalizeEmail(value);
+      if (!validEmail(email))
+        throw new Error("To‘g‘ri email manzilini kiriting.");
+      // Existing accounts can have older password policies. Only signup applies
+      // the new minimum; login must send the exact credential to managed Auth.
+      if (!password) throw new Error("Parolingizni kiriting.");
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password,
       });
-      if (error)
-        throw new Error(
-          "Kod tasdiqlanmadi. Emaildagi kodni tekshiring yoki yangisini so‘rang.",
-        );
+      if (error) throw passwordAuthError(error);
+      return data;
     },
   };
 }

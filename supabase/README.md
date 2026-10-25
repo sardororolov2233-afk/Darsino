@@ -4,16 +4,16 @@
 
 2026-10-16: O‘qi uchun ustoz koordinatalari, GPS yaqinlik qidiruvi, MP4/WebM materiallari va shaxsiy AI chat qo‘shildi. [Yangi backend sozlamalari](../docs/backend.md) SQL va Edge Function’ni ishga tushirish tartibini beradi.
 
-Bu paket repodagi Expo ilovasiga mos: email kodi, Google yoki Apple orqali kirish, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
+Bu paket repodagi Expo ilovasiga mos: email va parol bilan ro‘yxatdan o‘tish/kirish, ixtiyoriy Google yoki Apple, o‘quvchi va repetitor profillari, moderator tekshiruvi, guruh / individual dars, ariza, jadval, qatnashchi, davomat, fikr, shaxsiy chat, bildirishnoma va fayllar.
 
 **Asosiy fayl: [Darsino_Supabase_setup.sql](Darsino_Supabase_setup.sql).** Uni Supabase SQL Editor’da bir marta ishga tushiring. Fayl bo‘sh loyiha uchun bazani yaratadi; oldingi Darsino migratsiyasi qo‘llangan bo‘lsa, ma’lumotlarni saqlagan holda yangilaydi. Qayta ishga tushirish ham test qilingan. Begona yoki qisman yaratilgan Darsino sxemasini aniqlasa, tranzaksiya xato bilan to‘xtaydi.
 
-SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti, Email/SMTP va OAuth provider sozlamalari sizning loyihangizdan olinadi.
+2026-10-24: maqsadli jonli bazaning mavjud SQL Editor sxemasi barcha 16 migratsiya bilan mosligi tasdiqlandi; SQL qayta bajarilmadi va CLI tarixi o‘zgartirilmadi. Edge deploy hamda anonim ruxsat tekshiruvlari o‘tdi. **2026-10-25 yangi talab:** email + parol, signup’da parolni takrorlash, email kodi talab qilinmaydi. Signup SMTP’ga bog‘liq emas. Joriy sozlama/sinovlar [jonli hisobotda](../docs/supabase-live-verification.md); [SMTP](../docs/supabase-smtp.md) keyingi xizmat emaillari uchun ixtiyoriy. Quyidagi qadamlar yangi yoki boshqa loyiha uchun o‘rnatish yo‘riqnomasidir.
 
 ## 1. O‘rnatish tartibi
 
-1. Supabase loyihasini oching. SQL Editor’da `Darsino_Supabase_setup.sql` faylining **to‘liq matnini** loyiha administratori sifatida ishga tushiring. Supabase’ning tayyor `auth` va `storage` sxemalari kerak; oddiy PostgreSQL bazasining o‘zi yetmaydi.
-2. Authentication’da **Email** provider va email tasdiqlashni yoqing. Confirm signup hamda Magic Link email shablonlarida `{{ .Token }}` bo‘lsin: [templates/email-otp.html](templates/email-otp.html) matnini ishlatish mumkin. UI 6–8 xonali kodni qabul qiladi. Haqiqiy foydalanuvchilar uchun custom SMTP sozlang; Supabase default email xizmati ishlab chiqish cheklovlariga ega. Google va Apple’ni quyidagi sozlash bo‘limi bo‘yicha yoqing. SMS provider kerak emas.
+1. Yangi Supabase loyihasida SQL Editor’da `Darsino_Supabase_setup.sql` faylining **to‘liq matnini** loyiha administratori sifatida ishga tushiring. Mavjud loyihada avval sxema va migratsiya tarixini solishtiring; mos sxemani ko‘r-ko‘rona qayta bajarmang. Supabase’ning tayyor `auth` va `storage` sxemalari kerak; oddiy PostgreSQL bazasining o‘zi yetmaydi.
+2. Authentication’da **Email** provider va yangi foydalanuvchi signup’ini yoqing. Email confirmation’ni talab qilmang: Management API sozlamasi `mailer_autoconfirm=true`, minimal parol uzunligi `password_min_length=8`. Yangi akkaunt `signUp({email,password})`, mavjud akkaunt `signInWithPassword({email,password})` orqali kiradi; signup sessiya qaytarishi kerak. Parolni takrorlash klientda tekshiriladi. Email kodi, OTP shabloni va signup SMTP talab qilinmaydi. Google/Apple kerak bo‘lsa alohida sozlanadi; SMS provider kerak emas.
 3. Repodagi `.env.example` faylidan `.env` yarating:
 
    ```dotenv
@@ -25,15 +25,17 @@ SQL hali haqiqiy Supabase loyihangizga qo‘llanmagan. Loyiha URL / ochiq kaliti
    Ilovaga publishable / anon kalit kiritiladi. **`service_role`, secret key, database paroli va SMTP parolini ilovaga qo‘ymang.** `EXPO_PUBLIC_*` qiymatlar ilova to‘plamida ochiq bo‘ladi.
 
 4. Ilovani qayta boshlang: `npm run web` yoki `npx expo start --clear`. Ochiq terminal ishlab turgan bo‘lsa, uni to‘xtatib qayta ishga tushiring.
-5. Moderator uchun alohida email bilan email kodi, Google yoki Apple orqali ilovaga kiring. Supabase Authentication → Users’dan shu akkaunt UUID’sini oling. [admin/01_assign_moderator.sql](admin/01_assign_moderator.sql) ichidagi `target uuid := null` o‘rniga shu UUID’ni yozib, SQL Editor’da alohida bajaring. O‘zgartirilmagan fayl ataylab xato bilan to‘xtaydi; hech kimga tasodifan rol bermaydi.
+5. Moderator uchun alohida email/parolli akkaunt bilan ilovaga kiring yoki sozlangan OAuth provideridan foydalaning. Supabase Authentication → Users’dan shu akkaunt UUID’sini oling. [admin/01_assign_moderator.sql](admin/01_assign_moderator.sql) ichidagi `target uuid := null` o‘rniga shu UUID’ni yozib, SQL Editor’da alohida bajaring. O‘zgartirilmagan fayl ataylab xato bilan to‘xtaydi; hech kimga tasodifan rol bermaydi.
 6. [admin/02_healthcheck.sql](admin/02_healthcheck.sql) ni bajaring: ilova jadvallarida RLS, 5 ta private bucket, 7 ta Storage policy, Auth trigger, Realtime’dagi 5 ta jadval va kvota/retry diagnostikasi ko‘rinadi. `*_core` hamda `owned_file` funksiyalarida `authenticated_allowed=false` bo‘lishi kerak.
 7. Haqiqiy ikki akkaunt bilan tekshiring: repetitor ro‘yxatdan o‘tadi → moderator tasdiqlaydi → repetitor dars yaratadi → o‘quvchi ariza yuboradi → ustoz tasdiqlaydi → «Darslarim»da guruh paydo bo‘ladi. Live bazaga demo ustozlar yoki soxta Auth akkauntlari kiritilmaydi.
 
 SQL Editor va CLI — ikkita muqobil yo‘l. Yangi CLI loyihasida `supabase link --project-ref YOUR_PROJECT_REF`, keyin `supabase db push` hali bajarilmagan migratsiyalarni tartib bilan qo‘llaydi. SQL Editor orqali allaqachon o‘rnatilgan loyihada `001` migratsiyani yana ko‘r-ko‘rona bajarmang: u dastlabki sxemani yaratadi. CLI’ga keyin o‘tsangiz, Supabase migration history’sini real qo‘llangan fayllar bilan avval moslang.
 
-001–004 oldin bajarilgan bazaga [202610150001_free_clubs.sql](migrations/202610150001_free_clubs.sql) faylini SQL Editor’da qo‘llang yoki yangilangan umumiy setup faylini qayta bajaring. Migratsiya faqat `O‘qi klubi` belgili guruhga nol narxga ruxsat beradi; oddiy dars narxi, ustoz tekshiruvi va ariza tasdig‘i saqlanadi. Qayta bajarish va mavjud a’zolikni saqlash test qilingan. Bu migratsiya live loyihaga hali qo‘llanmagan.
+Faqat 001–004 bajarilgan eski bazaga [202610150001_free_clubs.sql](migrations/202610150001_free_clubs.sql) qo‘llanadi. Migratsiya faqat `O‘qi klubi` belgili guruhga nol narxga ruxsat beradi; oddiy dars narxi, ustoz tekshiruvi va ariza tasdig‘i saqlanadi. Qayta bajarish va mavjud a’zolikni saqlash lokal test qilingan; maqsadli jonli sxemada bu o‘zgarish mavjudligi ham solishtirildi.
 
 ## Google, Apple va email sozlamalari
+
+- Asosiy kirish email/parol orqali. Avtomatik tasdiqlash yangi signup uchun emailga xat yoki kod yubormaydi; manzilning egasi email orqali tekshirilmaydi. SQL’dagi akkaunt/sessiya, suspension va MFA himoyalari saqlanadi; rollar email qiymatidan olinmaydi. SMTP keyinchalik parol tiklash yoki emailni o‘zgartirish xabarlari yoqilsa kerak bo‘lishi mumkin, signup uchun shart emas.
 
 - Google Cloud’da Web OAuth client yarating. Authorized redirect URI: `https://YOUR_PROJECT.supabase.co/auth/v1/callback`. Client ID va Client Secret’ni Supabase → Authentication → Providers → Google’da kiriting. Mobil ilovada Google kirishi tizim brauzeri va PKCE orqali ishlaydi.
 - Apple Developer’da Sign in with Apple’ni yoqing. iOS native App ID / Bundle ID: `uz.darsino.app`; Supabase Apple provider Client IDs ro‘yxatiga shu ID’ni qo‘shing. Web / Android uchun alohida Apple Services ID, Team ID, Key ID va private key / client secret sozlang. Apple Return URL ham Supabase’ning yuqoridagi `/auth/v1/callback` manzili bo‘ladi. Apple client secret’ini uning muddatiga ko‘ra yangilash kerak.

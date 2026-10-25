@@ -23,9 +23,16 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_OR_ANON_KEY
 
 `service_role`, database paroli, SMTP va AI kalitlari mobil ilovaga kiritilmaydi. OAuth va native pluginlar uchun development/store build kerak; mobil qurilma sozlamalari [Supabase yo‘riqnomasida](supabase/README.md).
 
+## Email va parol bilan kirish
+
+2026-10-25 dan ro‘yxatdan o‘tish **email + parol + parolni takrorlash**, keyingi kirish esa **email + parol** orqali ishlaydi. Parol kamida 8 belgidan iborat bo‘ladi; ikki parol mos kelishi tekshiriladi. Email tasdiqlash kodi so‘ralmaydi va signup uchun SMTP kerak emas. Supabase’da avtomatik email tasdiqlash yoqilishi kerak; jonli sozlama va sinov holati [hisobotda](docs/supabase-live-verification.md) ko‘rsatiladi.
+
+Android APK, development client va production build uchun [EAS yo‘riqnomasi](docs/build.md) hamda [profillar](eas.json) tayyor. Expo/EAS akkaunti va signing credential’lari berilmaguncha APK/IPA yaratilgani da’vo qilinmaydi.
+
 ## Backendni o‘rnatish
 
 - Belgilangan Supabase loyihasiga ulash: [CLI, preflight va deploy tartibi](docs/supabase-deployment.md).
+- Jonli sxema, Edge va parolli kirish holati: [tekshiruv hisoboti](docs/supabase-live-verification.md). [SMTP](docs/supabase-smtp.md) faqat keyingi xizmat emaillari uchun ixtiyoriy.
 - Yangi loyiha: Supabase SQL Editor’da [generatsiya qilingan SQL](supabase/Darsino_Supabase_setup.sql) to‘liq bajariladi; keyin Auth/provider va Edge sozlamalari ulanadi.
 - Mavjud loyiha: [yangilash tartibi](docs/backend-hardening.md#yangilash-tartibi) bo‘yicha yangilangan AI Edge adapteri avval deploy qilinadi, keyin yangi migratsiyalar qo‘llanadi.
 - SQL bazasi va fayllar: [Supabase README](supabase/README.md).

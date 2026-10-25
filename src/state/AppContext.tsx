@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
 import { AppState as NativeAppState, Platform } from "react-native";
 import {
   blankUser,
@@ -24,7 +25,10 @@ import {
 } from "./domain";
 import { defaultFilters } from "./model";
 import {
-  DEMO_CODE,
+  DEMO_TUTOR_EMAIL,
+  DEMO_TUTOR_PHONE,
+  DEMO_MODERATOR_EMAIL,
+  DEMO_MODERATOR_PHONE,
   demoEmailAccount,
   demoMarketplace,
   emptyMarketplace,
@@ -46,7 +50,7 @@ import {
 import { migrateLegacyDemo, readDemoCache } from "./migration";
 import { subscribeToMarketplace } from "../services/realtime";
 import {
-  createEmailAuth,
+  createPasswordAuth,
   normalizeEmail,
   validEmail,
 } from "../services/authFlow";
@@ -59,9 +63,23 @@ import {
 import { createFileService } from "../services/files";
 import { createSnapshotGate } from "../services/snapshotGate";
 import type { AvatarPhoto } from "../services/avatar";
+import { createDemoPasswordAuth } from "../services/demoPasswordAuth";
 
 const storageKey = "@darsino/marketplace-v2";
 const pendingRoleKey = "@darsino/pending-role";
+const demoPasswordAuth = createDemoPasswordAuth({
+  storage: AsyncStorage,
+  hash: (value) =>
+    Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value),
+  createSalt: () => Crypto.randomUUID(),
+});
+function knownDemoEmails(market: Marketplace) {
+  return market.users.flatMap((user) => [
+    ...(user.email ? [user.email] : []),
+    ...(user.phone === DEMO_TUTOR_PHONE ? [DEMO_TUTOR_EMAIL] : []),
+    ...(user.phone === DEMO_MODERATOR_PHONE ? [DEMO_MODERATOR_EMAIL] : []),
+  ]);
+}
 type AppContextType = {
   ready: boolean;
   signedIn: boolean;
@@ -81,8 +99,12 @@ type AppContextType = {
   setUser: (value: Partial<User>) => void;
   setFilters: (value: Partial<Filters>) => void;
   refresh: () => Promise<void>;
-  requestCode: (email: string) => Promise<void>;
-  verifyCode: (code: string) => Promise<boolean>;
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    confirmation: string,
+  ) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   signInWithProvider: (provider: SocialProvider) => Promise<void>;
   updateAvatar: (photo: AvatarPhoto | null) => Promise<void>;
   completeOnboarding: (
@@ -116,6 +138,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const reminderJobs = useRef<Promise<unknown>>(Promise.resolve());
   const snapshotGate = useRef(createSnapshotGate());
   const authUserId = useRef<string | null>(null);
+  const passwordAttempt = useRef(0);
   marketRef.current = market;
   userRef.current = user;
   actorRef.current = actorId;
@@ -210,6 +233,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const hydrate = () => loadLiveAccount().catch(() => {});
     const auth = client?.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
+        passwordAttempt.current++;
         epoch.current++;
         authUserId.current = null;
         actorRef.current = null;
@@ -399,44 +423,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [adopt],
   );
-  const requestCode = useCallback(async (value: string) => {
-    const email = normalizeEmail(value);
-    if (!validEmail(email))
-      throw new Error("To‘g‘ri email manzilini kiriting.");
-    await AsyncStorage.setItem(
-      pendingRoleKey,
-      userRef.current.role === "tutor" ? "tutor" : "student",
-    );
-    if (backendMode === "supabase") {
-      await createEmailAuth(requireBackend()).request(email);
-    }
-    setCurrentUser((u) => ({ ...u, email }));
-    userRef.current = { ...userRef.current, email };
-  }, []);
-  const verifyCode = useCallback(
-    async (code: string) => {
-      if (backendMode === "supabase") {
-        await createEmailAuth(requireBackend()).verify(
-          userRef.current.email || "",
-          code,
-        );
-        await loadLiveAccount();
-        return userRef.current.onboarded;
-      }
-      if (code !== DEMO_CODE)
-        throw new Error(`Sinov rejimida kod: ${DEMO_CODE}`);
-      const result = demoEmailAccount(
-        marketRef.current,
-        userRef.current.email || "",
-        userRef.current.role,
+  const authenticateWithPassword = useCallback(
+    async (
+      kind: "signup" | "signin",
+      value: string,
+      password: string,
+      confirmation?: string,
+    ) => {
+      const attempt = ++passwordAttempt.current;
+      const email = normalizeEmail(value);
+      const requestedRole = userRef.current.role;
+      if (!validEmail(email))
+        throw new Error("To‘g‘ri email manzilini kiriting.");
+      const assertCurrent = () => {
+        if (passwordAttempt.current !== attempt)
+          throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+      };
+      await AsyncStorage.setItem(
+        pendingRoleKey,
+        requestedRole === "tutor" ? "tutor" : "student",
       );
-      adopt({ market: result.market, user: result.user });
-      return result.user.onboarded;
+      assertCurrent();
+      if (backendMode === "demo") {
+        const known = knownDemoEmails(marketRef.current);
+        if (kind === "signup")
+          await demoPasswordAuth.signUp(
+            email,
+            password,
+            confirmation ?? "",
+            known,
+          );
+        else await demoPasswordAuth.signIn(email, password, known);
+        assertCurrent();
+        const result = demoEmailAccount(
+          marketRef.current,
+          email,
+          requestedRole,
+        );
+        adopt({ market: result.market, user: result.user });
+        return;
+      }
+      const client = requireBackend();
+      const auth = createPasswordAuth(client);
+      const result =
+        kind === "signup"
+          ? await auth.signUp(email, password, confirmation ?? "")
+          : await auth.signIn(email, password);
+      assertCurrent();
+      if (
+        !result.session ||
+        !result.user ||
+        result.session.user.id !== result.user.id
+      )
+        throw new Error(
+          "Kirish sessiyasi olinmadi. Email va parol bilan qayta kiring.",
+        );
+      const current = await client.auth.getSession();
+      assertCurrent();
+      if (current.error) throw new Error(current.error.message);
+      if (current.data.session?.user.id !== result.user.id)
+        throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+      await loadLiveAccount();
+      assertCurrent();
     },
     [adopt, loadLiveAccount],
   );
+  const signUpWithPassword = useCallback(
+    (email: string, password: string, confirmation: string) =>
+      authenticateWithPassword("signup", email, password, confirmation),
+    [authenticateWithPassword],
+  );
+  const signInWithPassword = useCallback(
+    (email: string, password: string) =>
+      authenticateWithPassword("signin", email, password),
+    [authenticateWithPassword],
+  );
   const signInWithProvider = useCallback(
     async (provider: SocialProvider) => {
+      passwordAttempt.current++;
       await AsyncStorage.setItem(
         pendingRoleKey,
         userRef.current.role === "tutor" ? "tutor" : "student",
@@ -539,6 +603,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [command],
   );
   const signOut = useCallback(async () => {
+    passwordAttempt.current++;
     if (supabase) {
       const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) throw new Error(error.message);
@@ -606,8 +671,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       setFilters: (patch) => setCurrentFilters((f) => ({ ...f, ...patch })),
       refresh,
-      requestCode,
-      verifyCode,
+      signUpWithPassword,
+      signInWithPassword,
       signInWithProvider,
       updateAvatar,
       completeOnboarding,
@@ -634,8 +699,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     syncError,
     filters,
     refresh,
-    requestCode,
-    verifyCode,
+    signUpWithPassword,
+    signInWithPassword,
     signInWithProvider,
     updateAvatar,
     completeOnboarding,

@@ -1,3 +1,4 @@
+import { DEMO_PASSWORD } from "../src/state/demo";
 import { expect, test } from "@playwright/test";
 
 test("guided signup validates choices, restores draft and pins the saved goal at 320px", async ({
@@ -10,6 +11,7 @@ test("guided signup validates choices, restores draft and pins the saved goal at
     page.getByRole("button", { name, exact: true });
   await page.goto("/");
   await expect(button("O‘quvchi")).toBeVisible();
+  await expect(page.getByText(/Sinov akkauntlari\. Ustoz:/)).toBeVisible();
   await page.screenshot({ path: "docs/screenshots/onboarding-role-320.png" });
   await button("O‘quvchi").click();
   await expect(button("Google orqali davom etish")).toBeVisible();
@@ -20,11 +22,14 @@ test("guided signup validates choices, restores draft and pins the saved goal at
   await page
     .getByRole("textbox", { name: "Email manzilingiz", exact: true })
     .fill("onboarding@example.com");
-  await button("Emailga kod yuborish").click();
+  await page.getByLabel("Parol", { exact: true }).fill(DEMO_PASSWORD);
   await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("421806");
-  await button("Tasdiqlash").click();
+    .getByLabel("Parolni qayta kiriting", { exact: true })
+    .fill(DEMO_PASSWORD);
+  await page.screenshot({
+    path: "docs/screenshots/onboarding-password-320.png",
+  });
+  await button("Ro‘yxatdan o‘tish").click();
   await expect(button("IELTS olish")).toBeVisible();
   await page.screenshot({ path: "docs/screenshots/onboarding-goals-320.png" });
   await button("Davom etish").click();

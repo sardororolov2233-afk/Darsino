@@ -70,8 +70,8 @@ import { MaterialViewerScreen } from "./src/screens/MaterialViewerScreen";
 import { MaterialsScreen } from "./src/screens/MaterialsScreen";
 import {
   WelcomeScreen,
+  ProviderScreen,
   SignInScreen,
-  VerifyEmailScreen,
   SetupScreen,
 } from "./src/screens/AuthScreens";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -309,7 +309,7 @@ function Navigator() {
             <Stack.Group navigationKey="auth">
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
               <Stack.Screen name="SignIn" component={SignInScreen} />
-              <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+              <Stack.Screen name="Providers" component={ProviderScreen} />
             </Stack.Group>
           ) : !signedIn ? (
             <Stack.Group navigationKey="onboarding">

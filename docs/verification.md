@@ -1,4 +1,22 @@
+# 2026-10-25: email/parol va build tayyorligi
+
+- `npm run typecheck`, `npm test`: **123 ta test o‘tdi**, xato yoki skip yo‘q.
+- Eksport qilingan UI: **4 ta** test; Chromium: **17 ta** oqim o‘tdi. Yangi signup/login testi maxsus parol, tasdiqlash, ko‘rsatish/yashirish, xato login va reload’ni qamraydi.
+- `expo install --check`: SDK 57 dependency’lari mos; Expo **57.0.31**, development client va system UI o‘rnatilgan.
+- `npm run export:all`: web/Android/iOS bundle’lari o‘tdi. Demo/jonli rejim almashtirilganda eski Metro transformlari qolmasligi uchun eksport buyruqlari `--clear` ishlatadi.
+- Android/iOS `prebuild --no-install` vaqtinchalik checkout’da o‘tdi; native kataloglar asosiy repoga kiritilmadi. APK/IPA hali yo‘q.
+- Haqiqiy Supabase public signup → chiqish → parol bilan login, private Storage binary lifecycle va Realtime WebSocket o‘tdi. Barcha test akkauntlari tozalandi, mavjud profil saqlandi.
+- EAS’dagi uch profil va sozlama/credential tekshiruvlari tayyor. Expo login, EAS project link va signing ruxsatlari hali kerak.
+
+[Jonli xizmatlar bo‘yicha dalillar](supabase-live-verification.md), [build tartibi](build.md). Quyidagi eski sanali bo‘limlar dastlabki implementatsiya tekshiruvlarining tarixidir.
+
 # O‘qi tekshiruvi
+
+## 2026-10-25 — email va parol, native build tayyorlash
+
+Yangi kontrakt: signup **email + parol + parolni takrorlash**, login **email + parol**. Email OTP va signup SMTP talab qilinmaydi; serverda avtomatik tasdiqlash va kamida 8 belgili parol kerak. Yangi Auth testlari, eksportlar va jonli signup/login natijalari amalda bajarilgach qayd etiladi; oldingi sanalardagi OTP sinovlari yangi oqim natijasi emas.
+
+[EAS profillari](../eas.json), [build arxivi filtri](../.easignore) va [build yo‘riqnomasi](build.md) qo‘shildi. Bu konfiguratsiya hali APK/IPA yaratilganini anglatmaydi. Expo akkaunti, loyiha bog‘lanishi va signing ruxsatlari kerak. Jonli konfiguratsiya holati [Supabase hisobotida](supabase-live-verification.md).
 
 ## 2026-10-24 — backend tranzaksiyalari va himoyalar
 
