@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { applyMigrations, supabaseFixture } from "./supabaseFixture";
+import {
+  applyMigrations,
+  seedTutorCertificate,
+  supabaseFixture,
+} from "./supabaseFixture";
 const ids = {
   tutor: "20000000-0000-4000-8000-000000000031",
   student: "10000000-0000-4000-8000-000000000031",
@@ -47,6 +51,7 @@ test(
         modes: ["Onlayn"],
         availability: ["14:00"],
       };
+      Object.assign(tutor, await seedTutorCertificate(db, ids.tutor));
       await as(ids.tutor, { type: "profile", role: "tutor", profile, tutor });
       await as(ids.student, { type: "profile", profile });
       await db.exec("reset role");

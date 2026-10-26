@@ -7,7 +7,7 @@ import { AppText, Button, Header, Screen } from "../components/ui";
 import { Feedback, useAction } from "../components/feedback";
 import { useApp } from "../state/AppContext";
 import { useAppNavigation, type RootStackParamList } from "../navigation";
-import { requireBackend } from "../services/backend";
+import { requireActorBackend } from "../services/backend";
 import { createFileService } from "../services/files";
 import { C } from "../theme";
 function LessonPlayer({ uri }: { uri: string }) {
@@ -60,7 +60,7 @@ function LessonPlayer({ uri }: { uri: string }) {
 export function MaterialViewerScreen({
   route,
 }: NativeStackScreenProps<RootStackParamList, "MaterialViewer">) {
-  const { user, mode } = useApp(),
+  const { user, mode, market } = useApp(),
     navigation = useAppNavigation(),
     action = useAction();
   const [source, setSource] = useState<{ uri: string; mime: string } | null>(
@@ -75,9 +75,20 @@ export function MaterialViewerScreen({
     let active = true;
     setError("");
     const load = async () => {
-      if (mode === "demo")
-        throw new Error("Bu faylni ko‘rish uchun Supabase rejimini yoqing.");
-      const files = createFileService(requireBackend());
+      if (mode === "demo") {
+        const file = market.files?.find(
+          (f) => f.id === route.params.fileId && f.state === "ready",
+        );
+        if (
+          !file?.demoUri ||
+          (file.ownerId !== user.id &&
+            !(user.role === "moderator" && file.purpose === "verification"))
+        )
+          throw new Error("Bu faylni ko‘rish uchun Supabase rejimini yoqing.");
+        if (active) setSource({ uri: file.demoUri, mime: file.mimeType });
+        return;
+      }
+      const files = createFileService(await requireActorBackend(user.id));
       const file = await files.getFile(route.params.fileId);
       const uri = await files.signedUrl(file.id);
       if (active) setSource({ uri, mime: file.mimeType });

@@ -138,7 +138,11 @@ test(
           type: "profile",
           role: "tutor",
           profile,
-          tutor: teacher,
+          tutor: {
+            ...teacher,
+            contactPhone: "+998901234567",
+            certificateFileId: (await upload(id, "verification")).id,
+          },
         });
       await db.exec("reset role");
       await db.query(

@@ -30,7 +30,7 @@ export function useAction() {
       setBusy(false);
     }
   }
-  return { busy, error, success, run, setSuccess };
+  return { busy, error, success, run, setSuccess, setError };
 }
 export function Feedback({
   error,

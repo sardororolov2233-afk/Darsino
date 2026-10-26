@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { applyMigrations, supabaseFixture } from "./supabaseFixture";
+import {
+  applyMigrations,
+  seedTutorCertificate,
+  supabaseFixture,
+} from "./supabaseFixture";
 
 test(
   "Postgres protects tutor coordinates, private video membership, assistant history and atomic quotas",
@@ -61,7 +65,7 @@ test(
         type: "profile",
         role: "tutor",
         profile,
-        tutor: teaching,
+        tutor: { ...teaching, ...(await seedTutorCertificate(db, tutor)) },
       });
       await assert.rejects(
         rpc(student, "oqi_save_tutor_location", [41.3, 69.2, "Test manzil"]),

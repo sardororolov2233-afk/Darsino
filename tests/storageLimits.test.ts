@@ -2,7 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import type { PGlite } from "@electric-sql/pglite";
-import { applyMigrations, supabaseFixture } from "./supabaseFixture";
+import {
+  applyMigrations,
+  seedTutorCertificate,
+  supabaseFixture,
+} from "./supabaseFixture";
 import type { FileAsset } from "../src/state/domain";
 
 const owner = "20000000-0000-4000-8000-000000000094";
@@ -36,6 +40,12 @@ function storageActor(db: PGlite) {
     async setup() {
       await db.exec("reset role");
       await db.query("insert into auth.users(id) values($1)", [owner]);
+      const upgraded = (
+        await db.query<{ ready: boolean }>(
+          "select to_regclass('public.oqi_tutor_applications') is not null ready",
+        )
+      ).rows[0].ready;
+      const application = upgraded ? await seedTutorCertificate(db, owner) : {};
       await rpc("darsino_mutate", [
         JSON.stringify({
           actorId: owner,
@@ -49,6 +59,7 @@ function storageActor(db: PGlite) {
             goal: "IELTS / CEFR",
           },
           tutor: {
+            ...application,
             subjects: ["Ingliz tili"],
             specialty: "IELTS",
             experience: 4,
@@ -125,7 +136,7 @@ test(
         }
       }
       const before = await actor.inspect();
-      assert.equal(before.bytes, maximumReservations * verificationLimit);
+      assert.equal(before.bytes, maximumReservations * verificationLimit + 4);
       assert.ok(before.actual <= before.bytes);
       assert.ok(before.bytes <= maximumBytes);
       await assert.rejects(actor.prepare(), /Akkaunt fayl limiti/);

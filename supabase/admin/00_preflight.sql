@@ -38,6 +38,7 @@ from (values
   ('relation','public.darsino_private_state'),
   ('relation','public.darsino_mutation_receipts'),
   ('relation','public.oqi_tutor_locations'),
+  ('relation','public.oqi_tutor_applications'),
   ('relation','public.oqi_ai_requests'),
   ('relation','public.oqi_group_messages'),
   ('relation','public.oqi_group_reads'),

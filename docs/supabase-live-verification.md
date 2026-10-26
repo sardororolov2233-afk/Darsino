@@ -2,6 +2,12 @@
 
 Maqsad loyiha: `mhqofwuawwnappstcekh`. Natijalar sanasi bilan yuritiladi; lokal testlar, demo va amalda bajarilgan jonli tekshiruvlar aralashtirilmaydi. Sana zonasi: Asia/Tashkent.
 
+## 2026-10-26 — majburiy o‘qituvchi arizasi
+
+`202610260002_tutor_applications.sql` qo‘llandi. Management API orqali qayta o‘qishda: private ariza jadvalida RLS yoqilgan, klientning bevosita SELECT/yozishi taqiqlangan, ichki mutation/snapshot yordamchilari yopiq, public authenticated mutation ishlaydi, onboarding’dan oldin sertifikat yuklash guard’i o‘rnatilgan. Mavjud **1 profil / 1 moderator** saqlandi; jonli arizalar **0**, ushbu tekshiruvda foydalanuvchi yoki sertifikat yaratilmagan. Admin roli tayinlanmadi va credential o‘zgartirilmadi.
+
+Izolyatsiyalangan testlarda telefon, PDF/rasm, private hujjat, admin bildirishnomasi, kutish, rad etish, qayta yuborish, tasdiqlash va kabinetga kirish tekshirildi. Lokal **132 test**, **4 UI testi**, **20 brauzer oqimi** va **5 PostgreSQL concurrency tekshiruvi** o‘tdi. Android/iOS/web bundle eksportlari o‘tdi; bu APK/IPA kompilatsiyasi yoki fizik qurilma sinovi emas. [Ariza qo‘llanmasi](tutor-approval.md).
+
 ## 2026-10-26 — ustoz ish maydoni
 
 `202610260001_teacher_workspace.sql` Management API orqali tranzaksiyada qo‘llandi. Yangi to‘rtta jadvalda RLS yoqilgan, `oqi_group_messages` Realtime publication’ida bor. `oqi_mock_*` funksiyalari anon rolga yopiq; `authenticated` test saqlash RPCsini bajara oladi, ichki `oqi_mock_test_json` yordamchisini bajara olmaydi. Faqat o‘qish orqali qayta tekshirildi: avvalgi **1 profil / 0 guruh** saqlangan. Ushbu tekshiruvda jonli o‘quvchi, chat yoki test ma’lumotlari yaratilmagan.

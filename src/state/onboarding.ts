@@ -51,14 +51,8 @@ export function validateName(first: string, last: string) {
     throw new Error("Ism va familiya jami 100 belgidan oshmasin.");
 }
 export function validateTeaching(t: TutorInput) {
-  if (
-    t.specialty.trim().length < 2 ||
-    t.proof.trim().length < 5 ||
-    t.bio.trim().length < 10
-  )
-    throw new Error(
-      "Yo‘nalish, tasdiqlash ma’lumoti va darslaringiz haqida to‘ldiring.",
-    );
+  if (t.specialty.trim().length < 2 || t.bio.trim().length < 10)
+    throw new Error("Yo‘nalish va darslaringiz haqida to‘ldiring.");
   if (
     !Number.isFinite(t.experience) ||
     t.experience < 0 ||

@@ -33,6 +33,10 @@ Stitch asosidagi [test yuklash, guruh chat va o‘quvchilar tahlili](docs/teache
 
 Android APK, development client va production build uchun [EAS yo‘riqnomasi](docs/build.md) hamda [profillar](eas.json) tayyor. Expo/EAS akkaunti va signing credential’lari berilmaguncha APK/IPA yaratilgani da’vo qilinmaydi.
 
+## O‘qituvchini tasdiqlash
+
+O‘qituvchi uchun telefon va PDF/rasm sertifikat majburiy. Ariza admin navbatiga tushadi; tasdiqlanmaguncha ustoz kabineti yopiq. Telefon va hujjat faqat egasi hamda adminga ko‘rinadi. [Oqim va server qoidalari](docs/tutor-approval.md).
+
 ## Backendni o‘rnatish
 
 - Belgilangan Supabase loyihasiga ulash: [CLI, preflight va deploy tartibi](docs/supabase-deployment.md).

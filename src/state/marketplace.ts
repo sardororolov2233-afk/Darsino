@@ -1,3 +1,8 @@
+import {
+  CERTIFICATE_LIMIT,
+  CERTIFICATE_MIME_TYPES,
+  validateDemoTutorApplication,
+} from "./tutorApplication";
 import { applyAccountCommand } from "./accountMarket";
 import { canContactMessage } from "./account";
 import {
@@ -29,7 +34,8 @@ function validateTutor(p: TutorInput) {
     "Tajriba 0–60 yil oralig‘ida bo‘lsin.",
   );
   ensure(
-    p.proof.trim().length >= 5 && p.bio.trim().length >= 10,
+    (!!p.certificateFileId || p.proof.trim().length >= 5) &&
+      p.bio.trim().length >= 10,
     "Tasdiqlash ma’lumoti va darslaringiz haqida yozing.",
   );
   ensure(
@@ -92,8 +98,58 @@ export function applyMarketCommand(
     ensure(o?.tutorId === actorId, "Bu darsni boshqarish huquqingiz yo‘q.");
     return o;
   };
+  const application = (value: TutorInput) => {
+    const contactPhone = validateDemoTutorApplication(m, actorId, value);
+    const docs = m.tutorDocuments || (m.tutorDocuments = []);
+    const prior = docs.find((d) => d.fileId === value.certificateFileId);
+    if (prior)
+      Object.assign(prior, {
+        status: "pending",
+        reviewNote: "",
+        reviewedAt: null,
+      });
+    else
+      docs.push({
+        id: uid("document"),
+        tutorId: actorId,
+        fileId: value.certificateFileId!,
+        documentType: "certificate",
+        label: "O‘qituvchi sertifikati",
+        status: "pending",
+        reviewNote: "",
+        createdAt: now.toISOString(),
+        reviewedAt: null,
+      });
+    return {
+      ...value,
+      contactPhone,
+      proof:
+        value.proof.trim().length >= 5 ? value.proof : "Yuklangan sertifikat",
+    };
+  };
   let id: string | undefined;
   switch (c.type) {
+    case "demo-verification-file": {
+      ensure(
+        !actor.onboarded || actor.role === "tutor",
+        "Repetitor profilini to‘ldiring.",
+      );
+      const f = c.file;
+      ensure(
+        f.ownerId === actorId &&
+          f.purpose === "verification" &&
+          f.bucketId === "darsino-verifications" &&
+          f.state === "ready" &&
+          CERTIFICATE_MIME_TYPES.includes(f.mimeType) &&
+          f.sizeBytes > 0 &&
+          f.sizeBytes <= CERTIFICATE_LIMIT,
+        "Sertifikat fayli noto‘g‘ri.",
+      );
+      ensure(!m.files?.some((old) => old.id === f.id), "Fayl avval saqlangan.");
+      (m.files || (m.files = [])).push(f);
+      id = f.id;
+      break;
+    }
     case "profile": {
       const p = c.profile;
       ensure(
@@ -127,10 +183,11 @@ export function applyMarketCommand(
       });
       if (actor.role === "tutor" && c.tutor) {
         validateTutor(c.tutor);
+        const submitted = application(c.tutor);
         m.tutorProfiles = [
           ...m.tutorProfiles.filter((p) => p.userId !== actorId),
           {
-            ...c.tutor,
+            ...submitted,
             userId: actorId,
             verification: "pending",
             moderationNote: "",
@@ -145,10 +202,11 @@ export function applyMarketCommand(
     case "tutor-profile": {
       ensure(actor.role === "tutor", "Repetitor hisobiga kiring.");
       validateTutor(c.profile);
+      const submitted = application(c.profile);
       m.tutorProfiles = [
         ...m.tutorProfiles.filter((p) => p.userId !== actorId),
         {
-          ...c.profile,
+          ...submitted,
           userId: actorId,
           verification: "pending",
           moderationNote: "",
@@ -175,6 +233,15 @@ export function applyMarketCommand(
         c.decision !== "rejected" || c.note.trim().length >= 3,
         "Rad etish sababini yozing.",
       );
+      if (c.decision === "approved")
+        validateDemoTutorApplication(m, target.userId, target);
+      for (const doc of m.tutorDocuments || [])
+        if (doc.tutorId === target.userId && doc.status === "pending")
+          Object.assign(doc, {
+            status: c.decision,
+            reviewNote: c.note.trim(),
+            reviewedAt: now.toISOString(),
+          });
       target.verification = c.decision;
       target.moderationNote = c.note.trim();
       notify(

@@ -146,7 +146,26 @@ test("the last group seat can only be filled once", () => {
 });
 test("tutor onboarding requires moderation before publishing; public role cannot elevate", () => {
   const a = demoAccount(demoMarketplace(), "+998909999999", "tutor");
+  const certificateId = "onboarding-certificate";
+  a.market.files = [
+    {
+      id: certificateId,
+      ownerId: a.user.id,
+      purpose: "verification",
+      bucketId: "darsino-verifications",
+      objectPath: "demo/certificate.pdf",
+      originalName: "certificate.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 4,
+      state: "ready",
+      conversationId: null,
+      offeringId: null,
+      createdAt: new Date().toISOString(),
+    },
+  ];
   const tutor = {
+    contactPhone: "+998901234567",
+    certificateFileId: certificateId,
     subjects: ["Fizika"],
     specialty: "Mexanika",
     experience: 3,

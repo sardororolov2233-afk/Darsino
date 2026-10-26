@@ -23,6 +23,8 @@ export const AREAS = [
 export const GOALS = ONBOARDING_GOALS.map((goal) => goal.title);
 export const initialTutor: TutorInput = {
   subjects: ["Ingliz tili"],
+  contactPhone: "",
+  certificateFileId: "",
   specialty: "",
   experience: 0,
   proof: "",
@@ -74,8 +76,8 @@ export function TutorFields({
         }
       />
       <Field
-        label="Tasdiqlash ma’lumoti"
-        placeholder="Diplom / sertifikat raqami yoki havolasi"
+        label="Sertifikat izohi (ixtiyoriy)"
+        placeholder="Sertifikat nomi yoki izohi"
         multiline
         value={value.proof}
         onChangeText={(proof) => update({ proof })}

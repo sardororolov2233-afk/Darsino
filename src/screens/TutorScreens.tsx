@@ -1,3 +1,8 @@
+import { TutorVerificationFields } from "../components/TutorVerificationFields";
+import {
+  normalizeTutorPhone,
+  validateTutorApplication,
+} from "../state/tutorApplication";
 import React, { useMemo, useState } from "react";
 import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -348,15 +353,26 @@ export function TutorProfileScreen() {
   const [value, setValue] = useState<TutorInput>(
     existing || { ...initialTutor, subjects: user.interests },
   );
+  const [uploading, setUploading] = useState(false);
   return (
     <Screen
       bottom={
         <Button
           title="Tekshiruvga yuborish"
-          loading={action.busy}
+          loading={action.busy || uploading}
+          disabled={uploading}
           onPress={() =>
             action.run(
-              () => command({ type: "tutor-profile", profile: value }),
+              async () => {
+                validateTutorApplication(value);
+                return command({
+                  type: "tutor-profile",
+                  profile: {
+                    ...value,
+                    contactPhone: normalizeTutorPhone(value.contactPhone || ""),
+                  },
+                });
+              },
               () => navigation.goBack(),
             )
           }
@@ -373,6 +389,14 @@ export function TutorProfileScreen() {
           ma’lumoti ochiq profilda ko‘rinmaydi.
         </AppText>
       </Card>
+      <TutorVerificationFields
+        value={value}
+        onBusyChange={setUploading}
+        onChange={(patch) => {
+          action.setError("");
+          setValue((old) => ({ ...old, ...patch }));
+        }}
+      />
       <TutorFields value={value} onChange={setValue} />
       <Feedback {...action} />
     </Screen>
@@ -1228,6 +1252,48 @@ export function ModerateTutorScreen({
           {profile.modes.join(" / ")} · {profile.availability.join(", ")}
         </AppText>
       </Card>
+      <Card>
+        <AppText variant="heading">Telefon va sertifikat</AppText>
+        <AppText selectable localize={false}>
+          {profile.contactPhone || "Telefon raqami yuborilmagan"}
+        </AppText>
+        {(market.tutorDocuments || [])
+          .filter((d) => d.tutorId === profile.userId)
+          .map((doc) => (
+            <View key={doc.id} style={{ gap: 8 }}>
+              <AppText>
+                {doc.fileId === profile.certificateFileId
+                  ? "Joriy sertifikat"
+                  : doc.label}{" "}
+                ·{" "}
+                {doc.status === "approved"
+                  ? "Tasdiqlangan"
+                  : doc.status === "rejected"
+                    ? "Rad etilgan"
+                    : "Tekshiruvda"}
+              </AppText>
+              <Button
+                title={
+                  market.files?.find((f) => f.id === doc.fileId)
+                    ?.originalName || "Sertifikatni ochish"
+                }
+                icon="file-text"
+                variant="soft"
+                onPress={() =>
+                  navigation.navigate("MaterialViewer", {
+                    fileId: doc.fileId,
+                    title: doc.label,
+                  })
+                }
+              />
+            </View>
+          ))}
+        {!profile.certificateFileId ? (
+          <AppText color={C.error}>
+            Telefon raqami va sertifikat bilan arizani qayta yuborish kerak.
+          </AppText>
+        ) : null}
+      </Card>
       {profile.verification === "pending" ? (
         <>
           <Field
@@ -1240,6 +1306,7 @@ export function ModerateTutorScreen({
           <Feedback {...action} />
           <Button
             title="Repetitorni tasdiqlash"
+            disabled={!profile.contactPhone || !profile.certificateFileId}
             loading={action.busy}
             onPress={() =>
               action.run(

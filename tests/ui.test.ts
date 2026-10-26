@@ -42,6 +42,8 @@ async function app(saved?: string, photoBrowserStubs = false) {
       ],
     },
     beforeParse(w) {
+      w.URL.createObjectURL = () => "blob:https://darsino.test/certificate";
+      w.URL.revokeObjectURL = () => {};
       if (photoBrowserStubs) {
         // JSDOM has no image decoder/canvas encoder. Exercise the real picker,
         // manipulator calls, preview, save/remove UI and persistence with these
@@ -254,7 +256,26 @@ async function app(saved?: string, photoBrowserStubs = false) {
     if (tutor) {
       await fill("Yo‘nalish", "IELTS");
       await fill("Tajriba (yil)", "3");
-      await fill("Tasdiqlash ma’lumoti", "Diplom D123456");
+      await fill("Sertifikat izohi (ixtiyoriy)", "Diplom D123456");
+      await fill("Telefon raqami (majburiy)", "+998901234567");
+      await click("Sertifikat yuklash");
+      await wait(
+        () => doc.querySelector('input[type="file"]'),
+        "certificate picker",
+      );
+      const input = doc.querySelector('input[type="file"]')!;
+      const file = new w.File(["%PDF-test"], "diplom.pdf", {
+        type: "application/pdf",
+      });
+      Object.defineProperty(file, "arrayBuffer", {
+        value: async () => new TextEncoder().encode("%PDF-test").buffer,
+      });
+      Object.defineProperty(input, "files", {
+        configurable: true,
+        value: [file],
+      });
+      input.dispatchEvent(new w.Event("change", { bubbles: true }));
+      await wait(() => text("diplom.pdf"), "certificate uploaded");
       await fill("Darslaringiz haqida", "IELTS uchun amaliy darslar o‘taman.");
       await click("Davom etish");
     }
@@ -263,6 +284,11 @@ async function app(saved?: string, photoBrowserStubs = false) {
     await click("Saqlash");
   }
   async function logout() {
+    if (text("Admin tasdig‘i kutilmoqda") || text("Arizani tuzatish kerak")) {
+      await click("Hisobdan chiqish");
+      await wait(() => find("O‘quvchi"), "signed out pending tutor");
+      return;
+    }
     for (
       let i = 0;
       i < 4 &&
@@ -540,11 +566,11 @@ test(
     try {
       await ui.login("yangi@example.com", "O‘qituvchi");
       await ui.setup("Yangi", "Repetitor", true);
-      await ui.wait(() => ui.text("Moderator tekshiruvida"), "pending tutor");
-      assert.equal(
-        ui.find("Yangi guruh")!.getAttribute("aria-disabled"),
-        "true",
+      await ui.wait(
+        () => ui.text("Admin tasdig‘i kutilmoqda"),
+        "pending tutor",
       );
+      assert.equal(ui.find("Yangi guruh"), undefined);
       await ui.logout();
       await ui.login("moderator@darsino.demo");
       await ui.click("Yangi Repetitor profilini tekshirish");

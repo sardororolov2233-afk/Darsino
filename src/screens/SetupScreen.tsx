@@ -1,3 +1,8 @@
+import { TutorVerificationFields } from "../components/TutorVerificationFields";
+import {
+  validateTutorApplication,
+  normalizeTutorPhone,
+} from "../state/tutorApplication";
 import React, { useEffect, useRef, useState } from "react";
 import { BackHandler, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -45,6 +50,7 @@ export function SetupScreen() {
   const [draft, setDraft] = useState(() => initialDraft(user));
   const [loaded, setLoaded] = useState(false),
     [draftError, setDraftError] = useState("");
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
   const [photo, setPhoto] = useState<AvatarPhoto | null>(null);
   const action = useAction();
   const isTutor = user.role === "tutor";
@@ -115,7 +121,7 @@ export function SetupScreen() {
   const update = (patch: Partial<typeof draft>) =>
     setDraft((d) => ({ ...d, ...patch }));
   const back = () => {
-    if (action.busy) return;
+    if (action.busy || uploadingCertificate) return;
     if (draft.step > 0) update({ step: draft.step - 1 });
     else action.run(signOut);
   };
@@ -144,7 +150,10 @@ export function SetupScreen() {
     action.run(async () => {
       if (draft.step === 0) validateGoal(draft.goal, draft.subjects, isTutor);
       if (draft.step === 1) validatePreferences(preferences);
-      if (isTutor && draft.step === 2) validateTeaching(teaching);
+      if (isTutor && draft.step === 2) {
+        validateTutorApplication(teaching);
+        validateTeaching(teaching);
+      }
       if (draft.step < finalStep) {
         update({ step: draft.step + 1 });
         return;
@@ -152,7 +161,13 @@ export function SetupScreen() {
       validateGoal(draft.goal, draft.subjects, isTutor);
       validatePreferences(preferences);
       validateName(draft.firstName, draft.lastName);
-      if (isTutor) validateTeaching(teaching);
+      if (isTutor) {
+        validateTutorApplication(teaching);
+        validateTeaching(teaching);
+        teaching.contactPhone = normalizeTutorPhone(
+          teaching.contactPhone || "",
+        );
+      }
       // Upload before setting onboarded: a failed photo upload keeps the user here.
       if (photo) await updateAvatar(photo);
       await writes.current;
@@ -209,14 +224,14 @@ export function SetupScreen() {
       }
       step={draft.step + 3}
       total={finalStep + 3}
-      onBack={action.busy ? undefined : back}
+      onBack={action.busy || uploadingCertificate ? undefined : back}
       footer={
         <>
           <Feedback error={action.error || draftError} />
           <OnboardingButton
             title={draft.step === finalStep ? "Saqlash" : "Davom etish"}
-            busy={action.busy}
-            disabled={!loaded}
+            busy={action.busy || uploadingCertificate}
+            disabled={!loaded || uploadingCertificate}
             onPress={next}
           />
         </>
@@ -323,6 +338,18 @@ export function SetupScreen() {
           ) : null}
           {isTutor && draft.step === 2 ? (
             <>
+              <TutorVerificationFields
+                value={teaching}
+                dark
+                onBusyChange={setUploadingCertificate}
+                onChange={(patch) => {
+                  action.setError("");
+                  setDraft((old) => ({
+                    ...old,
+                    tutor: { ...old.tutor, ...patch },
+                  }));
+                }}
+              />
               <OnboardingField
                 label="Yo‘nalish"
                 placeholder="Masalan, IELTS yoki algebra"
@@ -345,8 +372,8 @@ export function SetupScreen() {
                 }
               />
               <OnboardingField
-                label="Tasdiqlash ma’lumoti"
-                placeholder="Diplom / sertifikat raqami yoki havolasi"
+                label="Sertifikat izohi (ixtiyoriy)"
+                placeholder="Sertifikat nomi yoki izohi"
                 value={draft.tutor.proof}
                 onChangeText={(proof) =>
                   update({ tutor: { ...draft.tutor, proof } })

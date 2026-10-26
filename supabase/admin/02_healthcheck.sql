@@ -12,7 +12,7 @@ from unnest(array['darsino_notifications','darsino_messages','darsino_enrollment
 select p.proname,not has_function_privilege('anon',p.oid,'execute') as anon_blocked_ok,
   has_function_privilege('authenticated',p.oid,'execute') as authenticated_allowed
 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-where n.nspname='public' and p.proname in ('darsino_snapshot','darsino_mutate','darsino_snapshot_core','darsino_mutate_core','darsino_owned_file','darsino_prepare_upload','darsino_finalize_upload','darsino_submit_document','darsino_send_file_message','darsino_attach_lesson_file','darsino_mutate_access_base','darsino_mutate_schedule_base','darsino_mutate_idempotent_base','darsino_mutate_scheduling','darsino_notify_new_message','darsino_prune_mutation_receipts','oqi_classroom_access','oqi_classroom_snapshot','oqi_group_messages_read','oqi_group_message_send','oqi_group_mark_read','oqi_mock_test_save','oqi_mock_begin','oqi_mock_submit','oqi_mock_test_json','oqi_mock_attempt_json','oqi_group_message_json') order by p.proname;
+where n.nspname='public' and p.proname in ('darsino_snapshot','darsino_mutate','darsino_snapshot_core','darsino_mutate_core','darsino_owned_file','darsino_prepare_upload','darsino_finalize_upload','darsino_submit_document','darsino_send_file_message','darsino_attach_lesson_file','darsino_mutate_access_base','darsino_mutate_schedule_base','darsino_mutate_idempotent_base','darsino_mutate_scheduling','darsino_notify_new_message','darsino_prune_mutation_receipts','oqi_classroom_access','oqi_classroom_snapshot','oqi_group_messages_read','oqi_group_message_send','oqi_group_mark_read','oqi_mock_test_save','oqi_mock_begin','oqi_mock_submit','darsino_mutate_tutor_base','darsino_snapshot_tutor_base','darsino_submit_document_tutor_base','oqi_mock_test_json','oqi_mock_attempt_json','oqi_group_message_json') order by p.proname;
 -- authenticated_allowed must be FALSE for *_core, *_base, owned_file, scheduling,
 -- notify_new_message, prune_mutation_receipts and oqi_*_json helpers; TRUE for public user RPCs.
 
@@ -46,3 +46,9 @@ select count(*) as receipt_count,min(created_at) as oldest_receipt
 from public.darsino_mutation_receipts;
 -- Schedule service/admin-only darsino_prune_mutation_receipts() according to
 -- retention policy. This read-only healthcheck never runs cleanup itself.
+
+-- New tutor applications must have a usable private certificate and contact number.
+select a.tutor_id,t.verification,f.state='ready' and f.owner_id=a.tutor_id and f.purpose='verification' as certificate_ok,
+  a.contact_phone ~ '^\+[1-9][0-9]{8,14}$' as phone_format_ok
+from public.oqi_tutor_applications a join public.darsino_tutors t on t.user_id=a.tutor_id
+join public.darsino_files f on f.id=a.certificate_file_id;

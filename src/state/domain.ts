@@ -42,6 +42,9 @@ export type TutorProfile = {
   verification: VerificationStatus;
   moderationNote: string;
   studentCount?: number;
+  contactPhone?: string;
+  certificateFileId?: string;
+  applicationSubmittedAt?: string;
 };
 export type Offering = StudyGroup & {
   type: "group" | "individual";
@@ -109,6 +112,7 @@ export type FileAsset = {
   conversationId: string | null;
   offeringId: string | null;
   createdAt: string;
+  demoUri?: string;
 };
 export type TutorDocument = {
   id: string;
@@ -228,6 +232,7 @@ export type MarketCommand =
       role?: "student" | "tutor";
       tutor?: TutorInput;
     }
+  | { type: "demo-verification-file"; file: FileAsset }
   | { type: "tutor-profile"; profile: TutorInput }
   | {
       type: "moderate";

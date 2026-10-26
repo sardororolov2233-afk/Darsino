@@ -1,3 +1,4 @@
+import { TutorApprovalScreen } from "./src/screens/TutorApprovalScreen";
 import { ClassroomProvider } from "./src/state/ClassroomContext";
 import {
   TeacherStudentsScreen,
@@ -285,7 +286,12 @@ function MainTabs() {
   );
 }
 function Navigator() {
-  const { ready, signedIn, authenticated, user } = useApp();
+  const { ready, signedIn, authenticated, user, market } = useApp();
+  const approvalRequired =
+    user.role === "tutor" &&
+    !market.tutorProfiles.some(
+      (p) => p.userId === user.id && p.verification === "approved",
+    );
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const [navigationReady, setNavigationReady] = useState(false);
   if (!ready)
@@ -329,7 +335,10 @@ function Navigator() {
             </Stack.Group>
           ) : (
             <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
-              <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen
+                name="Main"
+                component={approvalRequired ? TutorApprovalScreen : MainTabs}
+              />
               <Stack.Screen
                 name="TeacherClasses"
                 component={TutorClassesScreen}

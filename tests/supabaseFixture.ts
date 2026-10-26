@@ -29,3 +29,44 @@ export async function applyMigrations(db: PGlite) {
     .sort())
     await db.exec(await readFile(new URL(name, folder), "utf8"));
 }
+
+// A certificate upload through the real SQL/Storage policies, before onboarding.
+export async function seedTutorCertificate(db: PGlite, owner: string) {
+  const previous = (
+    await db.query<{ role: string; sub: string }>(
+      "select current_setting('role') role,current_setting('request.jwt.claim.sub',true) sub",
+    )
+  ).rows[0];
+  try {
+    await db.exec("reset role");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+      owner,
+    ]);
+    await db.exec("set role authenticated");
+    const file = (
+      await db.query<{
+        result: { id: string; bucketId: string; objectPath: string };
+      }>(
+        "select public.darsino_prepare_upload('verification','certificate.pdf','application/pdf',4) result",
+      )
+    ).rows[0].result;
+    await db.query(
+      "insert into storage.objects(bucket_id,name,owner_id,metadata) values($1,$2,$3,$4)",
+      [
+        file.bucketId,
+        file.objectPath,
+        owner,
+        JSON.stringify({ size: 4, mimetype: "application/pdf" }),
+      ],
+    );
+    await db.query("select public.darsino_finalize_upload($1)", [file.id]);
+    return { contactPhone: "+998901234567", certificateFileId: file.id };
+  } finally {
+    await db.exec("reset role");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+      previous.sub || "",
+    ]);
+    if (previous.role !== "none")
+      await db.exec(`set role "${previous.role.replace(/"/g, '""')}"`);
+  }
+}

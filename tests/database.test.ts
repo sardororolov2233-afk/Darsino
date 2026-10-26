@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyMigrations, supabaseFixture } from "./supabaseFixture";
+import {
+  applyMigrations,
+  seedTutorCertificate,
+  supabaseFixture,
+} from "./supabaseFixture";
 import type { MarketCommand } from "../src/state/domain";
 
 const ids = {
@@ -63,13 +67,16 @@ test(
         type: "profile",
         role: "tutor",
         profile: { ...profile, name: "Dilnoza Test" },
-        tutor: teacher,
+        tutor: { ...teacher, ...(await seedTutorCertificate(db, ids.tutor)) },
       });
       await as(ids.stranger, {
         type: "profile",
         role: "tutor",
         profile: { ...profile, name: "Other Tutor" },
-        tutor: teacher,
+        tutor: {
+          ...teacher,
+          ...(await seedTutorCertificate(db, ids.stranger)),
+        },
       });
       await as(ids.mod);
       await db.exec("reset role");

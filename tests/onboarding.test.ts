@@ -6,7 +6,11 @@ import {
   validatePreferences,
   validateName,
 } from "../src/state/onboarding";
-import { applyMigrations, supabaseFixture } from "./supabaseFixture";
+import {
+  applyMigrations,
+  seedTutorCertificate,
+  supabaseFixture,
+} from "./supabaseFixture";
 
 test("onboarding requires conditional subjects, explicit preferences, matching district and full name", () => {
   for (const goal of [
@@ -97,6 +101,7 @@ test("Postgres persists private onboarding preferences atomically, rejects inval
       role: "tutor",
       profile,
       tutor: {
+        ...(await seedTutorCertificate(db, teacher)),
         subjects: ["Matematika"],
         specialty: "Matematika",
         experience: 2,
