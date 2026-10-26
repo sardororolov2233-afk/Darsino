@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { View } from "react-native";
-import { AppText } from "../components/ui";
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { AppText, Icon } from "../components/ui";
 import { Feedback, useAction } from "../components/feedback";
+import { LocalizedPressable as Pressable } from "../i18n/native";
 import { useAppNavigation } from "../navigation";
 import { useApp } from "../state/AppContext";
 import {
-  DEMO_CODE,
   DEMO_MODERATOR_EMAIL,
+  DEMO_PASSWORD,
   DEMO_TUTOR_EMAIL,
 } from "../state/demo";
 import { ProviderButtons } from "../components/ProviderButtons";
@@ -24,7 +25,7 @@ export function WelcomeScreen() {
   const { user, setUser, mode } = useApp();
   const choose = (role: "student" | "tutor") => {
     setUser({ role });
-    navigation.navigate("SignIn");
+    navigation.navigate("Providers");
   };
   return (
     <OnboardingShell
@@ -53,29 +54,19 @@ export function WelcomeScreen() {
         Bilim sari birinchi qadam.
       </AppText>
       {mode === "demo" ? (
-        <AppText
-          variant="caption"
-          color={OB.muted}
-          style={{ textAlign: "center" }}
-        >
-          Sinov rejimi · kod {DEMO_CODE}. Ustoz: {DEMO_TUTOR_EMAIL}; moderator:{" "}
-          {DEMO_MODERATOR_EMAIL}.
+        <AppText variant="caption" color={OB.muted} style={styles.center}>
+          Sinov akkauntlari. Ustoz: {DEMO_TUTOR_EMAIL}; moderator:{" "}
+          {DEMO_MODERATOR_EMAIL}. Parol: {DEMO_PASSWORD}.
         </AppText>
       ) : null}
     </OnboardingShell>
   );
 }
-export function SignInScreen() {
+
+export function ProviderScreen() {
   const navigation = useAppNavigation();
-  const { user, mode, requestCode, signInWithProvider, syncError } = useApp();
-  const [email, setEmail] = useState(user.email || ""),
-    [showEmail, setShowEmail] = useState(false);
+  const { mode, signInWithProvider, syncError } = useApp();
   const action = useAction();
-  const next = () =>
-    action.run(
-      () => requestCode(email),
-      () => navigation.navigate("VerifyEmail"),
-    );
   return (
     <OnboardingShell
       title="Avval akkaunt ochamiz"
@@ -92,128 +83,255 @@ export function SignInScreen() {
         title="Email orqali davom etish"
         secondary
         disabled={action.busy}
-        onPress={() => setShowEmail(true)}
+        onPress={() => navigation.navigate("SignIn")}
       />
-      {showEmail ? (
-        <View style={{ gap: 16 }}>
-          <OnboardingField
-            label="Email manzilingiz"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="ism@example.com"
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!action.busy}
-            onSubmitEditing={() => {
-              if (!action.busy) next();
-            }}
-            returnKeyType="send"
-          />
-          <OnboardingButton
-            title="Emailga kod yuborish"
-            busy={action.busy}
-            onPress={next}
-          />
-        </View>
-      ) : null}
-      <AppText
-        variant="caption"
-        color={OB.muted}
-        style={{ textAlign: "center" }}
-      >
-        Akkauntingiz bormi? Shu email yoki avvalgi Google / Apple akkauntingiz
-        bilan kiring.
-      </AppText>
       <Feedback error={action.error || syncError} />
       {mode === "demo" ? (
-        <AppText
-          variant="caption"
-          color={OB.muted}
-          style={{ textAlign: "center" }}
-        >
-          Sinov rejimi: email yuborilmaydi, kod {DEMO_CODE}. Google va Apple
-          sinov akkauntini ochadi.
+        <AppText variant="caption" color={OB.muted} style={styles.center}>
+          Sinov rejimi: Google va Apple sinov akkauntini ochadi.
         </AppText>
       ) : null}
     </OnboardingShell>
   );
 }
-export function VerifyEmailScreen() {
+
+type AuthMode = "signup" | "login";
+
+export function SignInScreen() {
+  const { user } = useApp();
+  const [email, setEmail] = useState(user.email || "");
+  const [formMode, setFormMode] = useState<AuthMode>("signup");
+  return (
+    <PasswordForm
+      // Switching forms drops password drafts, visibility and old feedback.
+      key={formMode}
+      formMode={formMode}
+      email={email}
+      onEmailChange={setEmail}
+      onModeChange={setFormMode}
+    />
+  );
+}
+
+function PasswordForm({
+  formMode,
+  email,
+  onEmailChange,
+  onModeChange,
+}: {
+  formMode: AuthMode;
+  email: string;
+  onEmailChange: (email: string) => void;
+  onModeChange: (mode: AuthMode) => void;
+}) {
   const navigation = useAppNavigation();
-  const { user, mode, requestCode, verifyCode, syncError } = useApp();
-  const [code, setCode] = useState(""),
-    [remaining, setRemaining] = useState(60);
+  const { mode, signUpWithPassword, signInWithPassword, syncError } = useApp();
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const action = useAction();
-  useEffect(() => {
-    if (!remaining) return;
-    const timer = setTimeout(() => setRemaining((v) => v - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [remaining]);
-  const verify = () =>
-    action.run(async () => {
-      if (!/^\d{6,8}$/.test(code))
-        throw new Error("Emaildagi 6–8 xonali kodni kiriting.");
-      return verifyCode(code);
-    });
+  const signup = formMode === "signup";
+  const submit = () =>
+    action.run(
+      () =>
+        signup
+          ? signUpWithPassword(email, password, confirmation)
+          : signInWithPassword(email, password),
+      () => {
+        setPassword("");
+        setConfirmation("");
+      },
+    );
+  const goBack = () => {
+    setPassword("");
+    setConfirmation("");
+    navigation.goBack();
+  };
   return (
     <OnboardingShell
-      title="Emailingizni tekshiring"
-      subtitle={`${user.email} ${mode === "demo" ? `· sinov kodi ${DEMO_CODE}` : "manziliga yuborilgan kodni kiriting."}`}
-      onBack={action.busy ? undefined : () => navigation.goBack()}
-      footer={
-        <OnboardingButton
-          title="Tasdiqlash"
-          busy={action.busy}
-          onPress={verify}
-        />
+      title={signup ? "Ro‘yxatdan o‘tish" : "Akkauntingizga kiring"}
+      subtitle={
+        signup
+          ? "Email va parol bilan yangi akkaunt yarating."
+          : "Davom etish uchun email va parolingizni kiriting."
       }
+      onBack={action.busy ? undefined : goBack}
     >
+      <View style={styles.modeSelector}>
+        {(
+          [
+            ["signup", "Yangi akkaunt"],
+            ["login", "Akkauntga kirish"],
+          ] as const
+        ).map(([value, label]) => (
+          <Pressable
+            key={value}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{
+              selected: formMode === value,
+              disabled: action.busy,
+            }}
+            disabled={action.busy}
+            onPress={() => onModeChange(value)}
+            style={[
+              styles.modeButton,
+              formMode === value && styles.selectedMode,
+            ]}
+          >
+            <AppText
+              variant="label"
+              color={formMode === value ? "white" : OB.muted}
+            >
+              {label}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
       <OnboardingField
-        label="Email tasdiqlash kodi"
-        value={code}
-        onChangeText={(v) => setCode(v.replace(/\D/g, "").slice(0, 8))}
-        keyboardType="number-pad"
-        autoComplete="one-time-code"
-        textContentType="oneTimeCode"
-        maxLength={8}
+        label="Email manzilingiz"
+        value={email}
+        onChangeText={onEmailChange}
+        placeholder="ism@example.com"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        autoCapitalize="none"
+        autoCorrect={false}
         editable={!action.busy}
-        style={{ fontSize: 24, letterSpacing: 5, textAlign: "center" }}
-        onSubmitEditing={() => {
-          if (!action.busy) verify();
-        }}
+        returnKeyType="next"
       />
-      <AppText
-        color={OB.muted}
-        variant="caption"
-        style={{ textAlign: "center" }}
-      >
-        Xat ko‘rinmasa, Spam jildini tekshiring.
-      </AppText>
+      <PasswordField
+        label="Parol"
+        value={password}
+        onChangeText={setPassword}
+        newPassword={signup}
+        disabled={action.busy}
+        onSubmit={signup ? undefined : submit}
+      />
+      {signup ? (
+        <>
+          <AppText variant="caption" color={OB.muted}>
+            Parol kamida 8 ta belgidan iborat bo‘lsin.
+          </AppText>
+          <PasswordField
+            label="Parolni qayta kiriting"
+            value={confirmation}
+            onChangeText={setConfirmation}
+            newPassword
+            confirmation
+            disabled={action.busy}
+            onSubmit={submit}
+          />
+        </>
+      ) : null}
       <Feedback error={action.error || syncError} />
       <OnboardingButton
-        title={
-          remaining
-            ? `Kodni qayta yuborish · ${remaining}s`
-            : "Kodni qayta yuborish"
-        }
-        secondary
-        disabled={remaining > 0 || action.busy}
-        onPress={() =>
-          action.run(
-            () => requestCode(user.email || ""),
-            () => setRemaining(60),
-          )
-        }
+        title={signup ? "Ro‘yxatdan o‘tish" : "Kirish"}
+        busy={action.busy}
+        disabled={!email.trim() || !password || (signup && !confirmation)}
+        onPress={submit}
       />
-      <OnboardingButton
-        title="Emailni o‘zgartirish"
-        secondary
-        disabled={action.busy}
-        onPress={() => navigation.goBack()}
-      />
+      <AppText variant="caption" color={OB.muted} style={styles.center}>
+        {signup
+          ? "Akkauntingiz bormi? «Akkauntga kirish»ni tanlang."
+          : "Hali akkauntingiz yo‘qmi? «Yangi akkaunt»ni tanlang."}
+      </AppText>
+      {mode === "demo" ? (
+        <AppText variant="caption" color={OB.muted} style={styles.center}>
+          Sinov rejimi: haqiqiy akkaunt yaratilmaydi. Haqiqiy parolingizni
+          ishlatmang.
+          {"\n"}Sinov akkauntlari uchun parol: {DEMO_PASSWORD}
+        </AppText>
+      ) : null}
     </OnboardingShell>
   );
 }
+
+function PasswordField({
+  label,
+  value,
+  onChangeText,
+  newPassword = false,
+  confirmation = false,
+  disabled,
+  onSubmit,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  newPassword?: boolean;
+  confirmation?: boolean;
+  disabled: boolean;
+  onSubmit?: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const toggleLabel = confirmation
+    ? visible
+      ? "Takroriy parolni yashirish"
+      : "Takroriy parolni ko‘rsatish"
+    : visible
+      ? "Parolni yashirish"
+      : "Parolni ko‘rsatish";
+  return (
+    <View style={styles.passwordField}>
+      <OnboardingField
+        label={label}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={confirmation ? "Parolni takrorlang" : "Parolingiz"}
+        secureTextEntry={!visible}
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        autoComplete={newPassword ? "new-password" : "current-password"}
+        textContentType={newPassword ? "newPassword" : "password"}
+        editable={!disabled}
+        style={{ paddingRight: 60 }}
+        returnKeyType={onSubmit ? "go" : "next"}
+        onSubmitEditing={() => {
+          if (!disabled) onSubmit?.();
+        }}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={toggleLabel}
+        accessibilityState={{ disabled, selected: visible }}
+        disabled={disabled}
+        onPress={() => setVisible((current) => !current)}
+        style={styles.visibilityToggle}
+      >
+        <Icon name={visible ? "eye-off" : "eye"} color={OB.muted} size={21} />
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { textAlign: "center" },
+  modeSelector: {
+    flexDirection: "row",
+    gap: 6,
+    padding: 5,
+    borderRadius: 18,
+    backgroundColor: OB.card,
+  },
+  modeButton: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+  },
+  selectedMode: { backgroundColor: OB.blue },
+  passwordField: { position: "relative" },
+  visibilityToggle: {
+    position: "absolute",
+    right: 4,
+    bottom: 0,
+    minWidth: 48,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

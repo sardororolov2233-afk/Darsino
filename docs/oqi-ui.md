@@ -18,7 +18,7 @@ Rasmlar 390 × 844 o‘lchamdagi Chromium brauzerida namuna akkaunti bilan oling
 
 Besh asosiy bo‘lim: **Bosh → Qidirish → Radar → Darslarim → Profil**. Chat yuqoridagi xabar tugmasi va profil orqali ochiladi. Ustoz kabineti ikkinchi `o_qi_ustoz_kabineti_interaktiv_mobil_prototip.tsx` prototipiga moslashtirilgan: **Tahlil → Guruhlar → Xonalar → Klublar → Profil**. Arizalar va chat yuqoridagi belgilar orqali ochiladi. Moderatorning tekshiruv jarayoni saqlangan.
 
-Ustoz kartasi haqiqiy marketplace ma’lumotlarini, narx va sharhlardan hisoblangan reytingni oladi. Guruhga yuborilgan ariza tasdiqlanmaguncha jadvalga dars qo‘shilmaydi. Mavjud email, Google, Apple va profil rasmi jarayonlari davom etadi.
+Ustoz kartasi haqiqiy marketplace ma’lumotlarini, narx va sharhlardan hisoblangan reytingni oladi. Guruhga yuborilgan ariza tasdiqlanmaguncha jadvalga dars qo‘shilmaydi. 2026-10-25 dan email/parolli kirish ishlatiladi: signup’da parol takrorlanadi, email kodi talab qilinmaydi. Profil rasmi va ixtiyoriy OAuth jarayonlari alohida saqlanadi.
 
 ## Qo‘shilgan imkoniyatlarning chegaralari
 

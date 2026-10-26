@@ -356,7 +356,7 @@ export function SecuritySettingsScreen() {
           {user.email || "—"}
         </AppText>
         <AppText variant="caption" color={C.muted}>
-          Email kodi, Google yoki Apple orqali kirasiz. Parol ilovada
+          Email va parol, Google yoki Apple orqali kirasiz. Parol ilovada
           saqlanmaydi.
         </AppText>
       </Card>

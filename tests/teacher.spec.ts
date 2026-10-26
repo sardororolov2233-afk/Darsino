@@ -1,3 +1,4 @@
+import { authenticateDemo as login } from "./authHelpers";
 import { diagnostics } from "../src/data/learning";
 import { expect, test, type Page } from "@playwright/test";
 import { demoMarketplace } from "../src/state/demo";
@@ -58,22 +59,6 @@ async function logout(page: Page) {
   await page
     .getByRole("button", { name: "Chiqishni tasdiqlash", exact: true })
     .click();
-}
-async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Email orqali davom etish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
-    .fill(email);
-  await page
-    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("421806");
-  await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
 }
 test("teacher assigns a test, student shares results and teacher radar and attendance update", async ({
   page,

@@ -1,4 +1,39 @@
+# 2026-10-25: email/parol va build tayyorligi
+
+- `npm run typecheck`, `npm test`: **123 ta test o‘tdi**, xato yoki skip yo‘q.
+- Eksport qilingan UI: **4 ta** test; Chromium: **17 ta** oqim o‘tdi. Yangi signup/login testi maxsus parol, tasdiqlash, ko‘rsatish/yashirish, xato login va reload’ni qamraydi.
+- `expo install --check`: SDK 57 dependency’lari mos; Expo **57.0.31**, development client va system UI o‘rnatilgan.
+- `npm run export:all`: web/Android/iOS bundle’lari o‘tdi. Demo/jonli rejim almashtirilganda eski Metro transformlari qolmasligi uchun eksport buyruqlari `--clear` ishlatadi.
+- Android/iOS `prebuild --no-install` vaqtinchalik checkout’da o‘tdi; native kataloglar asosiy repoga kiritilmadi. APK/IPA hali yo‘q.
+- Haqiqiy Supabase public signup → chiqish → parol bilan login, private Storage binary lifecycle va Realtime WebSocket o‘tdi. Barcha test akkauntlari tozalandi, mavjud profil saqlandi.
+- EAS’dagi uch profil va sozlama/credential tekshiruvlari tayyor. Expo login, EAS project link va signing ruxsatlari hali kerak.
+
+[Jonli xizmatlar bo‘yicha dalillar](supabase-live-verification.md), [build tartibi](build.md). Quyidagi eski sanali bo‘limlar dastlabki implementatsiya tekshiruvlarining tarixidir.
+
 # O‘qi tekshiruvi
+
+## 2026-10-25 — email va parol, native build tayyorlash
+
+Yangi kontrakt: signup **email + parol + parolni takrorlash**, login **email + parol**. Email OTP va signup SMTP talab qilinmaydi; serverda avtomatik tasdiqlash va kamida 8 belgili parol kerak. Yangi Auth testlari, eksportlar va jonli signup/login natijalari amalda bajarilgach qayd etiladi; oldingi sanalardagi OTP sinovlari yangi oqim natijasi emas.
+
+[EAS profillari](../eas.json), [build arxivi filtri](../.easignore) va [build yo‘riqnomasi](build.md) qo‘shildi. Bu konfiguratsiya hali APK/IPA yaratilganini anglatmaydi. Expo akkaunti, loyiha bog‘lanishi va signing ruxsatlari kerak. Jonli konfiguratsiya holati [Supabase hisobotida](supabase-live-verification.md).
+
+## 2026-10-24 — backend tranzaksiyalari va himoyalar
+
+| Tekshiruv             | Natija / chegara                                                                                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript            | Frontend, servislar va test/harness turlari o‘tdi; generatsiya qilingan `dist` tekshiruvga aralashmaydi.                                                                                          |
+| Edge adapteri         | Deno 2.9.6 bilan `oqi-assistant/index.ts` strict check o‘tdi.                                                                                                                                     |
+| Node / PGlite         | 114 test o‘tdi, skip/failure yo‘q: sessiya va avatar maxfiyligi, bloklangan arizalar, umumiy xabar limiti, jadval, intent replay va write byudjeti, AI expiry, Storage kvotasi, snapshot tartibi. |
+| Haqiqiy PostgreSQL 17 | Barcha 16 migratsiya qo‘llandi; mustaqil sessiyalar bilan 5 ta deterministik parallel holat o‘tdi. Har bir test o‘z vaqtinchalik konteynerini o‘chirdi.                                           |
+| UI / Chromium         | Eksport qilingan bundle bilan 4 ta JSDOM va 16 ta Chromium oqimi o‘tdi. Brauzer oqimlari demo rejimida, haqiqiy Supabase Auth testi emas.                                                         |
+| Platformalar          | Web, Android va iOS JavaScript/Hermes eksportlari o‘tdi. APK/IPA yoki haqiqiy qurilma testi emas.                                                                                                 |
+| SQL va format         | Bundle migratsiyalarga mos; Prettier hamda `git diff --check` o‘tdi.                                                                                                                              |
+| Jonli xizmatlar       | Supabase URL/kalitlari va AI provider credential’lari berilmagan. Masofaviy sxema, Edge deploy, Auth/OAuth, binary Storage va Realtime WebSocket jonli tekshirilmagan.                            |
+
+Parallel holatlar: ikki ustozning bir o‘quvchini tasdiqlashi; taklif qabul qilish va ariza tasdiqlash; dars ko‘chirish va yangi qabul; bir kalitli xabar retry; Storage INSERT va o‘chirish. Birinchi to‘rttada PostgreSQL advisory barrier, oxirgisida haqiqiy row-lock va `pg_blocking_pids` ishlatilgan. Bu ishlab chiqarish yuklama sinovi emas.
+
+Eski SQL Editor installer’ni qayta bajarish va scoped receipt replay ham tekshirildi; mavjud ma’lumotlar yoki fayllarni o‘chirish migratsiyaga kiritilmagan. Ishlayotgan AI loyihasida yangilangan Edge adapteri avval deploy qilinadi: [yangilash yo‘riqnomasi](backend-hardening.md#yangilash-tartibi).
 
 2026-10-16: yangi bosqichli kirish va maqsad kartasi — [oqim, saqlash va testlar](onboarding.md).
 

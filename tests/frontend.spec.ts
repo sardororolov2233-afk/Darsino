@@ -1,21 +1,7 @@
+import { authenticateDemo as login, openEmailAuth } from "./authHelpers";
+import { DEMO_PASSWORD } from "../src/state/demo";
 import { completeStudentSetup } from "./onboardingHelpers";
 import { expect, test, type Page } from "@playwright/test";
-async function login(page: Page, email: string) {
-  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Email orqali davom etish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
-    .fill(email);
-  await page
-    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("421806");
-  await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
-}
 async function logout(page: Page) {
   for (
     let i = 0;
@@ -90,35 +76,26 @@ test("email validation and empty tutor search have actionable errors", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "O‘quvchi", exact: true }).click();
+  await openEmailAuth(page);
   await page
-    .getByRole("button", { name: "Email orqali davom etish", exact: true })
-    .click();
+    .getByLabel("Email manzilingiz", { exact: true })
+    .fill("invalid-email");
+  await page.getByLabel("Parol", { exact: true }).fill(DEMO_PASSWORD);
   await page
-    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
+    .getByLabel("Parolni qayta kiriting", { exact: true })
+    .fill(DEMO_PASSWORD);
+  await page
+    .getByRole("button", { name: "Ro‘yxatdan o‘tish", exact: true })
     .click();
   await expect(
-    page.getByText("To‘g‘ri email manzilini kiriting.", {
-      exact: true,
-    }),
+    page.getByText("To‘g‘ri email manzilini kiriting.", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("textbox", { name: "Email manzilingiz", exact: true })
+    .getByLabel("Email manzilingiz", { exact: true })
     .fill("sardor@example.com");
   await page
-    .getByRole("button", { name: "Emailga kod yuborish", exact: true })
+    .getByRole("button", { name: "Ro‘yxatdan o‘tish", exact: true })
     .click();
-  await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("111111");
-  await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
-  await expect(
-    page.getByText("Sinov rejimida kod: 421806", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("textbox", { name: "Email tasdiqlash kodi", exact: true })
-    .fill("421806");
-  await page.getByRole("button", { name: "Tasdiqlash", exact: true }).click();
   await completeStudentSetup(page, "Sardor Test");
   await page.getByRole("tab", { name: "Qidirish", exact: true }).click();
   await page
@@ -136,4 +113,82 @@ test("email validation and empty tutor search have actionable errors", async ({
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
+});
+
+test("password signup validates confirmation, hides drafts and restores a password login after reload", async ({
+  page,
+}) => {
+  const signupPassword = "Browser-signup-password-9427!";
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await openEmailAuth(page);
+  const email = page.getByLabel("Email manzilingiz", { exact: true });
+  const password = page.getByLabel("Parol", { exact: true });
+  const confirmation = page.getByLabel("Parolni qayta kiriting", {
+    exact: true,
+  });
+  await email.fill("password-flow@example.com");
+  await password.fill(signupPassword);
+  await expect(password).toHaveAttribute("type", "password");
+  await page
+    .getByRole("button", { name: "Parolni ko‘rsatish", exact: true })
+    .click();
+  await expect(password).toHaveJSProperty("type", "text");
+  await expect(password).toHaveValue(signupPassword);
+  await page
+    .getByRole("button", { name: "Parolni yashirish", exact: true })
+    .click();
+  await expect(password).toHaveAttribute("type", "password");
+  await confirmation.fill("different-confirmation");
+  await page
+    .getByRole("button", { name: "Ro‘yxatdan o‘tish", exact: true })
+    .click();
+  await expect(
+    page.getByText("Parollar mos kelmadi. Qayta tekshiring.", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Akkauntga kirish", exact: true })
+    .click();
+  await expect(password).toHaveValue("");
+  await expect(confirmation).toHaveCount(0);
+  await expect(email).toHaveValue("password-flow@example.com");
+  await expect(password).toHaveAttribute("type", "password");
+  await page
+    .getByRole("button", { name: "Yangi akkaunt", exact: true })
+    .click();
+  await expect(password).toHaveValue("");
+  await expect(confirmation).toHaveValue("");
+  await password.fill(signupPassword);
+  await confirmation.fill(signupPassword);
+  await page
+    .getByRole("button", { name: "Ro‘yxatdan o‘tish", exact: true })
+    .click();
+  await completeStudentSetup(page, "Parol Sinov");
+  await expect(
+    page.getByText("MENING MAQSADIM", { exact: true }),
+  ).toBeVisible();
+  await logout(page);
+  await login(page, "password-flow@example.com", DEMO_PASSWORD);
+  await expect(
+    page.getByText("Email yoki parol noto‘g‘ri.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Kirish", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Parol", { exact: true }).fill(signupPassword);
+  await page.getByRole("button", { name: "Kirish", exact: true }).click();
+  await expect(
+    page.getByText("MENING MAQSADIM", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByText("MENING MAQSADIM", { exact: true }),
+  ).toBeVisible();
+  const persisted = await page.evaluate(() =>
+    Object.values(localStorage).join("\n"),
+  );
+  expect(persisted).not.toContain(DEMO_PASSWORD);
+  expect(persisted).not.toContain(signupPassword);
+  expect(errors).toEqual([]);
 });

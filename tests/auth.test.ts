@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  createEmailAuth,
+  createPasswordAuth,
   createOAuthCallbackHandler,
   normalizeEmail,
   validEmail,
@@ -15,32 +15,157 @@ import {
 } from "../src/state/demo";
 import { applyMigrations, supabaseFixture } from "./supabaseFixture";
 
-test("email OTP normalizes addresses and never invokes phone/SMS verification", async () => {
-  const calls: any[] = [];
+test("password signup confirms matching credentials and normalizes only the email", async () => {
+  const calls: { method: string; args: unknown }[] = [];
+  const data = { user: { id: "created-user" }, session: null };
   const client = {
     auth: {
-      signInWithOtp: async (args: unknown) => {
-        calls.push(args);
-        return { error: null };
+      signUp: async (args: unknown) => {
+        calls.push({ method: "signUp", args });
+        return { data, error: null };
       },
-      verifyOtp: async (args: unknown) => {
-        calls.push(args);
-        return { error: null };
+      signInWithOtp: async () => {
+        assert.fail("Password signup must not request an email code");
+      },
+      verifyOtp: async () => {
+        assert.fail("Password signup must not verify an email code");
       },
     },
   } as unknown as SupabaseClient;
-  const auth = createEmailAuth(client);
+  const auth = createPasswordAuth(client);
   assert.equal(normalizeEmail("  Sardor@Example.com "), "sardor@example.com");
   assert.ok(validEmail("sardor+study@example.com"));
-  await assert.rejects(auth.request("not-an-email"), /To‘g‘ri email/);
+  await assert.rejects(
+    auth.signUp("not-an-email", "safe password", "safe password"),
+    /To‘g‘ri email/,
+  );
+  await assert.rejects(
+    auth.signUp("sardor@example.com", "1234567", "1234567"),
+    /kamida 8/,
+  );
+  await assert.rejects(
+    auth.signUp("sardor@example.com", "safe password", "different password"),
+    /mos kelmadi/,
+  );
+  await assert.rejects(
+    auth.signUp("sardor@example.com", "  exact pass  ", "exact pass"),
+    /mos kelmadi/,
+  );
   assert.equal(calls.length, 0);
-  await auth.request(" Sardor@Example.com ");
-  await auth.verify(" Sardor@Example.com ", "12345678");
+  assert.equal(
+    await auth.signUp(
+      " Sardor@Example.com ",
+      "  exact pass  ",
+      "  exact pass  ",
+    ),
+    data,
+  );
+  assert.equal(
+    await auth.signUp("sardor@example.com", "12345678", "12345678"),
+    data,
+  );
   assert.deepEqual(calls, [
-    { email: "sardor@example.com", options: { shouldCreateUser: true } },
-    { email: "sardor@example.com", token: "12345678", type: "email" },
+    {
+      method: "signUp",
+      args: { email: "sardor@example.com", password: "  exact pass  " },
+    },
+    {
+      method: "signUp",
+      args: { email: "sardor@example.com", password: "12345678" },
+    },
   ]);
-  await assert.rejects(auth.verify("sardor@example.com", "123"), /6–8/);
+});
+
+test("password login preserves credentials and supports existing shorter passwords without OTP", async () => {
+  const calls: unknown[] = [];
+  const data = {
+    user: { id: "returning-user" },
+    session: { access_token: "test-session" },
+  };
+  const client = {
+    auth: {
+      signInWithPassword: async (args: unknown) => {
+        calls.push(args);
+        return { data, error: null };
+      },
+      signInWithOtp: async () => {
+        assert.fail("Password login must not request an email code");
+      },
+      verifyOtp: async () => {
+        assert.fail("Password login must not verify an email code");
+      },
+    },
+  } as unknown as SupabaseClient;
+  const auth = createPasswordAuth(client);
+  await assert.rejects(auth.signIn("invalid", "password"), /To‘g‘ri email/);
+  await assert.rejects(
+    auth.signIn("sardor@example.com", ""),
+    /Parolingizni kiriting/,
+  );
+  assert.equal(calls.length, 0);
+  assert.equal(await auth.signIn(" SARDOR@Example.com ", " short "), data);
+  assert.equal(await auth.signIn("sardor@example.com", "123456"), data);
+  assert.deepEqual(calls, [
+    { email: "sardor@example.com", password: " short " },
+    { email: "sardor@example.com", password: "123456" },
+  ]);
+});
+
+test("managed Auth errors prevent password signup or login from reporting success", async () => {
+  const client = {
+    auth: {
+      signUp: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Registration unavailable" },
+      }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Invalid login credentials" },
+      }),
+    },
+  } as unknown as SupabaseClient;
+  const auth = createPasswordAuth(client);
+  await assert.rejects(
+    auth.signUp("sardor@example.com", "safe password", "safe password"),
+    /Registration unavailable/,
+  );
+  await assert.rejects(
+    auth.signIn("sardor@example.com", "wrong password"),
+    /Invalid login credentials/,
+  );
+});
+
+test("stable managed Auth error codes use translated password and duplicate-email messages", async () => {
+  let signupCode = "user_already_exists";
+  const client = {
+    auth: {
+      signUp: async () => ({
+        data: { user: null, session: null },
+        error: { code: signupCode, message: "Provider duplicate detail" },
+      }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: {
+          code: "invalid_credentials",
+          message: "Provider credentials detail",
+        },
+      }),
+    },
+  } as unknown as SupabaseClient;
+  const auth = createPasswordAuth(client);
+  await assert.rejects(auth.signIn("sardor@example.com", "wrong password"), {
+    message: "Email yoki parol noto‘g‘ri.",
+  });
+  for (const code of ["user_already_exists", "email_exists"]) {
+    signupCode = code;
+    await assert.rejects(
+      auth.signUp("sardor@example.com", "safe password", "safe password"),
+      {
+        message:
+          "Bu email bilan akkaunt mavjud. Kirish bo‘limidan foydalaning.",
+      },
+    );
+  }
 });
 
 test("OAuth accepts only the configured PKCE callback and exchanges duplicate events once", async () => {

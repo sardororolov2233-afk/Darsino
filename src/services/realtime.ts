@@ -20,6 +20,7 @@ export function subscribeToMarketplace(
   const filters = [
     ["darsino_notifications", `user_id=eq.${userId}`],
     ["darsino_messages", `recipient_id=eq.${userId}`],
+    ["darsino_messages", `sender_id=eq.${userId}`],
     ["darsino_enrollments", `student_id=eq.${userId}`],
     ["darsino_group_invitations", `student_id=eq.${userId}`],
     ["darsino_group_invitations", `tutor_id=eq.${userId}`],

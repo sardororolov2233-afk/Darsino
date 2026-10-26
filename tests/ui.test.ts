@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { webcrypto } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { JSDOM, VirtualConsole, requestInterceptor } from "jsdom";
@@ -106,6 +107,7 @@ async function app(saved?: string, photoBrowserStubs = false) {
         unobserve() {}
         disconnect() {}
       };
+      Object.defineProperty(w.crypto, "subtle", { value: webcrypto.subtle });
       w.TextEncoder = TextEncoder;
       w.TextDecoder = TextDecoder;
       Object.defineProperty(w.document, "fonts", {
@@ -225,10 +227,18 @@ async function app(saved?: string, photoBrowserStubs = false) {
   async function login(email: string, role = "O‘quvchi") {
     await click(role);
     await click("Email orqali davom etish");
+    const saved = w.localStorage.getItem(cacheKey);
+    const existing =
+      email.endsWith("@darsino.demo") ||
+      (saved &&
+        JSON.parse(saved).market.users.some(
+          (user: any) => user.email === email,
+        ));
+    if (existing) await click("Akkauntga kirish");
     await fill("Email manzilingiz", email);
-    await click("Emailga kod yuborish");
-    await fill("Email tasdiqlash kodi", "421806");
-    await click("Tasdiqlash");
+    await fill("Parol", "Demo421806!");
+    if (!existing) await fill("Parolni qayta kiriting", "Demo421806!");
+    await click(existing ? "Kirish" : "Ro‘yxatdan o‘tish");
   }
   async function setup(first: string, last: string, tutor = false) {
     await click("IELTS olish");
@@ -398,19 +408,23 @@ test(
       const ui = await app();
       try {
         await ui.click(provider === "Apple" ? "O‘qituvchi" : "O‘quvchi");
-        await ui.click("Email orqali davom etish");
         await ui.wait(
           () =>
             ui.find("Google orqali davom etish") &&
             ui.find("Apple orqali davom etish"),
           "social login choices",
         );
-        await ui.click("Emailga kod yuborish");
+        await ui.click("Email orqali davom etish");
+        await ui.fill("Email manzilingiz", "invalid-email");
+        await ui.fill("Parol", "Demo421806!");
+        await ui.fill("Parolni qayta kiriting", "Demo421806!");
+        await ui.click("Ro‘yxatdan o‘tish");
         await ui.wait(
           () => ui.text("To‘g‘ri email manzilini kiriting."),
           "email error",
         );
-        assert.equal(ui.text("SMS tasdiqlash kodi"), false);
+        assert.equal(ui.text("Email tasdiqlash kodi"), false);
+        await ui.click("Orqaga");
         // Allow RN Web to flush its disabled-state passive effect after validation.
         await new Promise((r) => setTimeout(r, 500));
         await ui.click(`${provider} orqali davom etish`);

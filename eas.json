@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "node": "24.19.0",
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_MODE": "supabase"
+      },
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "node": "24.19.0",
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_MODE": "supabase"
+      },
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "node": "24.19.0",
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_MODE": "supabase"
+      },
+      "distribution": "store",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
 import { AppState as NativeAppState, Platform } from "react-native";
 import {
   blankUser,
@@ -24,7 +25,10 @@ import {
 } from "./domain";
 import { defaultFilters } from "./model";
 import {
-  DEMO_CODE,
+  DEMO_TUTOR_EMAIL,
+  DEMO_TUTOR_PHONE,
+  DEMO_MODERATOR_EMAIL,
+  DEMO_MODERATOR_PHONE,
   demoEmailAccount,
   demoMarketplace,
   emptyMarketplace,
@@ -35,6 +39,7 @@ import {
   fetchSnapshot,
   mutateBackend,
   requireBackend,
+  requireActorBackend,
   supabase,
   type Snapshot,
 } from "../services/backend";
@@ -45,7 +50,7 @@ import {
 import { migrateLegacyDemo, readDemoCache } from "./migration";
 import { subscribeToMarketplace } from "../services/realtime";
 import {
-  createEmailAuth,
+  createPasswordAuth,
   normalizeEmail,
   validEmail,
 } from "../services/authFlow";
@@ -56,10 +61,25 @@ import {
   type SocialProvider,
 } from "../services/auth";
 import { createFileService } from "../services/files";
+import { createSnapshotGate } from "../services/snapshotGate";
 import type { AvatarPhoto } from "../services/avatar";
+import { createDemoPasswordAuth } from "../services/demoPasswordAuth";
 
 const storageKey = "@darsino/marketplace-v2";
 const pendingRoleKey = "@darsino/pending-role";
+const demoPasswordAuth = createDemoPasswordAuth({
+  storage: AsyncStorage,
+  hash: (value) =>
+    Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value),
+  createSalt: () => Crypto.randomUUID(),
+});
+function knownDemoEmails(market: Marketplace) {
+  return market.users.flatMap((user) => [
+    ...(user.email ? [user.email] : []),
+    ...(user.phone === DEMO_TUTOR_PHONE ? [DEMO_TUTOR_EMAIL] : []),
+    ...(user.phone === DEMO_MODERATOR_PHONE ? [DEMO_MODERATOR_EMAIL] : []),
+  ]);
+}
 type AppContextType = {
   ready: boolean;
   signedIn: boolean;
@@ -79,8 +99,12 @@ type AppContextType = {
   setUser: (value: Partial<User>) => void;
   setFilters: (value: Partial<Filters>) => void;
   refresh: () => Promise<void>;
-  requestCode: (email: string) => Promise<void>;
-  verifyCode: (code: string) => Promise<boolean>;
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    confirmation: string,
+  ) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   signInWithProvider: (provider: SocialProvider) => Promise<void>;
   updateAvatar: (photo: AvatarPhoto | null) => Promise<void>;
   completeOnboarding: (
@@ -112,7 +136,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     mutationQueue = useRef<Promise<unknown>>(Promise.resolve()),
     writes = useRef<Promise<unknown>>(Promise.resolve());
   const reminderJobs = useRef<Promise<unknown>>(Promise.resolve());
+  const snapshotGate = useRef(createSnapshotGate());
   const authUserId = useRef<string | null>(null);
+  const passwordAttempt = useRef(0);
   marketRef.current = market;
   userRef.current = user;
   actorRef.current = actorId;
@@ -127,48 +153,87 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const refresh = useCallback(async () => {
     if (backendMode === "demo" || !actorRef.current) return;
-    const generation = epoch.current,
-      currentRevision = revision.current;
-    const snapshot = await fetchSnapshot();
-    if (!snapshot.user.onboarded)
-      snapshot.user.role =
-        userRef.current.role === "tutor" ? "tutor" : "student";
-    if (generation === epoch.current && currentRevision === revision.current)
-      adopt(snapshot);
+    const actor = actorRef.current;
+    const ticket = snapshotGate.current.begin({
+      epoch: epoch.current,
+      revision: revision.current,
+    });
+    try {
+      const snapshot = await fetchSnapshot();
+      if (!snapshot.user.onboarded)
+        snapshot.user.role =
+          userRef.current.role === "tutor" ? "tutor" : "student";
+      if (
+        snapshot.user.id === actor &&
+        snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        adopt(snapshot);
+    } catch (error) {
+      if (
+        !snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        return;
+      setSyncError(
+        error instanceof Error ? error.message : "Sinxronlashda xato.",
+      );
+      throw error;
+    }
   }, [adopt]);
   const loadLiveAccount = useCallback(async () => {
-    const generation = epoch.current,
-      currentRevision = revision.current;
-    const { data, error } = await requireBackend().auth.getSession();
-    if (error) throw error;
-    if (!data.session) return;
-    const snapshot = await fetchSnapshot();
-    if (!snapshot.user.onboarded) {
-      const requestedRole = await AsyncStorage.getItem(pendingRoleKey);
-      snapshot.user.role = requestedRole === "tutor" ? "tutor" : "student";
-      const name =
-        data.session.user.user_metadata?.full_name ||
-        data.session.user.user_metadata?.name;
-      if (!snapshot.user.name && typeof name === "string")
-        snapshot.user.name = name.slice(0, 100);
+    const ticket = snapshotGate.current.begin({
+      epoch: epoch.current,
+      revision: revision.current,
+    });
+    try {
+      const { data, error } = await requireBackend().auth.getSession();
+      if (error) throw error;
+      if (!data.session) return;
+      const snapshot = await fetchSnapshot();
+      if (!snapshot.user.onboarded) {
+        const requestedRole = await AsyncStorage.getItem(pendingRoleKey);
+        snapshot.user.role = requestedRole === "tutor" ? "tutor" : "student";
+        const name =
+          data.session.user.user_metadata?.full_name ||
+          data.session.user.user_metadata?.name;
+        if (!snapshot.user.name && typeof name === "string")
+          snapshot.user.name = name.slice(0, 100);
+      }
+      if (
+        snapshot.user.id === data.session.user.id &&
+        snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        adopt(snapshot);
+    } catch (error) {
+      if (
+        !snapshotGate.current.accept(ticket, {
+          epoch: epoch.current,
+          revision: revision.current,
+        })
+      )
+        return;
+      setSyncError(
+        error instanceof Error ? error.message : "Akkauntni yuklab bo‘lmadi.",
+      );
+      throw error;
     }
-    if (
-      generation === epoch.current &&
-      currentRevision === revision.current &&
-      snapshot.user.id === data.session.user.id
-    )
-      adopt(snapshot);
   }, [adopt]);
   useEffect(() => {
     let live = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const client = supabase;
-    const hydrate = () =>
-      loadLiveAccount().catch((error) => {
-        if (live) setSyncError(error.message);
-      });
+    const hydrate = () => loadLiveAccount().catch(() => {});
     const auth = client?.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
+        passwordAttempt.current++;
         epoch.current++;
         authUserId.current = null;
         actorRef.current = null;
@@ -177,6 +242,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setActorId(null);
         setCurrentUser(userRef.current);
         setMarket(marketRef.current);
+        setSyncError("");
+        setCurrentFilters({ ...defaultFilters });
       } else if (
         session &&
         (event === "SIGNED_IN" ||
@@ -189,8 +256,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           epoch.current++;
           actorRef.current = null;
           marketRef.current = emptyMarketplace();
+          userRef.current = { ...blankUser };
           setActorId(null);
+          setCurrentUser(userRef.current);
           setMarket(marketRef.current);
+          setSyncError("");
+          setCurrentFilters({ ...defaultFilters });
         }
         // Do not await Supabase methods inside its Auth callback (SDK lock).
         if (!actorRef.current)
@@ -206,7 +277,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (live) void hydrate();
           },
           (error) => {
-            if (live) setSyncError(error.message);
+            if (live && !actorRef.current) setSyncError(error.message);
           },
         )
       : undefined;
@@ -227,11 +298,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (live) await loadLiveAccount();
       }
     };
+    const initialEpoch = epoch.current;
     initialize()
       .catch((e) => {
         if (live) {
           if (backendMode === "demo") setStorageError(true);
-          else setSyncError(e.message);
+          else if (epoch.current === initialEpoch) setSyncError(e.message);
         }
       })
       .finally(() => {
@@ -282,7 +354,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const client = supabase;
     if (!client || !actorId) return;
     const sync = () => {
-      refresh().catch((e) => setSyncError(e.message));
+      void refresh().catch(() => {});
     };
     const timer = setInterval(sync, 15000);
     const stopRealtime = subscribeToMarketplace(client, actorId, sync);
@@ -318,9 +390,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             adopt({ market: result.market, user: account });
             return result.id;
           }
-          const result = await mutateBackend(value, current);
+          let ticket: ReturnType<typeof snapshotGate.current.begin> | undefined;
+          const result = await mutateBackend(
+            value,
+            current,
+            () => generation === epoch.current && actorRef.current === current,
+            () => {
+              ticket = snapshotGate.current.begin({
+                epoch: epoch.current,
+                revision: revision.current,
+              });
+            },
+          );
+          if (generation !== epoch.current || actorRef.current !== current)
+            throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+          const apply =
+            ticket &&
+            snapshotGate.current.accept(ticket, {
+              epoch: epoch.current,
+              revision: revision.current,
+            });
+          // Invalidate reads started during this command, including when its
+          // own response loses to an already settled, newer refresh.
           revision.current++;
-          if (generation === epoch.current) adopt(result);
+          if (result.user.id !== current)
+            throw new Error("Server boshqa akkaunt ma’lumotini qaytardi.");
+          if (apply) adopt(result);
           return result.id;
         });
       mutationQueue.current = operation;
@@ -328,44 +423,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [adopt],
   );
-  const requestCode = useCallback(async (value: string) => {
-    const email = normalizeEmail(value);
-    if (!validEmail(email))
-      throw new Error("To‘g‘ri email manzilini kiriting.");
-    await AsyncStorage.setItem(
-      pendingRoleKey,
-      userRef.current.role === "tutor" ? "tutor" : "student",
-    );
-    if (backendMode === "supabase") {
-      await createEmailAuth(requireBackend()).request(email);
-    }
-    setCurrentUser((u) => ({ ...u, email }));
-    userRef.current = { ...userRef.current, email };
-  }, []);
-  const verifyCode = useCallback(
-    async (code: string) => {
-      if (backendMode === "supabase") {
-        await createEmailAuth(requireBackend()).verify(
-          userRef.current.email || "",
-          code,
-        );
-        await loadLiveAccount();
-        return userRef.current.onboarded;
-      }
-      if (code !== DEMO_CODE)
-        throw new Error(`Sinov rejimida kod: ${DEMO_CODE}`);
-      const result = demoEmailAccount(
-        marketRef.current,
-        userRef.current.email || "",
-        userRef.current.role,
+  const authenticateWithPassword = useCallback(
+    async (
+      kind: "signup" | "signin",
+      value: string,
+      password: string,
+      confirmation?: string,
+    ) => {
+      const attempt = ++passwordAttempt.current;
+      const email = normalizeEmail(value);
+      const requestedRole = userRef.current.role;
+      if (!validEmail(email))
+        throw new Error("To‘g‘ri email manzilini kiriting.");
+      const assertCurrent = () => {
+        if (passwordAttempt.current !== attempt)
+          throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+      };
+      await AsyncStorage.setItem(
+        pendingRoleKey,
+        requestedRole === "tutor" ? "tutor" : "student",
       );
-      adopt({ market: result.market, user: result.user });
-      return result.user.onboarded;
+      assertCurrent();
+      if (backendMode === "demo") {
+        const known = knownDemoEmails(marketRef.current);
+        if (kind === "signup")
+          await demoPasswordAuth.signUp(
+            email,
+            password,
+            confirmation ?? "",
+            known,
+          );
+        else await demoPasswordAuth.signIn(email, password, known);
+        assertCurrent();
+        const result = demoEmailAccount(
+          marketRef.current,
+          email,
+          requestedRole,
+        );
+        adopt({ market: result.market, user: result.user });
+        return;
+      }
+      const client = requireBackend();
+      const auth = createPasswordAuth(client);
+      const result =
+        kind === "signup"
+          ? await auth.signUp(email, password, confirmation ?? "")
+          : await auth.signIn(email, password);
+      assertCurrent();
+      if (
+        !result.session ||
+        !result.user ||
+        result.session.user.id !== result.user.id
+      )
+        throw new Error(
+          "Kirish sessiyasi olinmadi. Email va parol bilan qayta kiring.",
+        );
+      const current = await client.auth.getSession();
+      assertCurrent();
+      if (current.error) throw new Error(current.error.message);
+      if (current.data.session?.user.id !== result.user.id)
+        throw new Error("Akkaunt o‘zgardi. Amalni qayta boshlang.");
+      await loadLiveAccount();
+      assertCurrent();
     },
     [adopt, loadLiveAccount],
   );
+  const signUpWithPassword = useCallback(
+    (email: string, password: string, confirmation: string) =>
+      authenticateWithPassword("signup", email, password, confirmation),
+    [authenticateWithPassword],
+  );
+  const signInWithPassword = useCallback(
+    (email: string, password: string) =>
+      authenticateWithPassword("signin", email, password),
+    [authenticateWithPassword],
+  );
   const signInWithProvider = useCallback(
     async (provider: SocialProvider) => {
+      passwordAttempt.current++;
       await AsyncStorage.setItem(
         pendingRoleKey,
         userRef.current.role === "tutor" ? "tutor" : "student",
@@ -408,7 +543,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             });
             return;
           }
-          const files = createFileService(requireBackend());
+          const client = await requireActorBackend(actor);
+          if (generation !== epoch.current || actor !== actorRef.current)
+            throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
+          const files = createFileService(client);
           const previous = userRef.current.avatarFileId;
           const asset = photo
             ? await files.upload({
@@ -421,14 +559,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (generation !== epoch.current || actor !== actorRef.current)
             throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
           await files.setAvatar(asset?.id || null);
+          if (generation !== epoch.current || actor !== actorRef.current)
+            throw new Error("Akkaunt o‘zgardi. Rasmni qayta tanlang.");
           revision.current++;
+          const ticket = snapshotGate.current.begin({
+            epoch: epoch.current,
+            revision: revision.current,
+          });
           const snapshot = await fetchSnapshot();
-          if (generation === epoch.current && snapshot.user.id === actor)
+          if (
+            generation === epoch.current &&
+            actorRef.current === actor &&
+            snapshot.user.id === actor &&
+            snapshotGate.current.accept(ticket, {
+              epoch: epoch.current,
+              revision: revision.current,
+            })
+          )
             adopt(snapshot);
           if (
             previous &&
             previous !== asset?.id &&
-            generation === epoch.current
+            generation === epoch.current &&
+            actor === actorRef.current
           )
             await files.remove(previous).catch(() => {}); // Already detached; cleanup may be retried later.
         });
@@ -450,6 +603,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [command],
   );
   const signOut = useCallback(async () => {
+    passwordAttempt.current++;
     if (supabase) {
       const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) throw new Error(error.message);
@@ -517,8 +671,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
       setFilters: (patch) => setCurrentFilters((f) => ({ ...f, ...patch })),
       refresh,
-      requestCode,
-      verifyCode,
+      signUpWithPassword,
+      signInWithPassword,
       signInWithProvider,
       updateAvatar,
       completeOnboarding,
@@ -545,8 +699,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     syncError,
     filters,
     refresh,
-    requestCode,
-    verifyCode,
+    signUpWithPassword,
+    signInWithPassword,
     signInWithProvider,
     updateAvatar,
     completeOnboarding,
