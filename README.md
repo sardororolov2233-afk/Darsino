@@ -23,6 +23,10 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_OR_ANON_KEY
 
 `service_role`, database paroli, SMTP va AI kalitlari mobil ilovaga kiritilmaydi. OAuth va native pluginlar uchun development/store build kerak; mobil qurilma sozlamalari [Supabase yo‘riqnomasida](supabase/README.md).
 
+## Ustoz paneli
+
+Stitch asosidagi [test yuklash, guruh chat va o‘quvchilar tahlili](docs/teacher-workspace.md) tayyor. Boshqaruvda “Davomat” va “Qarzdorlar” bloklari ishlaydi; guruh ma’lumotlaridan keyingi alohida qadamda hafta kunlari, har kunning soati va darslar soni tanlanadi. [Dizaynning HTML va rasmlari](docs/designs/stitch/README.md) repozitoriyga kiritilgan.
+
 ## Email va parol bilan kirish
 
 2026-10-25 dan ro‘yxatdan o‘tish **email + parol + parolni takrorlash**, keyingi kirish esa **email + parol** orqali ishlaydi. Parol kamida 8 belgidan iborat bo‘ladi; ikki parol mos kelishi tekshiriladi. Email tasdiqlash kodi so‘ralmaydi va signup uchun SMTP kerak emas. Supabase’da avtomatik email tasdiqlash yoqilishi kerak; jonli sozlama va sinov holati [hisobotda](docs/supabase-live-verification.md) ko‘rsatiladi.

@@ -1,3 +1,4 @@
+import { offeringScheduleLabel } from "../state/domain";
 import React, { useEffect, useRef, useState } from "react";
 import { AppState, Linking, Platform, Share, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -546,7 +547,7 @@ export function InvitationCard({
         <>
           <AppText>{money(group.price)}</AppText>
           <AppText variant="caption" color={C.muted}>
-            {group.days + " · " + group.time + " · " + group.mode}
+            {offeringScheduleLabel(group) + " · " + group.mode}
           </AppText>
           <AppText variant="caption" color={C.muted} localize={false}>
             {group.location}

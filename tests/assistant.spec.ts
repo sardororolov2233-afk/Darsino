@@ -92,7 +92,7 @@ test("teacher opens location and material controls while the student assistant s
     );
   }, demoMarketplace());
   await page.goto("/");
-  await page.getByRole("tab", { name: "Kabinet", exact: true }).click();
+  await page.getByRole("tab", { name: "Profil", exact: true }).click();
   await expect(page.getByTestId("floating-assistant")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Dars manzilini belgilash", exact: true })
@@ -111,7 +111,10 @@ test("teacher opens location and material controls while the student assistant s
   ).toBeDisabled();
   await page.screenshot({ path: "docs/screenshots/teacher-location-320.png" });
   await page.getByRole("button", { name: "Orqaga", exact: true }).click();
-  await page.getByRole("tab", { name: "Guruhlar", exact: true }).click();
+  await page.getByRole("tab", { name: "Boshqaruv", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Barcha guruhlar", exact: true })
+    .click();
   await page
     .getByRole("button", { name: /ni boshqarish$/ })
     .first()

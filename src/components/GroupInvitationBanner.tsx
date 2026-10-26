@@ -1,3 +1,4 @@
+import { offeringScheduleLabel } from "../state/domain";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -69,7 +70,7 @@ export function GroupInvitationBanner({ onOpen }: { onOpen: () => void }) {
       </AppText>
       {group ? (
         <AppText variant="caption" color={C.muted}>
-          {money(group.price) + " · " + group.days + " · " + group.time}
+          {money(group.price) + " · " + offeringScheduleLabel(group)}
         </AppText>
       ) : null}
       <View style={uiStyles.row}>

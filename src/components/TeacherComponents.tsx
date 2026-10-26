@@ -1,3 +1,4 @@
+import { offeringScheduleLabel } from "../state/domain";
 import { LocalizedPressable as Pressable } from "../i18n/native";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -68,7 +69,7 @@ export function TeacherHeader() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Chatni ochish"
-            onPress={() => navigation.navigate("Chats")}
+            onPress={() => navigation.navigate("Main", { screen: "Chats" })}
             style={styles.action}
           >
             <Icon name="message-circle" color={C.white} size={18} />
@@ -272,7 +273,7 @@ export function TeacherGroupCard({
       </View>
       <AppText variant="heading">{group.title}</AppText>
       <AppText variant="caption" color={C.muted}>
-        {group.days} · {group.time}
+        {offeringScheduleLabel(group)}
       </AppText>
       <AppText variant="caption" color={C.muted}>
         {group.location}
@@ -348,7 +349,7 @@ export function TeacherFinance() {
         title="Guruhlar va to‘lovlar"
         variant="gold"
         icon="credit-card"
-        onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        onPress={() => navigation.navigate("TeacherClasses")}
       />
     </Card>
   );

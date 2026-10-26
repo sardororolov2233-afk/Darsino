@@ -1,3 +1,4 @@
+import { offeringScheduleLabel } from "../state/domain";
 import { LocalizedPressable as Pressable } from "../i18n/native";
 import {
   FilterPanel,
@@ -553,7 +554,7 @@ export function GroupCard({ group }: { group: Offering }) {
       <AppText variant="heading">{group.title}</AppText>
       <AppText color={C.muted}>{group.tutor}</AppText>
       <AppText variant="caption" color={C.muted}>
-        {group.days} · {group.time} · {group.mode}
+        {offeringScheduleLabel(group)} · {group.mode}
       </AppText>
       <View style={uiStyles.between}>
         <AppText variant="label">{money(group.price)}</AppText>
@@ -674,7 +675,7 @@ export function GroupScreen({
                       tutorId: group.tutorId,
                       title: group.title,
                       subtitle: group.subject,
-                      time: `${group.days} · ${group.time}`,
+                      time: offeringScheduleLabel(group),
                       price: group.price,
                     }),
                   (id) => navigation.navigate("Request", { id }),

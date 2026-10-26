@@ -2,6 +2,12 @@
 
 Maqsad loyiha: `mhqofwuawwnappstcekh`. Natijalar sanasi bilan yuritiladi; lokal testlar, demo va amalda bajarilgan jonli tekshiruvlar aralashtirilmaydi. Sana zonasi: Asia/Tashkent.
 
+## 2026-10-26 — ustoz ish maydoni
+
+`202610260001_teacher_workspace.sql` Management API orqali tranzaksiyada qo‘llandi. Yangi to‘rtta jadvalda RLS yoqilgan, `oqi_group_messages` Realtime publication’ida bor. `oqi_mock_*` funksiyalari anon rolga yopiq; `authenticated` test saqlash RPCsini bajara oladi, ichki `oqi_mock_test_json` yordamchisini bajara olmaydi. Faqat o‘qish orqali qayta tekshirildi: avvalgi **1 profil / 0 guruh** saqlangan. Ushbu tekshiruvda jonli o‘quvchi, chat yoki test ma’lumotlari yaratilmagan.
+
+Funksional guruh/test/chat tekshiruvlari izolyatsiyalangan PGlite va demo brauzerida bajarildi. Jonli migratsiyaning o‘rnatilgani haqiqiy foydalanuvchilar bilan WebSocket, binary PDF upload yoki qurilma sinovi bajarilganini anglatmaydi. [Oqim va cheklovlar](teacher-workspace.md), [SQL ruxsatlari](../supabase/README.md#2026-10-26-ustoz-ish-maydoni).
+
 ## 2026-10-25 — email va parol kontrakti
 
 Foydalanuvchining yangi talabi: **signup — email, parol, parolni takrorlash; login — email va parol**. Email kodi yoki signup xati talab qilinmaydi. Parol kamida 8 belgili; ikki parol mosligi klientda tekshiriladi. Signup/login uchun SMTP kerak emas.

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html lang="uz"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary": "#006c49", "tertiary-container": "#885500", "on-tertiary-fixed-variant": "#653e00", "surface-container-low": "#f2f4f6", "on-error": "#ffffff", "inverse-on-surface": "#eff1f3", "on-tertiary": "#ffffff", "on-tertiary-container": "#ffd4a4", "primary-fixed": "#e2dfff", "outline-variant": "#c7c4d8", "secondary-fixed": "#6ffbbe", "background": "#f7f9fb", "primary": "#3525cd", "surface-bright": "#f7f9fb", "error": "#ba1a1a", "surface-container-high": "#e6e8ea", "error-container": "#ffdad6", "tertiary-fixed-dim": "#ffb95f", "on-primary-fixed-variant": "#3323cc", "primary-fixed-dim": "#c3c0ff", "primary-container": "#4f46e5", "surface-tint": "#4d44e3", "surface-variant": "#e0e3e5", "inverse-primary": "#c3c0ff", "surface-container-highest": "#e0e3e5", "on-secondary-fixed": "#002113", "surface-container-lowest": "#ffffff", "on-background": "#191c1e", "on-tertiary-fixed": "#2a1700", "on-secondary-container": "#00714d", "outline": "#777587", "surface-dim": "#d8dadc", "on-primary-container": "#dad7ff", "on-surface": "#191c1e", "inverse-surface": "#2d3133", "secondary-container": "#6cf8bb", "surface-container": "#eceef0", "tertiary-fixed": "#ffddb8", "on-primary-fixed": "#0f0069", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#005236", "on-secondary": "#ffffff", "secondary-fixed-dim": "#4edea3", "surface": "#f7f9fb", "tertiary": "#684000", "on-surface-variant": "#464555", "on-error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "margin": "1.5rem", "space-md": "1rem", "gutter-mobile": "0.75rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "gutter": "1rem" }, "fontFamily": { "title-md": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "title-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-md": ["Inter"], "body-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "body-md": ["Plus Jakarta Sans"] }, "fontSize": { "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container text-on-primary shadow-sm"><span class="material-symbols-outlined text-[16px]">school</span><span class="font-label-sm text-label-sm tracking-wide font-semibold">O'qi Ustoz</span></div><h1 class="font-title-md text-title-md text-on-surface ml-1 truncate max-w-[140px]">Test Yuklash</h1></div><div class="flex items-center gap-space-xs"><button aria-label="Xabarlar" class="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors relative"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface"></span></button><button aria-label="Ustoz profili" class="w-11 h-11 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAngzSXdBRTPg1Zi4_1lJ1lwCM0w961z_YwfviKqCAzDO5zD9Rc3h8Z9AEtJrwiOEWl24eT_G8SH7L9ARRw_gHbLBg8stTS2C3-6wbArNMbn96y54POi6isTzVVY0bMo8tCLX5XDbCDbkyLiQEz7Q3IFZ3uNsxgk2pkf6PI-dQH4JH-d1PvlK6knvePLMF3ceGmmiKzi4748ZdsjPFT3tmrgBvKt_gDtWEevN_h0BAtyr1XUYNfqjsi2Q"/></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin-mobile pb-space-xl">
+<!-- Dynamic Motivation Banner -->
+<div class="mt-space-sm mb-space-md p-space-md rounded-2xl bg-gradient-to-r from-primary/10 via-secondary/10 to-primary-fixed/20 shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-md">
+<span class="material-symbols-outlined text-[22px]">auto_stories</span>
+</div>
+<div class="min-w-0">
+<p class="font-title-md text-title-md text-on-surface truncate">Yangi Mock Test yaratish</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">AI yordamida tezkor savollar ajratish</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm shrink-0 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">bolt</span> AI 3.0
+    </span>
+</div>
+<!-- Source Tabs -->
+<div class="bg-surface-container p-1 rounded-2xl flex items-center gap-1 mb-space-md shadow-inner">
+<button class="flex-1 py-2 px-1.5 rounded-xl font-label-md text-label-md transition-all text-center flex items-center justify-center gap-1 bg-surface-container-lowest text-primary shadow-sm" id="tab-import" onclick="switchMethod('import')">
+<span class="material-symbols-outlined text-[16px]">upload_file</span>
+<span>Fayldan import</span>
+</button>
+<button class="flex-1 py-2 px-1.5 rounded-xl font-label-md text-label-md transition-all text-center flex items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface" id="tab-manual" onclick="switchMethod('manual')">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+<span>Qo'lda kiritish</span>
+</button>
+<button class="flex-1 py-2 px-1.5 rounded-xl font-label-md text-label-md transition-all text-center flex items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface" id="tab-bank" onclick="switchMethod('bank')">
+<span class="material-symbols-outlined text-[16px]">dataset</span>
+<span>O'qi bazasi</span>
+</button>
+</div>
+<!-- Import Panel / Drag and Drop Area -->
+<div class="p-space-md rounded-3xl bg-surface-container-lowest shadow-sm mb-space-lg flex flex-col items-center text-center" id="method-panel-import">
+<div class="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary mb-space-sm relative">
+<span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+</span>
+</div>
+<p class="font-title-md text-title-md text-on-surface mb-1">PDF yoki Word faylni tashlang</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[270px] mb-space-md">
+      Savollar, formulalar va to'g'ri javob kalitlari AI orqali avtomatik tahlil qilinadi (.pdf, .docx)
+    </p>
+<div class="flex items-center gap-2 mb-space-md">
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant">Maks: 25 MB</span>
+<span class="px-2 py-0.5 rounded-lg bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant">Matn + Rasm</span>
+</div>
+<label class="w-full py-3.5 px-space-md rounded-2xl bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-[0.98] transition cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">folder_open</span>
+<span>Faylni tanlash</span>
+<input accept=".pdf,.docx,.doc" class="hidden" onchange="handleFileSelect(event)" type="file"/>
+</label>
+<!-- File feedback (interactive) -->
+<div class="hidden w-full mt-space-sm p-space-sm rounded-xl bg-secondary-fixed/30 text-on-surface flex items-center justify-between" id="file-status">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="font-body-sm text-body-sm truncate text-on-surface font-medium" id="file-name">DTM_Matematika_2025.pdf</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold shrink-0">Tayyor</span>
+</div>
+</div>
+<!-- Manual Mode Notice (Hidden by default) -->
+<div class="hidden p-space-md rounded-3xl bg-surface-container-lowest shadow-sm mb-space-lg text-center" id="method-panel-manual">
+<div class="w-12 h-12 mx-auto rounded-2xl bg-tertiary-fixed flex items-center justify-center text-tertiary mb-space-sm">
+<span class="material-symbols-outlined text-[24px]">post_add</span>
+</div>
+<p class="font-title-md text-title-md text-on-surface mb-1">Bloklar bo'yicha tuzish</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">Asosiy parametrlarni to'ldirib, savollar konstruktoriga o'ting.</p>
+<button class="py-2.5 px-space-md rounded-xl bg-surface-container-high text-on-surface font-label-md text-label-md" type="button">
+      Savollar redaktorini ochish
+    </button>
+</div>
+<!-- Bank Mode Notice (Hidden by default) -->
+<div class="hidden p-space-md rounded-3xl bg-surface-container-lowest shadow-sm mb-space-lg text-center" id="method-panel-bank">
+<div class="w-12 h-12 mx-auto rounded-2xl bg-secondary-fixed flex items-center justify-center text-secondary mb-space-sm">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<p class="font-title-md text-title-md text-on-surface mb-1">O'qi Tasdiqlangan Bazasi</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">Milliy test markazi standartidagi 12,000+ tayyor savollardan tanlang.</p>
+<button class="py-2.5 px-space-md rounded-xl bg-surface-container-high text-on-surface font-label-md text-label-md" type="button">
+      Bazadan savollar terish (30 ta)
+    </button>
+</div>
+<!-- Configuration Section Card -->
+<div class="p-space-md rounded-3xl bg-surface-container-lowest shadow-sm mb-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+<h2 class="font-title-md text-title-md text-on-surface">Test parametrlari</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed font-label-sm text-label-sm text-primary font-semibold">DTM Formati</span>
+</div>
+<!-- Test Name Input -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface-variant">Test nomi</label>
+<input class="w-full px-3.5 py-3 rounded-2xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest outline-none shadow-sm focus:shadow-md transition" type="text" value="DTM 2025 Matematika: 5-blok to'liq mock"/>
+</div>
+<!-- Subject & Direction Dropdown -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface-variant">Fan va yo'nalish</label>
+<div class="relative">
+<select class="w-full appearance-none px-3.5 py-3 pr-10 rounded-2xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest outline-none shadow-sm cursor-pointer">
+<option>Matematika (Majburiy + Asosiy)</option>
+<option>Fizika (Asosiy blok)</option>
+<option>Ona tili va Adabiyot</option>
+<option>Biologiya & Kimyo</option>
+<option>Ingliz tili (CEFR / DTM)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Target Audience (Multiselect Chips) -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Qaysi guruhlar uchun mo'ljallangan?</label>
+<div class="flex flex-wrap gap-2" id="group-chips">
+<button class="group-chip active px-3 py-1.5 rounded-full font-label-sm text-label-sm transition flex items-center gap-1.5 bg-primary text-on-primary shadow-sm" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>DTM Guruh-1</span>
+</button>
+<button class="group-chip active px-3 py-1.5 rounded-full font-label-sm text-label-sm transition flex items-center gap-1.5 bg-primary text-on-primary shadow-sm" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>Barcha o'quvchilarim</span>
+</button>
+<button class="group-chip px-3 py-1.5 rounded-full font-label-sm text-label-sm transition flex items-center gap-1.5 bg-surface-container-high text-on-surface hover:bg-surface-container-highest" onclick="toggleChip(this)" type="button">
+<span class="material-symbols-outlined text-[14px] opacity-60">public</span>
+<span>Ommaviy (ochiq)</span>
+</button>
+</div>
+</div>
+<!-- Questions Count & Duration (Two Column) -->
+<div class="grid grid-cols-2 gap-3">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface-variant">Savollar soni</label>
+<div class="flex items-center justify-between px-3 py-2.5 rounded-2xl bg-surface-container-low shadow-sm">
+<span class="font-title-md text-title-md text-on-surface">30 ta</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">quiz</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface-variant">Vaqt</label>
+<span class="font-label-sm text-label-sm font-semibold text-primary" id="time-val">80 daq</span>
+</div>
+<div class="h-[44px] flex items-center px-2 rounded-2xl bg-surface-container-low shadow-sm">
+<input class="w-full accent-primary cursor-pointer" id="time-slider" max="180" min="30" oninput="updateTime(this.value)" step="5" type="range" value="80"/>
+</div>
+</div>
+</div>
+<!-- Difficulty Level Selector -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Murakkablik darajasi</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="diff-btn py-2 px-1 rounded-xl font-label-sm text-label-sm text-center bg-surface-container-low text-on-surface hover:bg-surface-container-high transition" onclick="selectDifficulty(this)" type="button">
+          Oson
+        </button>
+<button class="diff-btn py-2 px-1 rounded-xl font-label-sm text-label-sm text-center bg-surface-container-low text-on-surface hover:bg-surface-container-high transition" onclick="selectDifficulty(this)" type="button">
+          O'rta
+        </button>
+<button class="diff-btn active py-2 px-1 rounded-xl font-label-sm text-label-sm text-center bg-primary text-on-primary shadow-sm font-semibold transition" onclick="selectDifficulty(this)" type="button">
+          Milliy sertifikat
+        </button>
+</div>
+</div>
+<!-- Scoring Logic Info Card -->
+<div class="p-space-sm rounded-2xl bg-surface-container-low flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">calculate</span>
+          Ball hisoblash tizimi
+        </span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">DTM Standart</span>
+</div>
+<div class="grid grid-cols-3 gap-1 pt-1 text-center">
+<div class="p-1 rounded-lg bg-surface-container-lowest">
+<p class="font-label-sm text-label-sm text-on-surface-variant">1-10 savol</p>
+<p class="font-title-md text-title-md text-primary font-bold">1.1 ball</p>
+</div>
+<div class="p-1 rounded-lg bg-surface-container-lowest">
+<p class="font-label-sm text-label-sm text-on-surface-variant">11-20 savol</p>
+<p class="font-title-md text-title-md text-primary font-bold">2.1 ball</p>
+</div>
+<div class="p-1 rounded-lg bg-surface-container-lowest">
+<p class="font-label-sm text-label-sm text-on-surface-variant">21-30 savol</p>
+<p class="font-title-md text-title-md text-primary font-bold">3.1 ball</p>
+</div>
+</div>
+</div>
+<!-- Automatic Video Review Toggle Switch -->
+<div class="flex items-center justify-between p-space-sm rounded-2xl bg-secondary-fixed/20 shadow-sm">
+<div class="flex items-center gap-2.5 min-w-0 pr-2">
+<div class="w-8 h-8 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">smart_display</span>
+</div>
+<div class="min-w-0">
+<p class="font-title-md text-title-md text-on-surface leading-tight">Video tahlil biriktirish</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Har bir savolga video yechim qo'shish</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="toggle-video" onchange="handleToggle(this)" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+<!-- Recent Uploads Section -->
+<div class="mb-space-lg">
+<div class="flex items-center justify-between mb-space-sm px-1">
+<h3 class="font-title-md text-title-md text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">history</span>
+        So'nggi yuklangan testlar
+      </h3>
+<a class="font-label-sm text-label-sm text-primary font-semibold hover:underline" href="#">Barchasi</a>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Item 1: Active -->
+<div class="p-space-sm rounded-2xl bg-surface-container-lowest shadow-sm flex items-center justify-between gap-space-sm hover:shadow-md transition">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-xl bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-2">
+<p class="font-title-md text-title-md text-on-surface truncate">DTM Mock #12</p>
+<span class="px-2 py-0.2 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">Faol</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2 mt-0.5">
+<span>84 o'quvchi topshirdi</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-secondary font-semibold">O'rtacha: 74%</span>
+</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Item 2: Draft -->
+<div class="p-space-sm rounded-2xl bg-surface-container-lowest shadow-sm flex items-center justify-between gap-space-sm hover:shadow-md transition">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">draft</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-2">
+<p class="font-title-md text-title-md text-on-surface truncate">Trigonometriya mini-test</p>
+<span class="px-2 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Qoralama</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              15 ta savol yuklangan
+            </p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Action Buttons (Dual actions) -->
+<div class="flex flex-col gap-2.5">
+<button class="w-full py-3.5 px-space-md rounded-2xl bg-primary text-on-primary font-headline-md text-headline-md flex items-center justify-center gap-2 shadow-lg hover:opacity-95 active:scale-[0.98] transition" id="publish-btn" onclick="publishTest()">
+<span class="material-symbols-outlined text-[22px]">rocket_launch</span>
+<span>Testni e'lon qilish (Publish)</span>
+</button>
+<button class="w-full py-3 px-space-md rounded-2xl bg-surface-container-high text-on-surface font-title-md text-title-md flex items-center justify-center gap-2 hover:bg-surface-container-highest active:scale-[0.99] transition" onclick="saveDraft()">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">save</span>
+<span>Qoralama sifatida saqlash</span>
+</button>
+</div>
+</div>
+<script>
+  function switchMethod(method) {
+    const tabs = ['import', 'manual', 'bank'];
+    tabs.forEach(t => {
+      const btn = document.getElementById('tab-' + t);
+      const panel = document.getElementById('method-panel-' + t);
+      if (t === method) {
+        btn.className = "flex-1 py-2 px-1.5 rounded-xl font-label-md text-label-md transition-all text-center flex items-center justify-center gap-1 bg-surface-container-lowest text-primary shadow-sm font-semibold";
+        if (panel) panel.classList.remove('hidden');
+      } else {
+        btn.className = "flex-1 py-2 px-1.5 rounded-xl font-label-md text-label-md transition-all text-center flex items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface";
+        if (panel) panel.classList.add('hidden');
+      }
+    });
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const statusBox = document.getElementById('file-status');
+      const fileName = document.getElementById('file-name');
+      fileName.textContent = file.name;
+      statusBox.classList.remove('hidden');
+    }
+  }
+
+  function toggleChip(button) {
+    const isSelected = button.classList.contains('active');
+    if (isSelected) {
+      button.classList.remove('active', 'bg-primary', 'text-on-primary', 'shadow-sm');
+      button.classList.add('bg-surface-container-high', 'text-on-surface');
+      const icon = button.querySelector('.material-symbols-outlined');
+      if (icon) icon.textContent = 'add';
+    } else {
+      button.classList.add('active', 'bg-primary', 'text-on-primary', 'shadow-sm');
+      button.classList.remove('bg-surface-container-high', 'text-on-surface');
+      const icon = button.querySelector('.material-symbols-outlined');
+      if (icon) icon.textContent = 'check';
+    }
+  }
+
+  function updateTime(val) {
+    document.getElementById('time-val').textContent = val + " daq";
+  }
+
+  function selectDifficulty(button) {
+    const buttons = document.querySelectorAll('.diff-btn');
+    buttons.forEach(b => {
+      b.classList.remove('active', 'bg-primary', 'text-on-primary', 'shadow-sm', 'font-semibold');
+      b.classList.add('bg-surface-container-low', 'text-on-surface');
+    });
+    button.classList.add('active', 'bg-primary', 'text-on-primary', 'shadow-sm', 'font-semibold');
+    button.classList.remove('bg-surface-container-low', 'text-on-surface');
+  }
+
+  function handleToggle(toggle) {
+    // Interactive feedback
+  }
+
+  function publishTest() {
+    const btn = document.getElementById('publish-btn');
+    const prev = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span><span>E'lon qilinmoqda...</span>`;
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Muvaffaqiyatli chop etildi!</span>`;
+      btn.classList.remove('bg-primary');
+      btn.classList.add('bg-secondary');
+      setTimeout(() => {
+        btn.innerHTML = prev;
+        btn.classList.remove('bg-secondary');
+        btn.classList.add('bg-primary');
+        btn.disabled = false;
+      }, 2200);
+    }, 1200);
+  }
+
+  function saveDraft() {
+    alert("Test qoralama sifatida saqlandi!");
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 px-1"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="boshqaruv" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm mt-0.5">Boshqaruv</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="oquvchilar" href="#"><span class="material-symbols-outlined text-[22px]">groups</span><span class="font-label-sm text-label-sm mt-0.5">O'quvchilar</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 transition-colors text-primary font-semibold" data-path="test-yuklash" href="#"><div class="w-7 h-7 rounded-xl bg-primary-fixed flex items-center justify-center mb-0.5"><span class="material-symbols-outlined text-primary text-[20px]">add_task</span></div><span class="font-label-sm text-label-sm">Test yuklash</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="guruh-chat" href="#"><span class="material-symbols-outlined text-[22px]">forum</span><span class="font-label-sm text-label-sm mt-0.5">Guruh chat</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="profil" href="#"><span class="material-symbols-outlined text-[22px]">account_circle</span><span class="font-label-sm text-label-sm mt-0.5">Profil</span></a></div></nav></body></html>

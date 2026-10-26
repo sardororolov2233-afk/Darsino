@@ -1,3 +1,15 @@
+import { ClassroomProvider } from "./src/state/ClassroomContext";
+import {
+  TeacherStudentsScreen,
+  TeacherStudentDetailScreen,
+  TeacherAttendanceScreen,
+  TeacherDebtorsScreen,
+} from "./src/screens/TeacherDashboardScreens";
+import {
+  UploadMockTestScreen,
+  MockTestScreen,
+} from "./src/screens/MockTestsScreens";
+import { GroupConversationScreen } from "./src/screens/ChatScreens";
 import { I18nProvider, useI18n } from "./src/i18n";
 import { LocaleBridge } from "./src/state/LocaleBridge";
 import { MfaGate } from "./src/components/TwoFactor";
@@ -157,31 +169,31 @@ function MainTabs() {
   const tutorTabs = [
     {
       name: "Home",
-      title: "Tahlil",
-      icon: "bar-chart-2" as const,
+      title: "Boshqaruv",
+      icon: "grid" as const,
       component: TutorHomeScreen,
     },
     {
-      name: "Classes",
-      title: "Guruhlar",
+      name: "TeacherStudents",
+      title: "O‘quvchilar",
       icon: "users" as const,
-      component: TutorClassesScreen,
+      component: TeacherStudentsScreen,
     },
     {
-      name: "TeacherRooms",
-      title: "Xonalar",
-      icon: "grid" as const,
-      component: TeacherRoomsScreen,
+      name: "TeacherTests",
+      title: "Test yuklash",
+      icon: "check-square" as const,
+      component: UploadMockTestScreen,
     },
     {
-      name: "TeacherClubs",
-      title: "Klublar",
-      icon: "award" as const,
-      component: TeacherClubsScreen,
+      name: "Chats",
+      title: "Guruh chat",
+      icon: "message-circle" as const,
+      component: ChatsScreen,
     },
     {
       name: "Profile",
-      title: "Kabinet",
+      title: "Profil",
       icon: "user" as const,
       component: ProfileScreen,
     },
@@ -209,7 +221,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: C.navy,
+        tabBarActiveTintColor: user.role === "tutor" ? "#4430ED" : C.navy,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: {
           fontFamily: font.medium,
@@ -246,20 +258,20 @@ function MainTabs() {
                 style={[
                   styles.tabIcon,
                   focused && styles.activeTab,
-                  (tab.name === "Radar" || tab.name === "TeacherRooms") &&
+                  (tab.name === "Radar" || tab.name === "TeacherTests") &&
                     styles.radarTab,
-                  tab.name === "TeacherRooms" && { backgroundColor: C.purple },
+                  tab.name === "TeacherTests" && { backgroundColor: C.purple },
                 ]}
               >
                 <Icon
                   name={tab.icon}
                   color={
-                    tab.name === "Radar" || tab.name === "TeacherRooms"
+                    tab.name === "Radar" || tab.name === "TeacherTests"
                       ? C.white
                       : color
                   }
                   size={
-                    tab.name === "Radar" || tab.name === "TeacherRooms"
+                    tab.name === "Radar" || tab.name === "TeacherTests"
                       ? 25
                       : 21
                   }
@@ -318,6 +330,39 @@ function Navigator() {
           ) : (
             <Stack.Group navigationKey={`app-${user.id}-${user.role}`}>
               <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen
+                name="TeacherClasses"
+                component={TutorClassesScreen}
+              />
+              <Stack.Screen
+                name="TeacherRooms"
+                component={TeacherRoomsScreen}
+              />
+              <Stack.Screen
+                name="TeacherClubs"
+                component={TeacherClubsScreen}
+              />
+              <Stack.Screen
+                name="TeacherAttendance"
+                component={TeacherAttendanceScreen}
+              />
+              <Stack.Screen
+                name="TeacherDebtors"
+                component={TeacherDebtorsScreen}
+              />
+              <Stack.Screen
+                name="TeacherStudentDetail"
+                component={TeacherStudentDetailScreen}
+              />
+              <Stack.Screen
+                name="UploadMockTest"
+                component={UploadMockTestScreen}
+              />
+              <Stack.Screen name="MockTest" component={MockTestScreen} />
+              <Stack.Screen
+                name="GroupConversation"
+                component={GroupConversationScreen}
+              />
               <Stack.Screen name="Settings" component={SettingsScreen} />
               <Stack.Screen
                 name="LanguageSettings"
@@ -450,10 +495,12 @@ export default function App() {
                   <LocaleBridge />
                   <LearningProvider>
                     <TeacherProvider>
-                      <View style={{ flex: 1 }}>
-                        <Navigator />
-                        <FloatingAssistant />
-                      </View>
+                      <ClassroomProvider>
+                        <View style={{ flex: 1 }}>
+                          <Navigator />
+                          <FloatingAssistant />
+                        </View>
+                      </ClassroomProvider>
                     </TeacherProvider>
                   </LearningProvider>
                 </AppProvider>

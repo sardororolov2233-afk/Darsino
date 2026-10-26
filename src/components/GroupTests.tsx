@@ -1,3 +1,4 @@
+import { MockTestCards } from "./MockTestCards";
 import React from "react";
 import { View } from "react-native";
 import { useApp } from "../state/AppContext";
@@ -44,6 +45,15 @@ export function GroupTests({ group }: { group: Offering }) {
   );
   return (
     <View style={{ gap: 14 }}>
+      <Button
+        title="Mock test yuklash"
+        icon="upload"
+        variant="gold"
+        onPress={() =>
+          navigation.navigate("UploadMockTest", { offeringId: group.id })
+        }
+      />
+      <MockTestCards offeringId={group.id} />
       <Button
         title="Guruhga test yuborish"
         icon="send"

@@ -1,3 +1,5 @@
+import { offeringScheduleLabel } from "../state/domain";
+import { MockTestCards } from "../components/MockTestCards";
 import { readAccountSettings } from "../state/account";
 import { StudentPayments } from "../components/GroupPayments";
 import {
@@ -356,6 +358,7 @@ function ScheduleContent() {
       {tab === "To‘lovlar" ? <StudentPayments /> : null}
       {tab === "Jadval" ? (
         <>
+          <MockTestCards />
           <FilterPanel
             count={Number(history) + Number(day !== "Barchasi")}
             onReset={() => {
@@ -425,7 +428,7 @@ function ScheduleContent() {
                   {g.tutor} · {g.mode}
                 </AppText>
                 <AppText variant="caption" color={C.muted}>
-                  {g.days} · {g.time}
+                  {offeringScheduleLabel(g)}
                 </AppText>
               </Card>
             ))}
@@ -453,171 +456,7 @@ function ScheduleContent() {
     </>
   );
 }
-function conversationName(
-  id: string,
-  actorId: string,
-  users: ReturnType<typeof useApp>["market"]["users"],
-) {
-  const [, student, tutor] = id.split(":");
-  const other = actorId === student ? tutor : student;
-  return users.find((u) => u.id === other)?.name || "Suhbatdoshingiz";
-}
-export function ChatsScreen() {
-  const { user, messages, requests, market } = useApp(),
-    navigation = useAppNavigation();
-  const ids = [
-    ...new Set([
-      ...Object.keys(messages),
-      ...requests
-        .map((r) => r.conversationId)
-        .filter((id): id is string => !!id),
-    ]),
-  ];
-  return (
-    <Screen>
-      <Header
-        title="Suhbatlar"
-        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
-      />
-      <AppText color={C.muted}>
-        {user.role === "tutor"
-          ? "O‘quvchilar bilan dars vaqtini va tayyorgarlikni kelishing."
-          : "Ustoz bilan dars tafsilotlarini kelishing."}
-      </AppText>
-      {ids.map((id) => {
-        const name = conversationName(id, user.id, market.users),
-          last = messages[id]?.at(-1);
-        return (
-          <Card
-            key={id}
-            accessibilityLabel={`Suhbat: ${name}`}
-            onPress={() => navigation.navigate("Conversation", { id })}
-          >
-            <View style={uiStyles.row}>
-              <UserAvatar
-                userId={id
-                  .split(":")
-                  .slice(1)
-                  .find((uid) => uid !== user.id)}
-                initials={initials(name)}
-              />
-              <View style={{ flex: 1, gap: 4 }}>
-                <AppText variant="heading">{name}</AppText>
-                <AppText variant="caption" numberOfLines={1} color={C.muted}>
-                  {last
-                    ? assessmentLabel(last.text)
-                    : "Ariza tafsilotlarini kelishing"}
-                </AppText>
-              </View>
-              <Icon name="chevron-right" />
-            </View>
-          </Card>
-        );
-      })}
-      {!ids.length ? (
-        <EmptyState
-          title="Hali suhbat yo‘q"
-          subtitle="Repetitor profilidagi «Ustozga yozish» tugmasi bilan suhbat boshlang."
-          icon="message-circle"
-        />
-      ) : null}
-    </Screen>
-  );
-}
-export function ConversationScreen({
-  route,
-}: NativeStackScreenProps<RootStackParamList, "Conversation">) {
-  const navigation = useAppNavigation(),
-    { user, market, messages, sendMessage } = useApp();
-  const [text, setText] = useState(""),
-    action = useAction(),
-    id = route.params.id;
-  const [, student, tutor] = id.split(":"),
-    valid = id.startsWith("dm:") && (user.id === student || user.id === tutor);
-  const list = messages[id] || [],
-    name = conversationName(id, user.id, market.users);
-  return (
-    <Screen
-      bottom={
-        valid ? (
-          <>
-            <Feedback {...action} />
-            <Field
-              label="Xabar yozing"
-              value={text}
-              onChangeText={setText}
-              multiline
-              maxLength={2000}
-            />
-            <Button
-              title="Xabarni yuborish"
-              icon="send"
-              disabled={!text.trim()}
-              loading={action.busy}
-              onPress={() =>
-                action.run(
-                  () => sendMessage(id, text),
-                  () => setText(""),
-                )
-              }
-            />
-          </>
-        ) : undefined
-      }
-    >
-      <Header
-        title={name}
-        onBack={() => navigation.goBack()}
-        right={
-          <Button
-            title="Kontaktlar"
-            icon="users"
-            variant="soft"
-            onPress={() => navigation.navigate("Contacts")}
-          />
-        }
-      />
-      <AppText variant="caption" color={C.muted}>
-        Dars va guruh bo‘yicha suhbat
-      </AppText>
-      {!valid ? (
-        <EmptyState
-          title="Suhbat mavjud emas"
-          subtitle="O‘z akkauntingizdagi suhbatni oching."
-        />
-      ) : !list.length ? (
-        <EmptyState
-          title="Suhbatni boshlang"
-          subtitle="Maqsadingiz va dars vaqti haqida yozishingiz mumkin."
-          icon="message-circle"
-        />
-      ) : (
-        list.map((m) => (
-          <View
-            key={m.id}
-            style={{
-              alignSelf: m.mine ? "flex-end" : "flex-start",
-              maxWidth: "90%",
-              padding: 14,
-              borderRadius: 18,
-              gap: 5,
-              backgroundColor: m.mine ? C.navy : C.white,
-            }}
-          >
-            <AssessmentMessage message={m} />
-            <AppText
-              variant="caption"
-              color={m.mine ? "#CBD7E5" : C.muted}
-              style={{ alignSelf: "flex-end" }}
-            >
-              {m.time}
-            </AppText>
-          </View>
-        ))
-      )}
-    </Screen>
-  );
-}
+export { ChatsScreen, ConversationScreen } from "./ChatScreens";
 export function NotificationsScreen() {
   const navigation = useAppNavigation(),
     { notifications, command, refresh, user } = useApp(),

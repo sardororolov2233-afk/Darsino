@@ -96,6 +96,7 @@ export function Screen({
   bottom,
   style,
   top,
+  lightTop = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -103,13 +104,17 @@ export function Screen({
   bottom?: ReactNode;
   style?: StyleProp<ViewStyle>;
   top?: ReactNode;
+  lightTop?: boolean;
 }) {
   return (
     <SafeAreaView
-      style={[styles.screen, { backgroundColor: top ? C.navy : background }]}
+      style={[
+        styles.screen,
+        { backgroundColor: top && !lightTop ? C.navy : background },
+      ]}
       edges={["top", "left", "right"]}
     >
-      <StatusBar style={top ? "light" : "dark"} />
+      <StatusBar style={top && !lightTop ? "light" : "dark"} />
       <KeyboardAvoidingView
         style={[styles.fill, { backgroundColor: background }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

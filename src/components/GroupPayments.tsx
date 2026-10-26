@@ -9,6 +9,7 @@ import {
   paymentMonth,
   paymentSummary,
   shiftMonth,
+  validPaymentMonth,
 } from "../state/payments";
 import { dateLabel, dmId, type Offering } from "../state/domain";
 import { matchesSearch } from "../state/learning";
@@ -64,13 +65,25 @@ export function MonthPicker({
   );
 }
 
-export function GroupPayments({ group }: { group: Offering }) {
+export function GroupPayments({
+  group,
+  initialMonth,
+  initialStatus,
+}: {
+  group: Offering;
+  initialMonth?: string;
+  initialStatus?: string;
+}) {
   const { market, command, user } = useApp();
   const navigation = useAppNavigation(),
     action = useAction();
-  const [month, setMonth] = useState(paymentMonth),
+  const [month, setMonth] = useState(
+      initialMonth && validPaymentMonth(initialMonth)
+        ? initialMonth
+        : paymentMonth,
+    ),
     [query, setQuery] = useState(""),
-    [status, setStatus] = useState("Barchasi");
+    [status, setStatus] = useState(initialStatus || "Barchasi");
   const rows = groupPaymentRows(market, group.id, month);
   const summary = paymentSummary(market, user.id, month, group.id);
   const visible = rows.filter(

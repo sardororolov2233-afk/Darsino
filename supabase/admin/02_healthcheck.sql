@@ -7,14 +7,14 @@ select id,not public as private_ok,file_size_limit,allowed_mime_types
 from storage.buckets where id like 'darsino-%' order by id;
 
 select t.name,exists(select 1 from pg_publication_tables p where p.pubname='supabase_realtime' and p.schemaname='public' and p.tablename=t.name) as ok
-from unnest(array['darsino_notifications','darsino_messages','darsino_enrollments','darsino_group_invitations','darsino_contact_requests']) t(name);
+from unnest(array['darsino_notifications','darsino_messages','darsino_enrollments','darsino_group_invitations','darsino_contact_requests','oqi_group_messages']) t(name);
 
 select p.proname,not has_function_privilege('anon',p.oid,'execute') as anon_blocked_ok,
   has_function_privilege('authenticated',p.oid,'execute') as authenticated_allowed
 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-where n.nspname='public' and p.proname in ('darsino_snapshot','darsino_mutate','darsino_snapshot_core','darsino_mutate_core','darsino_owned_file','darsino_prepare_upload','darsino_finalize_upload','darsino_submit_document','darsino_send_file_message','darsino_attach_lesson_file','darsino_mutate_access_base','darsino_mutate_schedule_base','darsino_mutate_idempotent_base','darsino_mutate_scheduling','darsino_notify_new_message','darsino_prune_mutation_receipts') order by p.proname;
+where n.nspname='public' and p.proname in ('darsino_snapshot','darsino_mutate','darsino_snapshot_core','darsino_mutate_core','darsino_owned_file','darsino_prepare_upload','darsino_finalize_upload','darsino_submit_document','darsino_send_file_message','darsino_attach_lesson_file','darsino_mutate_access_base','darsino_mutate_schedule_base','darsino_mutate_idempotent_base','darsino_mutate_scheduling','darsino_notify_new_message','darsino_prune_mutation_receipts','oqi_classroom_access','oqi_classroom_snapshot','oqi_group_messages_read','oqi_group_message_send','oqi_group_mark_read','oqi_mock_test_save','oqi_mock_begin','oqi_mock_submit','oqi_mock_test_json','oqi_mock_attempt_json','oqi_group_message_json') order by p.proname;
 -- authenticated_allowed must be FALSE for *_core, *_base, owned_file, scheduling,
--- notify_new_message and prune_mutation_receipts; TRUE for public user RPCs.
+-- notify_new_message, prune_mutation_receipts and oqi_*_json helpers; TRUE for public user RPCs.
 
 select c.relname,not has_table_privilege('authenticated',c.oid,'insert,update,delete,truncate') as writes_blocked_ok
 from pg_class c join pg_namespace n on n.oid=c.relnamespace

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="uz"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary": "#006c49", "tertiary-container": "#885500", "on-tertiary-fixed-variant": "#653e00", "surface-container-low": "#f2f4f6", "on-error": "#ffffff", "inverse-on-surface": "#eff1f3", "on-tertiary": "#ffffff", "on-tertiary-container": "#ffd4a4", "primary-fixed": "#e2dfff", "outline-variant": "#c7c4d8", "secondary-fixed": "#6ffbbe", "background": "#f7f9fb", "primary": "#3525cd", "surface-bright": "#f7f9fb", "error": "#ba1a1a", "surface-container-high": "#e6e8ea", "error-container": "#ffdad6", "tertiary-fixed-dim": "#ffb95f", "on-primary-fixed-variant": "#3323cc", "primary-fixed-dim": "#c3c0ff", "primary-container": "#4f46e5", "surface-tint": "#4d44e3", "surface-variant": "#e0e3e5", "inverse-primary": "#c3c0ff", "surface-container-highest": "#e0e3e5", "on-secondary-fixed": "#002113", "surface-container-lowest": "#ffffff", "on-background": "#191c1e", "on-tertiary-fixed": "#2a1700", "on-secondary-container": "#00714d", "outline": "#777587", "surface-dim": "#d8dadc", "on-primary-container": "#dad7ff", "on-surface": "#191c1e", "inverse-surface": "#2d3133", "secondary-container": "#6cf8bb", "surface-container": "#eceef0", "tertiary-fixed": "#ffddb8", "on-primary-fixed": "#0f0069", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#005236", "on-secondary": "#ffffff", "secondary-fixed-dim": "#4edea3", "surface": "#f7f9fb", "tertiary": "#684000", "on-surface-variant": "#464555", "on-error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "margin": "1.5rem", "space-md": "1rem", "gutter-mobile": "0.75rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "gutter": "1rem" }, "fontFamily": { "title-md": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "title-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-md": ["Inter"], "body-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "body-md": ["Plus Jakarta Sans"] }, "fontSize": { "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container text-on-primary shadow-sm"><span class="material-symbols-outlined text-[16px]">school</span><span class="font-label-sm text-label-sm tracking-wide font-semibold">O'qi Ustoz</span></div><h1 class="font-title-md text-title-md text-on-surface ml-1 truncate max-w-[140px]">O'Quvchilar</h1></div><div class="flex items-center gap-space-xs"><button aria-label="Xabarlar" class="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors relative"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface"></span></button><button aria-label="Ustoz profili" class="w-11 h-11 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAngzSXdBRTPg1Zi4_1lJ1lwCM0w961z_YwfviKqCAzDO5zD9Rc3h8Z9AEtJrwiOEWl24eT_G8SH7L9ARRw_gHbLBg8stTS2C3-6wbArNMbn96y54POi6isTzVVY0bMo8tCLX5XDbCDbkyLiQEz7Q3IFZ3uNsxgk2pkf6PI-dQH4JH-d1PvlK6knvePLMF3ceGmmiKzi4748ZdsjPFT3tmrgBvKt_gDtWEevN_h0BAtyr1XUYNfqjsi2Q"/></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin-mobile pb-space-lg gap-space-md">
+<!-- Tezkor Statistik Tahlil Kartochkasi (Analytics Overview) -->
+<div class="w-full bg-surface-container-lowest rounded-3xl p-space-md shadow-[0_4px_24px_-4px_rgba(53,37,205,0.06)] flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">insights</span>
+</div>
+<div>
+<h2 class="font-title-md text-title-md text-on-surface">Umumiy o'zlashtirish</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Jami 142 nafar faol o'quvchi</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> 78.4% o'rtacha
+      </span>
+</div>
+<!-- Segmentlangan Progress Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="w-full h-3 rounded-full bg-surface-container-high overflow-hidden flex p-0.5 gap-0.5">
+<div class="h-full rounded-l-full bg-secondary transition-all duration-500" style="width: 45%;" title="A'lo: 45%"></div>
+<div class="h-full bg-primary transition-all duration-500" style="width: 39%;" title="Yaxshi: 39%"></div>
+<div class="h-full bg-tertiary-fixed-dim transition-all duration-500" style="width: 13%;" title="Qoniqarli: 13%"></div>
+<div class="h-full rounded-r-full bg-error transition-all duration-500" style="width: 3%;" title="Qoloq: 3%"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant px-0.5">
+<span>0%</span>
+<span>Maqsad: 85%+</span>
+<span>100%</span>
+</div>
+</div>
+<!-- 4 ta Kategoriya Ko'rsatkichlari (Bento Tiles) -->
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- A'lo -->
+<div class="p-2.5 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">A'lo (85-100%)</p>
+<p class="font-title-md text-title-md text-on-surface font-semibold">64 nafar</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">45%</span>
+</div>
+<!-- Yaxshi -->
+<div class="p-2.5 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Yaxshi (70-84%)</p>
+<p class="font-title-md text-title-md text-on-surface font-semibold">56 nafar</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-medium">39%</span>
+</div>
+<!-- Qoniqarli -->
+<div class="p-2.5 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim"></span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Qoniqarli (50-69%)</p>
+<p class="font-title-md text-title-md text-on-surface font-semibold">18 nafar</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary-container font-medium">13%</span>
+</div>
+<!-- Qoloq / Diqqat talab -->
+<div class="p-2.5 rounded-2xl bg-error-container/40 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<div>
+<p class="font-label-sm text-label-sm text-error">Qoloq (<50%)</p>
+<p class="font-title-md text-title-md text-error font-semibold">4 nafar</p>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-error text-on-error font-label-sm text-[10px]">Chora!</span>
+</div>
+</div>
+</div>
+<!-- Qidiruv va Filtr Paneli -->
+<div class="flex flex-col gap-space-sm">
+<!-- Qidiruv maydoni -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full h-12 pl-11 pr-10 rounded-2xl bg-surface-container-lowest text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest shadow-sm" id="student-search-input" placeholder="O'quvchini ismi yoki ID orqali izlash..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+<!-- Guruhlar bo'yicha gorizontal filtrlar (Pills) -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-margin-mobile px-margin-mobile">
+<button class="filter-group-btn whitespace-nowrap px-4 py-2 rounded-full font-label-md text-label-md bg-primary text-on-primary shadow-sm transition-transform active:scale-95" data-filter="all">
+        Barcha guruhlar (142)
+      </button>
+<button class="filter-group-btn whitespace-nowrap px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant shadow-sm hover:bg-surface-container transition-transform active:scale-95" data-filter="dtm-1">
+        DTM Matematika-1 (28)
+      </button>
+<button class="filter-group-btn whitespace-nowrap px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant shadow-sm hover:bg-surface-container transition-transform active:scale-95" data-filter="prezident">
+        Prezident maktabi (16)
+      </button>
+<button class="filter-group-btn whitespace-nowrap px-4 py-2 rounded-full font-label-md text-label-md bg-surface-container-lowest text-on-surface-variant shadow-sm hover:bg-surface-container transition-transform active:scale-95" data-filter="individual">
+        Individual (6)
+      </button>
+</div>
+<!-- Saralash Selektori -->
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">swap_vert</span> Saralash holati:
+      </span>
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl">
+<button class="sort-chip px-2.5 py-1 rounded-lg text-label-sm font-label-sm bg-surface-container-lowest text-primary font-semibold shadow-xs">
+          O'zlashtirish (Yuqori)
+        </button>
+<button class="sort-chip px-2.5 py-1 rounded-lg text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface">
+          Xavf ostida (<60%)
+        </button>
+<button class="sort-chip px-2.5 py-1 rounded-lg text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface">
+          Faollik
+        </button>
+</div>
+</div>
+</div>
+<!-- O'quvchilar Ro'yxati (Student Cards) -->
+<div class="flex flex-col gap-space-sm" id="student-list-container">
+<!-- 1. Anvar Rustamov -->
+<div class="student-card w-full bg-surface-container-lowest rounded-3xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden" data-status="top">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-12 h-12 rounded-2xl object-cover bg-surface-container" data-alt="A clean portrait photo of a smart 17-year-old Uzbek high school boy wearing a neat navy blue jacket, holding a notebook, modern classroom background with warm natural lighting and soft focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZNRRpDSiDIBjCh-u28ulwcfF_Qc0EGjVGz_UeIniH0FWs42LtvZM4DHez3sVgRW7rqp5mvrTWH6OksZLbeVa9skuaclL6O1PzRiAPZJHhA8eRCQ-UfdpopNHdaaHF7f55ndWBftEmHNzplxpEXBFkPrfA54LAQTOy1o1CIJYSWKTGDNwahFT7guIyED4IjICON8SbbSYScaxzgWbGLHP95ywpc_L5EyC6L8NbqjaJraGwUSq2tW4mrQ"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-[10px] font-bold ring-2 ring-surface-container-lowest">
+              1
+            </span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Anvar Rustamov</h3>
+<span class="material-symbols-outlined text-secondary text-[16px]" title="Yetakchi o'quvchi">verified</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">DTM Guruh-1 • ID: #9842</p>
+</div>
+</div>
+<!-- Daraja belgisi -->
+<div class="flex flex-col items-end">
+<span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-title-md text-title-md font-bold">
+            94%
+          </span>
+<span class="font-label-sm text-[11px] text-secondary font-semibold">A+ Daraja</span>
+</div>
+</div>
+<!-- Kichik Metrikalar Bloklari -->
+<div class="grid grid-cols-2 gap-2 bg-surface-container-low/70 p-2.5 rounded-2xl">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">quiz</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Mock test o'rtacha</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">29 / 30 ball</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]">how_to_reg</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Davomat holati</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">100% (24/24 dars)</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-[16px]">workspace_premium</span>
+<span>Olimpiada ishtirokchisi</span>
+</div>
+<button class="px-3.5 py-1.5 rounded-xl bg-primary-fixed text-primary font-label-md text-label-md flex items-center gap-1 hover:bg-primary hover:text-on-primary transition-colors">
+<span>Profil & Tahlil</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- 2. Malika Zokirova -->
+<div class="student-card w-full bg-surface-container-lowest rounded-3xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden" data-status="good">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-12 h-12 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of an intelligent 16-year-old Central Asian female student wearing a light cream scarf and glasses, sitting at a desk with mathematics diagrams, smiling brightly, studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgI_kTCFYf-Lu34qkv9QEBbu6po0by8318lKy3gu8a3EeD90Jo6HPow37zooLEi1WaDLxyr0_U8fkD-zLuK6NQxHyypTKQhoghXwxoANTPNT6oLDCtriOCrCwK07BjSLcuN04FXH_xSALcTwsyXGrQdDVSKlwbMZc3PLlyJuz2AGS5F1TTXbGDbWk-OsBOHwUbKdaAhXYPQ2YtlWzCDjb2CPoQD6CjqSoZG2GAGmjusB9MOSyRtnYYoA"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-[10px] font-bold ring-2 ring-surface-container-lowest">
+              4
+            </span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Malika Zokirova</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Individual Ta'lim • ID: #9810</p>
+</div>
+</div>
+<!-- Daraja belgisi -->
+<div class="flex flex-col items-end">
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-title-md text-title-md font-bold">
+            88%
+          </span>
+<span class="font-label-sm text-[11px] text-primary font-semibold">A Daraja</span>
+</div>
+</div>
+<!-- Kichik Metrikalar Bloklari -->
+<div class="grid grid-cols-2 gap-2 bg-surface-container-low/70 p-2.5 rounded-2xl">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">quiz</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Mock test o'rtacha</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">26 / 30 ball</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+</div>
+<div class="flex flex-col truncate">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Zaif mavzu</span>
+<span class="font-label-md text-label-md text-tertiary-container font-semibold truncate">Trigonometriya</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event_repeat</span> Haftasiga 3 marta
+        </span>
+<button class="px-3.5 py-1.5 rounded-xl bg-primary-fixed text-primary font-label-md text-label-md flex items-center gap-1 hover:bg-primary hover:text-on-primary transition-colors">
+<span>Profil & Tahlil</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- 3. Bobur Eshmatov (Xavf ostida - Warning State) -->
+<div class="student-card w-full bg-surface-container-lowest rounded-3xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden" data-status="risk">
+<!-- Diqqat hoshiya chizig'i o'rniga rangli fon pillasi -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-12 h-12 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of a pensive 17-year-old young man wearing a casual dark gray hoodie, resting his chin on his hand while studying geometry, soft dramatic study-room light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5Nsq-5i1JxPxjIj7yQP1iIM6pQUV8O9WuwuQZ7aQcoNUVvl6ml7edDYdtifkASg9BM-pIQQsqL4xefmMSwL9e7uo98eV-fjptMTPZoPnxPPuPeRbJCOIU4k9nFaTcvP99TJKEmhM0Z3W8eha9tIl7h2kkExRySXowSaMqS4ySKScuu-WhgLC4Jrnyp6jT6vJ0Yzn97pQHuKMEkZqpDwqh7KYkG9YQRz7leMAM9bBJ4b09H8wMl7bhVg"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-error text-on-error flex items-center justify-center font-label-sm text-[10px] font-bold ring-2 ring-surface-container-lowest">
+              !
+            </span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Bobur Eshmatov</h3>
+<span class="px-1.5 py-0.2 rounded bg-error-container text-error font-label-sm text-[10px] font-bold">XAVF</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">DTM Guruh-1 • ID: #9765</p>
+</div>
+</div>
+<!-- Daraja belgisi -->
+<div class="flex flex-col items-end">
+<span class="px-2 py-0.5 rounded-full bg-error-container text-error font-title-md text-title-md font-bold">
+            52%
+          </span>
+<span class="font-label-sm text-[11px] text-error font-semibold">C Daraja</span>
+</div>
+</div>
+<!-- Kichik Metrikalar Bloklari -->
+<div class="grid grid-cols-2 gap-2 bg-error-container/30 p-2.5 rounded-2xl">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Mock test o'rtacha</span>
+<span class="font-label-md text-label-md text-error font-semibold">14 / 30 ball</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[16px]">category</span>
+</div>
+<div class="flex flex-col truncate">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Zaif tomoni</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Stereometriya</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<span class="font-label-sm text-label-sm text-error flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[16px]">schedule</span> 3 ta dars qoldirilgan
+        </span>
+<button class="px-3.5 py-1.5 rounded-xl bg-error text-on-error font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]">assignment_add</span>
+<span>Shaxsiy reja tuzish</span>
+</button>
+</div>
+</div>
+<!-- 4. Shahlo Karimova -->
+<div class="student-card w-full bg-surface-container-lowest rounded-3xl p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden" data-status="good">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img class="w-12 h-12 rounded-2xl object-cover bg-surface-container" data-alt="Portrait of an energetic 16-year-old girl student holding a tablet with colorful education charts, looking inspired and confident, educational center ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsyX1D1Gt2qBQGE-lyXi-Q-yBYcOzReIgH572WHr_Aj39wr8OiB0_A6DPWP2oqyuNKbT6J57UX_A7He8U9OOUBSc5HCpBq1LccgQsQOSnMEGdQUt0biGg5IOZ1dttq6XO-jjFQAxv-4BrU65HyH0mLMIwhkuDcfEnBU_SIyuWLWnLtih8nJzIr2LsURW1FDhd7rNDOfwJeYTtRxIHs-jD6D90DYAuZyCuuFvTuSgQNrtZnjVHS27FL1A"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-[10px] font-bold ring-2 ring-surface-container-lowest">
+              12
+            </span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold">Shahlo Karimova</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Prezident maktabi (Guruh-2) • ID: #9822</p>
+</div>
+</div>
+<!-- Daraja belgisi -->
+<div class="flex flex-col items-end">
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-title-md text-title-md font-bold">
+            79%
+          </span>
+<span class="font-label-sm text-[11px] text-primary font-semibold">B+ Daraja</span>
+</div>
+</div>
+<!-- Kichik Metrikalar Bloklari -->
+<div class="grid grid-cols-2 gap-2 bg-surface-container-low/70 p-2.5 rounded-2xl">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">quiz</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Mock test o'rtacha</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">23 / 30 ball</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Davomat</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">92% faol</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-[16px]">trending_up</span>
+<span>Oxirgi testda +4 ball o'sish</span>
+</div>
+<button class="px-3.5 py-1.5 rounded-xl bg-primary-fixed text-primary font-label-md text-label-md flex items-center gap-1 hover:bg-primary hover:text-on-primary transition-colors">
+<span>Profil & Tahlil</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Tezkor Ommaviy Amallar va Hisobot Chiqarish Paneli (Quick Action Bar) -->
+<div class="w-full bg-surface-container-low rounded-3xl p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface font-semibold">Guruh amallari & Hisobot</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tanlangan: 142 o'quvchi</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Ommaviy xabar yuborish -->
+<button class="h-12 px-3 rounded-2xl bg-surface-container-lowest text-on-surface flex items-center justify-center gap-2 font-label-md text-label-md shadow-sm hover:bg-surface-container transition-colors active:scale-98">
+<span class="material-symbols-outlined text-primary text-[20px]">forward_to_inbox</span>
+<span>SMS & Telegram</span>
+</button>
+<!-- Eksport PDF Hisobot -->
+<button class="h-12 px-3 rounded-2xl bg-primary text-on-primary flex items-center justify-center gap-2 font-label-md text-label-md shadow-md hover:bg-primary-container transition-all active:scale-98">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+<span>Hisobot (PDF)</span>
+</button>
+</div>
+<!-- Ota-onalarga umumiy bildirishnoma eslatmasi -->
+<div class="flex items-center justify-between px-2 pt-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">family_restroom</span> Ota-onalar SMS bildirishnomasi: Faol
+      </span>
+<button class="text-primary font-semibold hover:underline">Sozlash</button>
+</div>
+</div>
+</div>
+<script>
+  // Filter chips interaction
+  document.querySelectorAll('.filter-group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-group-btn').forEach(b => {
+        b.classList.remove('bg-primary', 'text-on-primary');
+        b.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+      });
+      this.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+      this.classList.add('bg-primary', 'text-on-primary');
+    });
+  });
+
+  // Sort chips interaction
+  document.querySelectorAll('.sort-chip').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sort-chip').forEach(b => {
+        b.classList.remove('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-xs');
+        b.classList.add('text-on-surface-variant');
+      });
+      this.classList.add('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-xs');
+      this.classList.remove('text-on-surface-variant');
+    });
+  });
+
+  // Live search filtering
+  const searchInput = document.getElementById('student-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('.student-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(term)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 px-1"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="boshqaruv" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm mt-0.5">Boshqaruv</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="oquvchilar" href="#"><span class="material-symbols-outlined text-[22px]">groups</span><span class="font-label-sm text-label-sm mt-0.5">O'quvchilar</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="test-yuklash" href="#"><div class="w-7 h-7 rounded-xl bg-primary-fixed flex items-center justify-center mb-0.5"><span class="material-symbols-outlined text-primary text-[20px]">add_task</span></div><span class="font-label-sm text-label-sm">Test yuklash</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="guruh-chat" href="#"><span class="material-symbols-outlined text-[22px]">forum</span><span class="font-label-sm text-label-sm mt-0.5">Guruh chat</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="profil" href="#"><span class="material-symbols-outlined text-[22px]">account_circle</span><span class="font-label-sm text-label-sm mt-0.5">Profil</span></a></div></nav></body></html>

@@ -421,3 +421,10 @@ export function publicGroups(m: Marketplace): Offering[] {
       return { ...o, students, spots: Math.max(0, o.capacity - students) };
     });
 }
+
+// New weekly schedules already carry each weekday's own time.
+export function offeringScheduleLabel(group: Pick<Offering, "days" | "time">) {
+  return /\b\d{2}:\d{2}\b/.test(group.days)
+    ? group.days
+    : `${group.days} · ${group.time}`;
+}

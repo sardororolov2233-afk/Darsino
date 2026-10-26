@@ -124,6 +124,7 @@ function RoomCard({ room }: { room: StudyRoom }) {
 }
 export function TeacherRoomsScreen() {
   const { data, error, removeRoomPlan } = useTeacher();
+  const navigation = useAppNavigation();
   const { market } = useApp();
   const action = useAction();
   const [district, setDistrict] = useState("Barchasi"),
@@ -138,7 +139,7 @@ export function TeacherRoomsScreen() {
   const selected = list.find((r) => r.id === activeId) || list[0];
   return (
     <Screen top={<TeacherHeader />}>
-      <Header title="O‘quv xonalari" />
+      <Header title="O‘quv xonalari" onBack={() => navigation.goBack()} />
       <AppText variant="caption" color={C.muted}>
         Guruh darslari, seminar va olimpiadalar uchun darsxonalarni bron qilish
         va boshqarish.
@@ -421,6 +422,12 @@ export function TeacherClubsScreen() {
   );
   return (
     <Screen top={<TeacherHeader />}>
+      <Button
+        title="Orqaga"
+        icon="arrow-left"
+        variant="soft"
+        onPress={() => navigation.goBack()}
+      />
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
         <View style={{ flex: 1 }}>
           <AppText variant="title">O‘quv Klublari & Tadbirlarim</AppText>

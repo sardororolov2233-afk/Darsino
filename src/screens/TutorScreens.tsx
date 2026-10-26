@@ -59,10 +59,18 @@ import {
 } from "../components/FilterControls";
 import { GroupPayments } from "../components/GroupPayments";
 import { GroupTests } from "../components/GroupTests";
+import {
+  dailyAttendance,
+  planWeeklyLessons,
+  teacherDebtors,
+  weekdayOf,
+  WEEKDAYS,
+} from "../state/teacherDashboard";
+import { TeacherSchedule } from "../components/ClassroomUI";
 
 export function TutorHomeScreen() {
   const { user, market, syncError } = useApp();
-  const { data, error } = useTeacher();
+  const { error } = useTeacher();
   const navigation = useAppNavigation();
   const [selectedGroup, setSelectedGroup] = useState("all");
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
@@ -70,10 +78,12 @@ export function TutorHomeScreen() {
   const all = teacherOverview(market, user.id);
   const month = paymentMonth();
   const finances = paymentSummary(market, user.id, month);
-  const next = all.sessions
-    .filter((s) => Date.parse(s.endsAt) > Date.now())
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
-    .slice(0, 3);
+  const attendanceToday = dailyAttendance(
+    market,
+    user.id,
+    localDate(new Date()),
+  );
+  const debtors = teacherDebtors(market, user.id, month);
   return (
     <Screen top={<TeacherHeader />}>
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
@@ -103,11 +113,11 @@ export function TutorHomeScreen() {
       ) : null}
       <View style={uiStyles.wrap}>
         <TeacherMetric
-          title="Faol o‘quvchilar"
-          value={`${all.studentIds.size} nafar`}
-          subtitle={`${all.classes.length} guruh va darsda`}
-          icon="users"
-          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+          title="Davomat"
+          value={`${attendanceToday.present} / ${attendanceToday.expected}`}
+          subtitle={`Bugungi ${attendanceToday.sessions.length} dars`}
+          icon="check-square"
+          onPress={() => navigation.navigate("TeacherAttendance")}
         />
         <TeacherMetric
           title="Yangi arizalar"
@@ -122,14 +132,14 @@ export function TutorHomeScreen() {
           subtitle={monthLabel(month)}
           icon="credit-card"
           dark
-          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+          onPress={() => navigation.navigate("TeacherClasses")}
         />
         <TeacherMetric
-          title="To‘lov qoldig‘i"
-          value={formatPrice(finances.outstanding)}
-          subtitle={`${finances.unpaidCount} o‘quvchidan kutilmoqda`}
-          icon="clock"
-          onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+          title="Qarzdorlar"
+          value={`${debtors.length} nafar`}
+          subtitle={`${formatPrice(finances.outstanding)} · ${monthLabel(month)}`}
+          icon="users"
+          onPress={() => navigation.navigate("TeacherDebtors")}
         />
       </View>
       <Button
@@ -144,36 +154,29 @@ export function TutorHomeScreen() {
         onSelect={setSelectedGroup}
         compact
       />
-      <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
-        <AppText variant="heading">Yaqin darslar</AppText>
-        <Chip label={`${data.roomPlans.length} xona rejasi`} tone="purple" />
-      </View>
-      {next.map((session) => (
-        <Card key={session.id}>
-          <AppText variant="caption" color={C.purple}>
-            {dateLabel(session.startsAt)} · {timeLabel(session.startsAt)}–
-            {timeLabel(session.endsAt)} · {session.mode}
-          </AppText>
-          <AppText variant="heading">{session.title}</AppText>
-          <AppText variant="caption" color={C.muted}>
-            {session.location}
-          </AppText>
-          <Button
-            title="Jadval va davomat"
-            variant="soft"
-            onPress={() =>
-              navigation.navigate("ManageClass", { id: session.offeringId })
-            }
-          />
-        </Card>
-      ))}
-      {!next.length ? (
-        <EmptyState
-          title="Kelgusi darslar yo‘q"
-          subtitle="Yangi guruh oching yoki guruhingiz jadvalini tekshiring."
-          icon="calendar"
+      <TeacherSchedule />
+      <View style={uiStyles.wrap}>
+        <Button
+          title="O‘quv xonalari"
+          icon="grid"
+          variant="soft"
+          onPress={() => navigation.navigate("TeacherRooms")}
         />
-      ) : null}
+        <Button
+          title="Klublarim"
+          icon="award"
+          variant="soft"
+          onPress={() => navigation.navigate("TeacherClubs")}
+        />
+        <Button
+          title="O‘quvchilarim"
+          icon="users"
+          variant="soft"
+          onPress={() =>
+            navigation.navigate("Main", { screen: "TeacherStudents" })
+          }
+        />
+      </View>
       <AppText variant="heading">Guruhlarim</AppText>
       {all.classes.slice(0, 2).map((g) => (
         <TeacherGroupCard key={g.id} group={g} />
@@ -181,7 +184,7 @@ export function TutorHomeScreen() {
       <Button
         title="Barcha guruhlar"
         variant="outline"
-        onPress={() => navigation.navigate("Main", { screen: "Classes" })}
+        onPress={() => navigation.navigate("TeacherClasses")}
       />
       <Feedback error={syncError || error} />
     </Screen>
@@ -409,6 +412,12 @@ export function TutorClassesScreen() {
   ].filter(Boolean).length;
   return (
     <Screen top={<TeacherHeader />}>
+      <Button
+        title="Orqaga"
+        icon="arrow-left"
+        variant="soft"
+        onPress={() => navigation.goBack()}
+      />
       <View style={[uiStyles.between, { flexWrap: "wrap" }]}>
         <View style={{ flex: 1, minWidth: 160 }}>
           <AppText variant="title">Guruhlarim va nazorat</AppText>
@@ -492,196 +501,317 @@ export function CreateOfferingScreen() {
     navigation = useAppNavigation(),
     action = useAction();
   const profile = market.tutorProfiles.find((p) => p.userId === user.id);
-  const [title, setTitle] = useState(""),
+  const [step, setStep] = useState(0),
+    [title, setTitle] = useState(""),
     [subject, setSubject] = useState(profile?.subjects[0] || ""),
     [type, setType] = useState<"group" | "individual">("group"),
     [capacity, setCapacity] = useState("10"),
-    [price, setPrice] = useState(String(profile?.price || 90000));
-  const [mode, setMode] = useState(profile?.modes[0] || "Onlayn"),
+    [price, setPrice] = useState(String(profile?.price || 90000)),
+    [mode, setMode] = useState(profile?.modes[0] || "Onlayn"),
     [area, setArea] = useState(user.area),
     [location, setLocation] = useState(""),
     [date, setDate] = useState(nextDates(1)[0]),
-    [time, setTime] = useState(profile?.availability[0] || "18:00"),
+    [days, setDays] = useState<number[]>([weekdayOf(nextDates(1)[0])]),
+    [times, setTimes] = useState<Record<number, string>>(() =>
+      Object.fromEntries(
+        WEEKDAYS.map((d) => [d.day, profile?.availability[0] || "18:00"]),
+      ),
+    ),
     [count, setCount] = useState("4"),
     [duration, setDuration] = useState("60");
   const planned = useMemo(() => {
     try {
-      const n = Number(count),
-        minutes = Number(duration);
-      if (
-        !Number.isInteger(n) ||
-        n < 1 ||
-        n > 12 ||
-        minutes < 15 ||
-        minutes > 240
-      )
-        return [];
-      const first = toLessonTime(date, time, minutes);
-      return Array.from({ length: n }, (_, i) => ({
-        startsAt: new Date(
-          new Date(first.startsAt).getTime() + i * 7 * 86400000,
-        ).toISOString(),
-        endsAt: new Date(
-          new Date(first.endsAt).getTime() + i * 7 * 86400000,
-        ).toISOString(),
-      }));
+      return planWeeklyLessons({
+        firstDate: date,
+        days,
+        times,
+        count: Number(count),
+        minutes: Number(duration),
+      });
     } catch {
       return [];
     }
-  }, [date, time, count, duration]);
+  }, [date, days, times, count, duration]);
+  const validateGroup = () => {
+    if (user.role !== "tutor" || profile?.verification !== "approved")
+      throw new Error("Tasdiqlangan ustoz profili kerak.");
+    if (
+      title.trim().length < 3 ||
+      title.trim().length > 150 ||
+      !profile.subjects.includes(subject)
+    )
+      throw new Error("Guruh nomi va profilingizdagi fanni kiriting.");
+    if (
+      type === "group" &&
+      (!Number.isInteger(Number(capacity)) ||
+        Number(capacity) < 1 ||
+        Number(capacity) > 100)
+    )
+      throw new Error("O‘rinlar soni 1–100 ta bo‘lsin.");
+    if (
+      !Number.isFinite(Number(price)) ||
+      Number(price) <= 0 ||
+      Number(price) > 100000000 ||
+      area.trim().length < 2 ||
+      location.trim().length < 3
+    )
+      throw new Error("Narx, hudud va dars manzilini to‘ldiring.");
+  };
   return (
     <Screen
       bottom={
-        <Button
-          title="Darsni e’lon qilish"
-          loading={action.busy}
-          onPress={() =>
-            action.run(
-              async () => {
-                if (!planned.length)
-                  throw new Error(
-                    "Sana, vaqt, darslar soni va davomiylikni tekshiring.",
-                  );
-                return command({
-                  type: "offering",
-                  offering: {
-                    title,
-                    subject,
-                    type,
-                    capacity: type === "individual" ? 1 : Number(capacity),
-                    price: Number(price),
-                    mode,
-                    area,
-                    location,
-                    days: `Haftalik · ${planned.length} dars`,
-                    benefits: [],
-                    sessions: planned,
-                  },
-                });
-              },
-              (id) => {
-                if (id) navigation.replace("ManageClass", { id });
-              },
-            )
-          }
-        />
+        <View style={{ gap: 10 }}>
+          {step === 0 ? (
+            <Button
+              title="Dars kunlari va soatlarini belgilash"
+              icon="arrow-right"
+              variant="gold"
+              disabled={profile?.verification !== "approved"}
+              onPress={() =>
+                action.run(async () => {
+                  validateGroup();
+                  setStep(1);
+                })
+              }
+            />
+          ) : (
+            <>
+              <Button
+                title="Darsni e’lon qilish"
+                loading={action.busy}
+                disabled={!planned.length}
+                variant="gold"
+                icon="check"
+                onPress={() =>
+                  action.run(
+                    async () => {
+                      validateGroup();
+                      if (!planned.length)
+                        throw new Error(
+                          "Sana, vaqt, darslar soni va davomiylikni tekshiring.",
+                        );
+                      return command({
+                        type: "offering",
+                        offering: {
+                          title: title.trim(),
+                          subject,
+                          type,
+                          capacity:
+                            type === "individual" ? 1 : Number(capacity),
+                          price: Number(price),
+                          mode,
+                          area,
+                          location,
+                          days: WEEKDAYS.filter((d) => days.includes(d.day))
+                            .map((d) => `${d.short} ${times[d.day]}`)
+                            .join(" · "),
+                          benefits: [],
+                          sessions: planned,
+                        },
+                      });
+                    },
+                    (id) => {
+                      if (id)
+                        navigation.replace("ManageClass", {
+                          id,
+                          tab: "Davomat",
+                        });
+                    },
+                  )
+                }
+              />
+              <Button
+                title="Guruh ma’lumotlariga qaytish"
+                variant="outline"
+                disabled={action.busy}
+                onPress={() => setStep(0)}
+              />
+            </>
+          )}
+        </View>
       }
     >
       <Header
-        title="Yangi dars yoki guruh"
-        onBack={() => navigation.goBack()}
-      />
-      <View style={uiStyles.wrap}>
-        <Chip
-          label="Guruh"
-          selected={type === "group"}
-          onPress={() => setType("group")}
-        />
-        <Chip
-          label="Individual"
-          selected={type === "individual"}
-          onPress={() => {
-            setType("individual");
-            setCount("1");
-          }}
-        />
-      </View>
-      <Field
-        label="Dars / guruh nomi"
-        placeholder="Masalan, IELTS 6.5+ kechki guruh"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <AppText variant="label">Fan</AppText>
-      <View style={uiStyles.wrap}>
-        {profile?.subjects.map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={subject === v}
-            onPress={() => setSubject(v)}
-          />
-        ))}
-      </View>
-      {type === "group" ? (
-        <Field
-          label="O‘rinlar soni"
-          keyboardType="number-pad"
-          value={capacity}
-          onChangeText={setCapacity}
-        />
-      ) : null}
-      <Field
-        label="E’lon narxi (so‘m)"
-        keyboardType="number-pad"
-        value={price}
-        onChangeText={setPrice}
-      />
-      <AppText variant="caption" color={C.muted}>
-        Narxni bir dars yoki kurs uchun belgilasangiz, guruh nomida va chatda
-        aniqlashtiring.
-      </AppText>
-      <View style={uiStyles.wrap}>
-        {profile?.modes.map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={mode === v}
-            onPress={() => setMode(v)}
-          />
-        ))}
-      </View>
-      <Field label="Hudud" value={area} onChangeText={setArea} />
-      <Field
-        label={mode === "Onlayn" ? "Onlayn dars manzili" : "Dars manzili"}
-        placeholder={
-          mode === "Onlayn"
-            ? "Platforma nomi yoki dars havolasi"
-            : "Manzil va xona"
+        title={
+          step === 0 ? "Yangi dars yoki guruh" : "Dars kunlari va soatlari"
         }
-        value={location}
-        onChangeText={setLocation}
+        onBack={() => (step === 1 ? setStep(0) : navigation.goBack())}
       />
-      <AppText variant="heading">Jadval (Toshkent vaqti)</AppText>
-      <Field
-        label="Birinchi dars sanasi (YYYY-MM-DD)"
-        value={date}
-        onChangeText={setDate}
-      />
-      <Field
-        label="Boshlanish vaqti (HH:MM)"
-        value={time}
-        onChangeText={setTime}
-      />
-      <View style={uiStyles.row}>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Haftalik darslar soni"
-            keyboardType="number-pad"
-            value={count}
-            onChangeText={setCount}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="Davomiylik (daqiqa)"
-            keyboardType="number-pad"
-            value={duration}
-            onChangeText={setDuration}
-          />
-        </View>
+      <View style={uiStyles.wrap}>
+        <Chip
+          label="1. Guruh ma’lumotlari"
+          tone={step === 0 ? "green" : undefined}
+        />
+        <Chip
+          label="2. Kun va soatlar"
+          tone={step === 1 ? "green" : undefined}
+        />
       </View>
-      {planned.length ? (
-        <Card>
-          <AppText variant="label">E’lon qilinadigan jadval</AppText>
-          {planned.map((s) => (
-            <AppText key={s.startsAt} variant="caption" color={C.muted}>
-              {dateLabel(s.startsAt)} · {timeLabel(s.startsAt)}–
-              {timeLabel(s.endsAt)}
+      {step === 0 ? (
+        <>
+          <AppText color={C.muted}>
+            Avval guruhni to‘ldiring. Keyingi qadamda dars kunlari va har bir
+            kun uchun boshlanish vaqtini belgilaysiz.
+          </AppText>
+          <View style={uiStyles.wrap}>
+            <Chip
+              label="Guruh"
+              selected={type === "group"}
+              onPress={() => setType("group")}
+            />
+            <Chip
+              label="Individual"
+              selected={type === "individual"}
+              onPress={() => {
+                setType("individual");
+                setCount("1");
+              }}
+            />
+          </View>
+          <Field
+            label="Dars / guruh nomi"
+            placeholder="Masalan, IELTS 6.5+ kechki guruh"
+            value={title}
+            onChangeText={setTitle}
+          />
+          <AppText variant="label">Fan</AppText>
+          <View style={uiStyles.wrap}>
+            {profile?.subjects.map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={subject === v}
+                onPress={() => setSubject(v)}
+              />
+            ))}
+          </View>
+          {type === "group" ? (
+            <Field
+              label="O‘rinlar soni"
+              keyboardType="number-pad"
+              value={capacity}
+              onChangeText={setCapacity}
+            />
+          ) : null}
+          <Field
+            label="E’lon narxi (so‘m)"
+            keyboardType="number-pad"
+            value={price}
+            onChangeText={setPrice}
+          />
+          <AppText variant="caption" color={C.muted}>
+            Narxni bir dars yoki kurs uchun belgilasangiz, guruh nomida va
+            chatda aniqlashtiring.
+          </AppText>
+          <View style={uiStyles.wrap}>
+            {profile?.modes.map((v) => (
+              <Chip
+                key={v}
+                label={v}
+                selected={mode === v}
+                onPress={() => setMode(v)}
+              />
+            ))}
+          </View>
+          <Field label="Hudud" value={area} onChangeText={setArea} />
+          <Field
+            label={mode === "Onlayn" ? "Onlayn dars manzili" : "Dars manzili"}
+            placeholder={
+              mode === "Onlayn"
+                ? "Platforma nomi yoki dars havolasi"
+                : "Manzil va xona"
+            }
+            value={location}
+            onChangeText={setLocation}
+          />
+        </>
+      ) : (
+        <>
+          <Card style={{ backgroundColor: C.greenSoft }}>
+            <AppText variant="heading" localize={false}>
+              {title}
             </AppText>
+            <AppText color={C.muted}>
+              {subject} · {mode}
+            </AppText>
+          </Card>
+          <AppText variant="heading">Haftaning qaysi kunlari?</AppText>
+          <View style={uiStyles.wrap}>
+            {WEEKDAYS.map((d) => (
+              <Chip
+                key={d.day}
+                label={d.label}
+                selected={days.includes(d.day)}
+                onPress={() =>
+                  setDays((old) =>
+                    old.includes(d.day)
+                      ? old.filter((day) => day !== d.day)
+                      : [...old, d.day],
+                  )
+                }
+              />
+            ))}
+          </View>
+          <Field
+            label="Birinchi dars sanasi (YYYY-MM-DD)"
+            value={date}
+            onChangeText={setDate}
+          />
+          {WEEKDAYS.filter((d) => days.includes(d.day)).map((d) => (
+            <Field
+              key={d.day}
+              label={`${d.label} boshlanishi (HH:MM)`}
+              value={times[d.day]}
+              onChangeText={(value) =>
+                setTimes((old) => ({ ...old, [d.day]: value }))
+              }
+            />
           ))}
-        </Card>
-      ) : null}
+          <View style={uiStyles.row}>
+            <View style={{ flex: 1 }}>
+              <Field
+                label="Jami darslar soni"
+                keyboardType="number-pad"
+                value={count}
+                onChangeText={setCount}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Field
+                label="Davomiylik (daqiqa)"
+                keyboardType="number-pad"
+                value={duration}
+                onChangeText={setDuration}
+              />
+            </View>
+          </View>
+          <AppText variant="caption" color={C.muted}>
+            Barcha soatlar Toshkent vaqti bo‘yicha. Tanlangan hafta kunlari
+            bo‘yicha aniq dars sanalari yaratiladi.
+          </AppText>
+          {planned.length ? (
+            <Card>
+              <AppText variant="label">
+                E’lon qilinadigan jadval · {planned.length} dars
+              </AppText>
+              {planned.map((session) => (
+                <AppText
+                  key={session.startsAt}
+                  variant="caption"
+                  color={C.muted}
+                >
+                  {dateLabel(session.startsAt)} · {timeLabel(session.startsAt)}–
+                  {timeLabel(session.endsAt)}
+                </AppText>
+              ))}
+            </Card>
+          ) : (
+            <AppText color={C.error}>
+              Dars kuni, sana va soatlarni tekshiring.
+            </AppText>
+          )}
+        </>
+      )}
       <Feedback {...action} />
     </Screen>
   );
@@ -698,9 +828,11 @@ export function ManageClassScreen({
     sessions = market.sessions
       .filter((s) => s.offeringId === route.params.id)
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const [selected, setSelected] = useState(sessions[0]?.id || ""),
+  const [selected, setSelected] = useState(
+      route.params.sessionId || sessions[0]?.id || "",
+    ),
     [remove, setRemove] = useState<string | null>(null);
-  const [tab, setTab] = useState("O‘quvchilar"),
+  const [tab, setTab] = useState<string>(route.params.tab || "O‘quvchilar"),
     [editing, setEditing] = useState(false),
     [newDate, setNewDate] = useState(""),
     [newTime, setNewTime] = useState("");
@@ -774,7 +906,13 @@ export function ManageClassScreen({
         value={tab}
         onChange={setTab}
       />
-      {tab === "O‘quvchilar" ? <GroupPayments group={group} /> : null}
+      {tab === "O‘quvchilar" ? (
+        <GroupPayments
+          group={group}
+          initialMonth={route.params.month}
+          initialStatus={route.params.paymentStatus}
+        />
+      ) : null}
       {tab === "Testlar" ? <GroupTests group={group} /> : null}
       {tab === "Materiallar" ? <LessonMaterials offeringId={group.id} /> : null}
       {tab === "Davomat" ? (

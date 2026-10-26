@@ -120,7 +120,9 @@ test("teacher assigns a test, student shares results and teacher radar and atten
   await expect(
     page.getByText("40%", { exact: true }).filter({ visible: true }).first(),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Guruhlar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Barcha guruhlar", exact: true })
+    .click();
   await page
     .getByRole("button", {
       name: "IELTS 6.5+ guruhini boshqarish",
@@ -149,7 +151,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   page,
 }) => {
   await seed(page);
-  await page.getByRole("tab", { name: "Klublar", exact: true }).click();
+  await page.getByRole("button", { name: "Klublarim", exact: true }).click();
   await page
     .getByRole("button", { name: "+ Yangi klub ochish", exact: true })
     .click();
@@ -187,7 +189,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   ).toBeVisible();
   await logout(page);
   await login(page, "dilnoza@darsino.demo");
-  await page.getByRole("tab", { name: "Klublar", exact: true }).click();
+  await page.getByRole("button", { name: "Klublarim", exact: true }).click();
   await page
     .getByRole("button", { name: "Klub arizalari · 1", exact: true })
     .click();
@@ -211,7 +213,9 @@ test("room plans persist, filters clear stale map selections and another teacher
 }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await seed(page);
-  await page.getByRole("tab", { name: "Xonalar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "O‘quv xonalari", exact: true })
+    .click();
   await page.getByRole("button", { name: "Xarita", exact: true }).click();
   await page
     .getByRole("button", { name: "Filtrlarni ochish yoki yopish", exact: true })
@@ -254,13 +258,17 @@ test("room plans persist, filters clear stale map selections and another teacher
     ),
   ).toBe(true);
   await page.reload();
-  await page.getByRole("tab", { name: "Xonalar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "O‘quv xonalari", exact: true })
+    .click();
   await expect(
     page.getByText("Reja · tasdiqlanmagan", { exact: true }),
   ).toBeVisible();
   await logout(page);
   await login(page, "akmal@darsino.demo");
-  await page.getByRole("tab", { name: "Xonalar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "O‘quv xonalari", exact: true })
+    .click();
   await expect(
     page.getByText("Hozircha xona rejasi saqlanmagan.", { exact: true }),
   ).toBeVisible();

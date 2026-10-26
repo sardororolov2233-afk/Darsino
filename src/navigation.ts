@@ -15,9 +15,8 @@ export type RootStackParamList = {
           | "Chats"
           | "Profile"
           | "Applications"
-          | "Classes"
-          | "TeacherRooms"
-          | "TeacherClubs"
+          | "TeacherStudents"
+          | "TeacherTests"
           | "Moderation";
       }
     | undefined;
@@ -42,7 +41,22 @@ export type RootStackParamList = {
   EditProfile: undefined;
   TutorProfile: undefined;
   CreateOffering: undefined;
-  ManageClass: { id: string };
+  TeacherClasses: undefined;
+  TeacherRooms: undefined;
+  TeacherClubs: undefined;
+  TeacherAttendance: undefined;
+  TeacherDebtors: undefined;
+  TeacherStudentDetail: { id: string; groupId?: string };
+  UploadMockTest: { id?: string; offeringId?: string } | undefined;
+  MockTest: { id: string };
+  GroupConversation: { id: string };
+  ManageClass: {
+    id: string;
+    tab?: "O‘quvchilar" | "Davomat" | "Testlar" | "Materiallar";
+    sessionId?: string;
+    month?: string;
+    paymentStatus?: string;
+  };
   ModerateTutor: { id: string };
   Notifications: undefined;
   Review: { sessionId: string };

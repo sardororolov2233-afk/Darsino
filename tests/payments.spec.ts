@@ -55,7 +55,9 @@ async function actor(page: Page, id: string) {
   await page.reload();
 }
 async function openGroup(page: Page) {
-  await page.getByRole("tab", { name: "Guruhlar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Barcha guruhlar", exact: true })
+    .click();
   await page
     .getByRole("button", {
       name: "IELTS 6.5+ guruhini boshqarish",
@@ -251,7 +253,7 @@ test("teacher and student filters stay inside a small screen and reset coherentl
 }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await seed(page);
-  for (const tab of ["Guruhlar", "Xonalar", "Klublar", "Kabinet"]) {
+  for (const tab of ["O‘quvchilar", "Test yuklash", "Guruh chat", "Profil"]) {
     await page.getByRole("tab", { name: tab, exact: true }).click();
     expect(
       await page.evaluate(

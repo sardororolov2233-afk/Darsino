@@ -320,7 +320,7 @@ test(
       await ui.click("Tasdiqlash");
       await ui.wait(() => ui.text("Yangi arizalar yo‘q"), "approval saved");
       await ui.click("Orqaga");
-      await ui.click("Guruhlar", "tab");
+      await ui.click("Barcha guruhlar");
       await ui.click("IELTS 6.5+ guruhini boshqarish");
       await ui.wait(() => ui.text("Sardor Test"), "real participant appears");
       await ui.click("Davomat");
@@ -560,7 +560,8 @@ test(
       await ui.click("Yangi guruh");
       await ui.fill("Dars / guruh nomi", "IELTS yangi guruh");
       await ui.fill("Onlayn dars manzili", "https://example.com/lesson");
-      await ui.fill("Haftalik darslar soni", "2");
+      await ui.click("Dars kunlari va soatlarini belgilash");
+      await ui.fill("Jami darslar soni", "2");
       await ui.click("Darsni e’lon qilish");
       await ui.wait(() => ui.text("Guruhni boshqarish"), "class created");
       const data = JSON.parse(ui.cache());
