@@ -1,5 +1,20 @@
 # O‘qi — Android va iOS build
 
+## 2026-10-26: APK kirish xatosi
+
+Android/Hermes’da `crypto` mavjud, ammo `getRandomValues()` yo‘q bo‘lsa, Google/Apple OAuth va PKCE ishlatadigan email signup `undefined is not a function` bilan to‘xtardi. Supabase yaratilishidan oldin yetishmagan random va SHA-256 funksiyalari mavjud `expo-crypto` orqali tayyorlanadi. Brauzerning mavjud kriptografiyasi saqlanadi; qo‘shimcha native dependency kiritilmagan.
+
+Tuzatishdan keyin APK’ni yangi koddan qayta yig‘ing:
+
+```bash
+git pull origin main
+npx --yes eas-cli@latest build --platform android --profile preview --clear-cache
+```
+
+Avval o‘rnatilgan APK yangi JavaScript kodini o‘zidan-o‘zi olmaydi. Yangi APK’ni o‘rnating va kirishni yana tekshiring. Shu xato haqiqiy Supabase SDK bilan native’ga o‘xshash muhitda takrorlandi; tuzatishdan keyin Google/Apple `s256` challenge va email signup so‘rovi yaratildi. Bu fizik telefonda provider akkaunti bilan yakuniy kirish sinovi o‘rnini bosmaydi.
+
+## Build sozlamalari
+
 2026-10-25, Asia/Tashkent. React Native / Expo loyihasi native build uchun uchta [EAS profiliga](../eas.json) ega. Ushbu konfiguratsiya APK/IPA yaratilganini anglatmaydi: Expo akkaunti, EAS loyiha bog‘lanishi va imzolash ruxsatlari hali taqdim etilmagan.
 
 ## Profillar va identifikatorlar

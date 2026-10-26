@@ -1,3 +1,10 @@
+# 2026-10-26: Android native Auth tuzatishi
+
+- `crypto.getRandomValues()` yo‘q, `crypto.subtle.digest()` esa mavjud bo‘lgan muhitda haqiqiy Supabase SDK bilan APK kirish xatosi takrorlandi; hech qanday HTTP so‘rov yuborilmasdan xato chiqdi.
+- Native crypto adapteri o‘rnatilgach Google va Apple OAuth `s256` challenge yaratdi, email signup esa to‘g‘ri PKCE so‘rovini yubordi. HTTP chegarasida stub ishlatilgan; real provider login yoki email yuborilmadi.
+- Tasodifiy sonlar native xavfsiz generatoriga uzatiladi. SHA-256 baytlarni dekodlamasdan hisoblanadi; binar input va view offsetlari test qilindi. Mavjud crypto funksiyalari o‘zgarmasligi tekshirildi.
+- `npm run typecheck`, **126 ta test**, web/Android/iOS bundle eksporti o‘tdi. Native dependency versiyalari o‘zgarmadi. Fizik APK/provider qayta sinovi yangi build bilan bajariladi.
+
 # 2026-10-25: email/parol va build tayyorligi
 
 - `npm run typecheck`, `npm test`: **123 ta test o‘tdi**, xato yoki skip yo‘q.

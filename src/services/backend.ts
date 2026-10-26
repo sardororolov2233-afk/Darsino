@@ -1,3 +1,4 @@
+import "./nativeCrypto";
 import "react-native-url-polyfill/auto";
 import * as Crypto from "expo-crypto";
 import { createClient } from "@supabase/supabase-js";
@@ -8,31 +9,6 @@ import { createChunkedStorage } from "./secureStorage";
 import { executeMutation } from "./mutations";
 import { bindActorClient } from "./actorClient";
 import type { MarketCommand, Marketplace, User } from "../state/domain";
-
-// Polyfill WebCrypto subtle.digest so Supabase Auth uses S256 PKCE without warnings
-if (typeof globalThis.crypto === "undefined") {
-  (globalThis as any).crypto = {};
-}
-if (!globalThis.crypto.subtle && Platform.OS !== "web") {
-  (globalThis.crypto as any).subtle = {
-    digest: async (_algorithm: string, data: Uint8Array | ArrayBuffer) => {
-      const text =
-        typeof data === "string"
-          ? data
-          : new TextDecoder().decode(
-              data instanceof Uint8Array ? data : new Uint8Array(data),
-            );
-      const hex = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        text,
-        { encoding: Crypto.CryptoEncoding.HEX },
-      );
-      const match = hex.match(/.{1,2}/g) || [];
-      const bytes = new Uint8Array(match.map((byte) => parseInt(byte, 16)));
-      return bytes.buffer;
-    },
-  };
-}
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
