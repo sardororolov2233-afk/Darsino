@@ -331,7 +331,7 @@ export function GroupPayments({
   );
 }
 
-export function StudentPayments() {
+export function StudentPayments({ offeringId }: { offeringId?: string } = {}) {
   const { market, user } = useApp(),
     navigation = useAppNavigation();
   const [month, setMonth] = useState(paymentMonth);
@@ -341,7 +341,7 @@ export function StudentPayments() {
       .map((e) => e.offeringId),
   );
   const groups = market.offerings
-    .filter((g) => ownGroups.has(g.id))
+    .filter((g) => ownGroups.has(g.id) && (!offeringId || g.id === offeringId))
     .flatMap((group) => {
       const row = groupPaymentRows(market, group.id, month).find(
         (r) => r.enrollment.studentId === user.id,

@@ -203,7 +203,7 @@ test("a teacher targets one student, the student completes the test and shares a
   await actor(page, "ledger-ali");
   await page.getByRole("tab", { name: "Radar", exact: true }).click();
   await expect(
-    page.getByText("Bilim radari tez kunda ishga tushadi", { exact: true }),
+    page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Testni ishlash", exact: true })

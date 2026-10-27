@@ -15,6 +15,16 @@ test("student assistant drags, restores its position, supports keyboard chat and
   await page.goto("/");
   await expect(page.getByTestId("floating-assistant")).toHaveCount(0);
   await login(page);
+  await expect(page.getByTestId("floating-assistant")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "O‘qi AI yordamchini ochish", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Suzuvchi AI tugmasini yoqish", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "AI chatni yopish", exact: true })
+    .click();
   const bubble = page.getByTestId("floating-assistant");
   await expect(bubble).toBeVisible();
   await page.screenshot({

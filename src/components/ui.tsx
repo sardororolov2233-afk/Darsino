@@ -46,9 +46,9 @@ export function Icon({
 }
 const textVariants: Record<string, TextStyle> = {
   display: { fontFamily: font.extra, fontSize: 28, lineHeight: 36 },
-  title: { fontFamily: font.extra, fontSize: 22, lineHeight: 30 },
+  title: { fontFamily: font.extra, fontSize: 24, lineHeight: 32 },
   heading: { fontFamily: font.bold, fontSize: 18, lineHeight: 26 },
-  body: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
+  body: { fontFamily: font.medium, fontSize: 15, lineHeight: 24 },
   label: { fontFamily: font.bold, fontSize: 14, lineHeight: 20 },
   caption: { fontFamily: font.medium, fontSize: 12, lineHeight: 18 },
 };
@@ -96,7 +96,7 @@ export function Screen({
   bottom,
   style,
   top,
-  lightTop = false,
+  lightTop = true,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -110,7 +110,7 @@ export function Screen({
     <SafeAreaView
       style={[
         styles.screen,
-        { backgroundColor: top && !lightTop ? C.navy : background },
+        { backgroundColor: top ? (lightTop ? C.white : C.navy) : background },
       ]}
       edges={["top", "left", "right"]}
     >
@@ -189,12 +189,17 @@ export function Button({
   accessibilityLabel?: string;
 }) {
   const bg = {
-    primary: C.navy,
-    gold: C.gold,
+    primary: C.primary,
+    gold: C.primary,
     soft: C.blueSoft,
     outline: C.white,
   }[variant];
-  const fg = variant === "primary" ? C.white : C.navy;
+  const fg =
+    variant === "primary" || variant === "gold"
+      ? C.white
+      : variant === "soft"
+        ? C.primary
+        : C.navy;
   return (
     <Pressable
       onPress={onPress}
@@ -384,7 +389,7 @@ export function Field({
       <View
         style={[
           styles.field,
-          { borderColor: error ? C.error : focused ? C.gold : C.border },
+          { borderColor: error ? C.error : focused ? C.primary : C.border },
         ]}
       >
         {icon ? <Icon name={icon} color={C.muted} /> : null}
@@ -488,11 +493,12 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: C.white,
-    borderRadius: 22,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: C.border,
-    gap: 10,
+    gap: 12,
+    boxShadow: "0 3px 12px rgba(17,34,70,0.035)",
   },
   chip: {
     flexDirection: "row",

@@ -11,69 +11,55 @@ import {
   uiStyles,
 } from "../components/ui";
 import { OqiHeader } from "../components/OqiHeader";
+import { MetricTile, SectionTitle } from "../components/WorkspaceCards";
 import { Feedback } from "../components/feedback";
+import { OpenLessonCard } from "../components/LearningCards";
 import { useApp } from "../state/AppContext";
 import { useLearning } from "../state/LearningContext";
+import { useClassroom } from "../state/ClassroomContext";
+import { studentWorkspace, studentResults } from "../state/studentWorkspace";
 import { useAppNavigation } from "../navigation";
 import { dateLabel, timeLabel } from "../state/domain";
 import { TutorCard, GroupCard } from "./DiscoveryScreens";
 import { openLessons } from "../data/learning";
+import { formatPrice } from "../data/catalog";
 import { C, font } from "../theme";
-
 const subjects = [
   {
     name: "Matematika",
+    subject: "Matematika",
     icon: "triangle" as const,
-    emoji: "📐",
-    color: "#EEF2FF",
+    color: "#EFEDFF",
   },
-  {
-    name: "Fizika",
-    icon: "sun" as const,
-    emoji: "⚛️",
-    color: "#F3EFFE",
-  },
+  { name: "Fizika", subject: "Fizika", icon: "zap" as const, color: "#FFF4DD" },
   {
     name: "Ingliz tili",
+    subject: "Ingliz tili",
     icon: "globe" as const,
-    emoji: "🇬🇧",
-    color: "#FFF7E5",
+    color: "#E6F6F2",
   },
   {
     name: "Kimyo",
+    subject: "Kimyo",
     icon: "droplet" as const,
-    emoji: "🧪",
-    color: "#E8FAF2",
+    color: "#E9F3FF",
   },
   {
     name: "Dasturlash",
+    subject: "IT",
     icon: "code" as const,
-    emoji: "💻",
-    color: "#E7F6FD",
+    color: "#F0EDFF",
   },
-  {
-    name: "Tarix",
-    icon: "columns" as const,
-    emoji: "🏛️",
-    color: "#FFF0F3",
-  },
+  { name: "Tarix", subject: "Tarix", icon: "book" as const, color: "#FFF0F1" },
 ];
-
 export function HomeScreen() {
   const { user, market, tutors, groups, setFilters, mode, syncError } =
-    useApp();
-  const { error } = useLearning();
-  const navigation = useAppNavigation();
-  const ids = new Set(
-    market.enrollments
-      .filter((e) => e.studentId === user.id && e.active)
-      .map((e) => e.offeringId),
-  );
-  const next = market.sessions
-    .filter(
-      (s) => ids.has(s.offeringId) && new Date(s.endsAt).getTime() > Date.now(),
-    )
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
+      useApp(),
+    learning = useLearning(),
+    classroom = useClassroom(),
+    navigation = useAppNavigation();
+  const stats = studentWorkspace(market, user.id, classroom.data),
+    results = studentResults(user.id, classroom.data, learning.data.attempts);
   const recommended = tutors
     .filter((t) =>
       user.interests.some((s) => (t.subjects || [t.subject]).includes(s)),
@@ -86,38 +72,54 @@ export function HomeScreen() {
     .slice(0, 2);
   return (
     <Screen top={<OqiHeader />}>
-      <View style={{ gap: 4 }}>
+      <View style={{ gap: 5 }}>
         <AppText variant="caption" color={C.muted}>
           Salom, {user.name.split(" ")[0]}
         </AppText>
         <AppText variant="title">Maqsadingiz sari bir qadam</AppText>
       </View>
-
-      {/* Selected learning goal */}
       <Card
-        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 22 }}
+        style={{
+          backgroundColor: C.navy,
+          borderColor: C.navy,
+          padding: 22,
+          gap: 12,
+          overflow: "hidden",
+        }}
       >
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            right: -38,
+            top: -48,
+            width: 180,
+            height: 180,
+            borderRadius: 90,
+            borderWidth: 26,
+            borderColor: "#FFFFFF08",
+          }}
+        />
         <View style={uiStyles.between}>
           <View style={uiStyles.row}>
-            <Icon name="target" color={C.mint} size={20} />
-            <AppText variant="caption" color="#C6D5F1">
+            <Icon name="target" color={C.mint} size={18} />
+            <AppText variant="caption" color="#D3DDF4">
               MENING MAQSADIM
             </AppText>
           </View>
-          <Icon name="bookmark" color={C.mint} size={18} />
+          <Chip label={user.studyMode || "Ta’lim"} tone="purple" />
         </View>
         <AppText variant="display" color="white">
           {user.goal || "Maqsadingizni belgilang"}
         </AppText>
-        <AppText color="#C6D5F1">{user.interests.join(" · ")}</AppText>
-        {user.studyMode || user.studySupport ? (
-          <AppText variant="caption" color={C.mint}>
-            {[user.studyMode, user.studySupport].filter(Boolean).join(" · ")}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+          <AppText variant="caption" color="#D3DDF4">
+            {user.interests.join(" · ")}
           </AppText>
-        ) : null}
-        <AppText variant="caption" color="#C6D5F1">
-          {user.city}, {user.area}
-        </AppText>
+          <AppText variant="caption" color="#D3DDF4">
+            {user.studySupport || user.area}
+          </AppText>
+        </View>
         <Button
           title={
             user.studySupport === "Mustaqil"
@@ -125,7 +127,6 @@ export function HomeScreen() {
               : "Maqsadimga mos ustoz topish"
           }
           icon="arrow-right"
-          variant="gold"
           onPress={() => {
             if (user.studySupport === "Mustaqil")
               navigation.navigate("Main", { screen: "Lessons" });
@@ -140,79 +141,160 @@ export function HomeScreen() {
           }}
         />
       </Card>
-
-      <Card style={{ backgroundColor: C.purpleSoft }}>
-        <View style={uiStyles.row}>
-          <Icon name="target" color={C.purple} />
-          <AppText variant="heading" style={{ flex: 1 }}>
-            Bilim radari
+      <SectionTitle
+        title="Mening o‘qishim"
+        subtitle="Ustozingiz bilan bir joyda"
+      />
+      <View style={uiStyles.wrap}>
+        <MetricTile
+          title="Mening guruhlarim"
+          value={stats.groups.length}
+          caption={`${stats.today.length} ta bugungi dars`}
+          icon="users"
+          onPress={() => navigation.navigate("StudentGroups")}
+        />
+        <MetricTile
+          title="Mening testlarim"
+          value={stats.pendingTests.length}
+          caption="Bajarish kutilmoqda"
+          icon="check-square"
+          onPress={() => navigation.navigate("StudentTests")}
+        />
+        <MetricTile
+          title="Mening davomatim"
+          value={
+            stats.attendancePercent === null
+              ? "—"
+              : `${stats.attendancePercent}%`
+          }
+          caption={`${stats.present}/${stats.past.length} qatnashuv`}
+          icon="calendar"
+          tone="green"
+          onPress={() => navigation.navigate("StudentAttendance")}
+        />
+        <MetricTile
+          title="Mening to‘lovlarim"
+          value={formatPrice(stats.due)}
+          caption="Joriy oy · to‘lanmagan"
+          icon="credit-card"
+          tone={stats.due ? "red" : "green"}
+          onPress={() => navigation.navigate("StudentPayments")}
+        />
+      </View>
+      <View style={uiStyles.row}>
+        <Button
+          title="Guruh chatlari"
+          icon="message-circle"
+          variant="soft"
+          style={{ flex: 1 }}
+          onPress={() => navigation.navigate("Chats")}
+        />
+        <Button
+          title="Ustozni QR orqali topish"
+          icon="maximize"
+          variant="outline"
+          style={{ flex: 1 }}
+          onPress={() => navigation.navigate("ScanContact")}
+        />
+      </View>
+      <SectionTitle title="Keyingi darsingiz" />
+      {stats.next ? (
+        <Card
+          onPress={() =>
+            navigation.navigate("StudentGroup", { id: stats.next!.offeringId })
+          }
+          accessibilityLabel="Keyingi darsni ko‘rish"
+          style={{ borderLeftWidth: 4, borderLeftColor: C.primary }}
+        >
+          <View style={uiStyles.between}>
+            <Chip label={dateLabel(stats.next.startsAt)} tone="purple" />
+            <AppText variant="label" color={C.primary}>
+              {timeLabel(stats.next.startsAt)}–{timeLabel(stats.next.endsAt)}
+            </AppText>
+          </View>
+          <AppText variant="heading" localize={false}>
+            {stats.next.title}
           </AppText>
-          <Chip label="Tez kunda" tone="purple" />
+          <AppText variant="caption" color={C.muted}>
+            {stats.next.location}
+          </AppText>
+        </Card>
+      ) : (
+        <Card>
+          <AppText variant="heading">Birinchi darsga tayyormisiz?</AppText>
+          <AppText color={C.muted}>
+            Ustoz arizangizni tasdiqlagach, dars jadvalingiz shu yerda
+            ko‘rinadi.
+          </AppText>
+          <Button
+            title="Ochiq guruhlarni ko‘rish"
+            variant="soft"
+            onPress={() => navigation.navigate("Groups")}
+          />
+        </Card>
+      )}
+      <Card style={{ backgroundColor: C.primarySoft, borderColor: "#DAD4FD" }}>
+        <View style={uiStyles.between}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <AppText variant="heading">Bilim radari</AppText>
+            <AppText color={C.muted}>
+              {results.length
+                ? `${results.length} ta saqlangan natijangiz bor. Rivojlanishingizni kuzating.`
+                : "Birinchi testdan so‘ng shaxsiy natijalaringiz ko‘rinadi."}
+            </AppText>
+          </View>
+          <Icon name="bar-chart-2" size={36} color={C.primary} />
         </View>
-        <AppText color={C.muted}>
-          Bilim radari tez kunda ishga tushadi. Hozir ustoz yuborgan testlarni
-          bajarishingiz mumkin.
-        </AppText>
         <Button
           title="Radar va testlar"
-          icon="arrow-up-right"
-          variant="soft"
+          icon="arrow-right"
+          variant="outline"
           onPress={() => navigation.navigate("Main", { screen: "Radar" })}
         />
       </Card>
-
-      {/* 4. Fanlar Olami (6 Categories from Prototype) */}
-      <View style={uiStyles.between}>
-        <AppText variant="heading">Fanlar olami</AppText>
-        <AppText variant="caption" color={C.muted}>
-          O‘zingizga mosini tanlang
-        </AppText>
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 9 }}>
+      <SectionTitle title="Fanlar olami" subtitle="O‘zingizga mosini tanlang" />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
         {subjects.map((s) => (
           <Pressable
             key={s.name}
             accessibilityRole="button"
             accessibilityLabel={`${s.name} ustozlarini topish`}
             onPress={() => {
-              setFilters({
-                subject: s.name === "Dasturlash" ? "IT" : s.name,
-                area: "Barcha hududlar",
-              });
+              setFilters({ subject: s.subject, area: "Barcha hududlar" });
               navigation.navigate("Main", { screen: "Search" });
             }}
             style={{
               flexBasis: "30%",
               flexGrow: 1,
-              paddingVertical: 14,
-              paddingHorizontal: 6,
+              paddingVertical: 16,
+              paddingHorizontal: 5,
               borderRadius: 18,
               backgroundColor: C.white,
               alignItems: "center",
-              gap: 4,
+              gap: 7,
               borderWidth: 1,
               borderColor: C.border,
             }}
           >
             <View
               style={{
-                width: 38,
-                height: 38,
+                width: 42,
+                height: 42,
+                borderRadius: 14,
+                backgroundColor: s.color,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: s.color,
-                borderRadius: 13,
               }}
             >
-              <AppText style={{ fontSize: 20 }}>{s.emoji}</AppText>
+              <Icon name={s.icon} color={C.primary} size={23} />
             </View>
             <AppText variant="caption" style={{ fontFamily: font.bold }}>
               {s.name}
             </AppText>
-            <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
+            <AppText variant="caption" color={C.muted}>
               {
                 tutors.filter((t) =>
-                  (t.subjects || [t.subject]).includes(s.name),
+                  (t.subjects || [t.subject]).includes(s.subject),
                 ).length
               }{" "}
               ustoz
@@ -220,63 +302,31 @@ export function HomeScreen() {
           </Pressable>
         ))}
       </View>
-
-      {/* 5. Geolocation Banner */}
-      <Pressable
+      <Card
         onPress={() => {
-          setFilters({ area: "Chilonzor" });
+          const short = user.area.replace(/ tumani| shahri/g, "");
+          const area =
+            tutors.find((t) => t.area === user.area || t.area === short)
+              ?.area || user.area;
+          setFilters({ area });
           navigation.navigate("Main", { screen: "Search" });
         }}
-        style={{
-          backgroundColor: "#EEF2FF",
-          borderColor: "#C7D2FE",
-          borderWidth: 1,
-          borderRadius: 18,
-          padding: 14,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
+        accessibilityLabel="Hududimdagi ustozlarni ko‘rish"
+        style={{ backgroundColor: C.primarySoft, borderColor: "#DAD4FD" }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            flex: 1,
-          }}
-        >
-          <View
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              backgroundColor: "#E0E7FF",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icon name="map-pin" color={C.navy} size={20} />
-          </View>
+        <View style={uiStyles.row}>
+          <Icon name="map-pin" color={C.primary} />
           <View style={{ flex: 1 }}>
-            <AppText
-              variant="caption"
-              style={{ fontFamily: font.bold, color: C.navy }}
-            >
+            <AppText variant="label">
               {user.area}, {user.city}
             </AppText>
             <AppText variant="caption" color={C.muted}>
-              {tutors.filter((t) => t.area === user.area).length} ustoz sizning
-              hududingizda
+              Hududingizdagi ustoz va guruhlar
             </AppText>
           </View>
+          <Icon name="arrow-up-right" color={C.primary} />
         </View>
-        <AppText variant="label" color={C.navy}>
-          Xaritada ko‘rish →
-        </AppText>
-      </Pressable>
-
-      {/* 6. Quick Action Links */}
+      </Card>
       <View style={uiStyles.row}>
         <Button
           title="Guruhlar"
@@ -293,99 +343,51 @@ export function HomeScreen() {
           onPress={() => navigation.navigate("Events")}
         />
       </View>
-      <Feedback error={syncError || error} />
-
-      {/* 7. Next Lesson */}
-      <AppText variant="heading">Keyingi darsingiz</AppText>
-      {next ? (
-        <Card
-          onPress={() => navigation.navigate("Main", { screen: "Lessons" })}
-          accessibilityLabel="Keyingi darsni ko‘rish"
-        >
-          <Chip label={dateLabel(next.startsAt)} tone="green" />
-          <AppText variant="heading">{next.title}</AppText>
-          <AppText color={C.muted}>
-            {timeLabel(next.startsAt)}–{timeLabel(next.endsAt)} ·{" "}
-            {next.location}
-          </AppText>
-        </Card>
-      ) : (
-        <Card>
-          <AppText variant="heading">Birinchi darsga tayyormisiz?</AppText>
-          <AppText variant="caption" color={C.muted}>
-            Ustoz arizangizni tasdiqlagach, dars jadvalingiz shu yerda
-            ko‘rinadi.
-          </AppText>
+      <SectionTitle
+        title="Ochiq video darslar"
+        subtitle="Ishonchli ta’lim manbalari"
+        action={
           <Button
-            title="Ochiq guruhlarni ko‘rish"
+            title="Barchasi"
             variant="soft"
-            onPress={() => navigation.navigate("Groups")}
+            onPress={() =>
+              navigation.navigate("LearningLibrary", {
+                section: "Video darslar",
+              })
+            }
           />
-        </Card>
-      )}
-
-      {/* 8. Jonli va Ochiq Darslar (Video Preview) */}
-      <View style={uiStyles.between}>
-        <AppText variant="heading">Jonli va ochiq darslar</AppText>
-        <Button
-          title="Barchasi"
-          variant="soft"
-          style={{ minHeight: 40 }}
-          onPress={() => navigation.navigate("Main", { screen: "Lessons" })}
-        />
-      </View>
-      <View style={{ gap: 10 }}>
-        {openLessons.slice(0, 2).map((l) => (
-          <Card
-            key={l.id}
-            onPress={() => navigation.navigate("Main", { screen: "Lessons" })}
-          >
-            <View style={uiStyles.between}>
-              <Chip label={l.subject} tone="purple" />
-              {l.live ? (
-                <Chip label="Hozir jonli 🔴" tone="green" />
-              ) : (
-                <AppText variant="caption" color={C.muted}>
-                  {l.views || "1.2k"} ko‘rildi
-                </AppText>
-              )}
-            </View>
-            <AppText variant="heading">{l.title}</AppText>
-            <AppText variant="caption" color={C.muted}>
-              {l.author} • {l.duration}
-            </AppText>
-          </Card>
-        ))}
-      </View>
-
-      {/* 9. Recommended Tutors */}
-      <View style={uiStyles.between}>
-        <AppText variant="heading">Sizga mos ustozlar</AppText>
-        <Button
-          title="Barchasi"
-          variant="soft"
-          style={{ minHeight: 44 }}
-          onPress={() => navigation.navigate("Tutors")}
-        />
-      </View>
+        }
+      />
+      {openLessons.slice(0, 2).map((lesson) => (
+        <OpenLessonCard key={lesson.id} lesson={lesson} />
+      ))}
+      <SectionTitle
+        title="Sizga mos ustozlar"
+        action={
+          <Button
+            title="Barchasi"
+            variant="soft"
+            onPress={() => navigation.navigate("Tutors")}
+          />
+        }
+      />
       {recommended.map((t) => (
         <TutorCard key={t.id} tutor={t} />
       ))}
       {!recommended.length ? (
-        <AppText variant="caption" color={C.muted}>
+        <AppText color={C.muted}>
           Tanlagan faningiz bo‘yicha ustozlar hozircha yo‘q. Boshqa fanlarni ham
           qidirib ko‘ring.
         </AppText>
       ) : null}
-
-      {/* 10. Open Groups */}
-      <AppText variant="heading">Ochiq guruhlar</AppText>
+      <SectionTitle title="Ochiq guruhlar" />
       {groups
         .filter((g) => g.spots > 0)
         .slice(0, 2)
         .map((g) => (
           <GroupCard key={g.id} group={g} />
         ))}
+      <Feedback error={syncError || learning.error || classroom.error} />
       {mode === "demo" ? (
         <AppText variant="caption" color={C.muted}>
           Sinov rejimi · ustoz va guruhlar namuna katalogidan.

@@ -1,4 +1,4 @@
-import { backendMode, requireBackend } from "./backend";
+import { backendMode, requireBackend, requireActorBackend } from "./backend";
 import {
   areContacts,
   isBlocked,
@@ -43,7 +43,8 @@ export async function findAccount(
           : undefined,
     };
   }
-  const { data, error } = await requireBackend().rpc("darsino_find_account", {
+  const client = await requireActorBackend(actorId);
+  const { data, error } = await client.rpc("darsino_find_account", {
     p_public_id: id,
   });
   if (error) throw new Error(error.message);

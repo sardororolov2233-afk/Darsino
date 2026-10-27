@@ -1,3 +1,4 @@
+import { CalendarField, TimeField } from "../components/ScheduleFields";
 import { TutorVerificationFields } from "../components/TutorVerificationFields";
 import {
   normalizeTutorPhone,
@@ -137,7 +138,7 @@ export function TutorHomeScreen() {
           subtitle={monthLabel(month)}
           icon="credit-card"
           dark
-          onPress={() => navigation.navigate("TeacherClasses")}
+          onPress={() => navigation.navigate("TeacherFinance")}
         />
         <TeacherMetric
           title="Qarzdorlar"
@@ -776,13 +777,13 @@ export function CreateOfferingScreen() {
               />
             ))}
           </View>
-          <Field
+          <CalendarField
             label="Birinchi dars sanasi (YYYY-MM-DD)"
             value={date}
             onChangeText={setDate}
           />
           {WEEKDAYS.filter((d) => days.includes(d.day)).map((d) => (
-            <Field
+            <TimeField
               key={d.day}
               label={`${d.label} boshlanishi (HH:MM)`}
               value={times[d.day]}
@@ -967,12 +968,12 @@ export function ManageClassScreen({
           ) : null}
           {editing && session ? (
             <Card>
-              <Field
+              <CalendarField
                 label="Yangi sana (YYYY-MM-DD)"
                 value={newDate}
                 onChangeText={setNewDate}
               />
-              <Field
+              <TimeField
                 label="Yangi vaqt (HH:MM)"
                 value={newTime}
                 onChangeText={setNewTime}

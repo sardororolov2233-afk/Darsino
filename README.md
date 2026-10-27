@@ -33,6 +33,10 @@ Stitch asosidagi [test yuklash, guruh chat va o‘quvchilar tahlili](docs/teache
 
 Android APK, development client va production build uchun [EAS yo‘riqnomasi](docs/build.md) hamda [profillar](eas.json) tayyor. Expo/EAS akkaunti va signing credential’lari berilmaguncha APK/IPA yaratilgani da’vo qilinmaydi.
 
+## 2026-10-27 kabinet va QR yangilanishi
+
+[Yagona dizayn, o‘quvchi kabineti, moliya va QR](docs/workspace-polish.md): “Oylik to‘lovlar” alohida daromad/to‘lov sahifasini ochadi; o‘quvchi guruh, test, davomat, to‘lov va chatni bir joyda ko‘radi. Kamera va QR rasmini tanlash orqali o‘zaro kontakt topish, rozilik va guruhga taklif ishlaydi. Web QR dekoderi `npm ci` yoki export vaqtida lokal tayyorlanadi.
+
 ## O‘qituvchini tasdiqlash
 
 O‘qituvchi uchun telefon va PDF/rasm sertifikat majburiy. Ariza admin navbatiga tushadi; tasdiqlanmaguncha ustoz kabineti yopiq. Telefon va hujjat faqat egasi hamda adminga ko‘rinadi. [Oqim va server qoidalari](docs/tutor-approval.md).

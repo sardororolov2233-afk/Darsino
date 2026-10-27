@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Linking } from "react-native";
-import { normalizePublicId, validPublicId } from "../state/account";
+import { parseContactQr } from "../state/account";
 export function ConnectionLinkHandler({
   signedIn,
   ready,
@@ -15,8 +15,8 @@ export function ConnectionLinkHandler({
     let active = true;
     const receive = (url: string | null) => {
       if (!active || !url || !/^darsino:\/\/connect\//i.test(url)) return;
-      const id = normalizePublicId(url);
-      if (validPublicId(id)) setPending(id);
+      const id = parseContactQr(url);
+      if (id) setPending(id);
     };
     void Linking.getInitialURL()
       .then(receive)

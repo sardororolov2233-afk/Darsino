@@ -15,7 +15,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
   await login(page, "oqi@example.com");
   await page.getByRole("tab", { name: "Radar", exact: true }).click();
   await expect(
-    page.getByText("Bilim radari tez kunda ishga tushadi", { exact: true }),
+    page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", {
@@ -82,7 +82,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
   await login(page, "other-oqi@example.com");
   await page.getByRole("tab", { name: "Radar", exact: true }).click();
   await expect(
-    page.getByText("Bilim radari tez kunda ishga tushadi", { exact: true }),
+    page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("tab", { name: /^(Profil|Kabinet)$/, exact: true })

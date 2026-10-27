@@ -1,3 +1,4 @@
+import { useAssistantAccess } from "../state/AssistantAccess";
 import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -29,7 +30,15 @@ import {
 } from "../state/assistant";
 import { C } from "../theme";
 
-function AssistantChat({ onClose }: { onClose: () => void }) {
+function AssistantChat({
+  onClose,
+  floating,
+  onToggleFloating,
+}: {
+  onClose: () => void;
+  floating: boolean;
+  onToggleFloating: () => void;
+}) {
   const { user, mode } = useApp();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
@@ -154,6 +163,18 @@ function AssistantChat({ onClose }: { onClose: () => void }) {
         </View>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={
+            floating
+              ? "Suzuvchi AI tugmasini o‘chirish"
+              : "Suzuvchi AI tugmasini yoqish"
+          }
+          onPress={onToggleFloating}
+          style={styles.close}
+        >
+          <Icon name="move" color={floating ? C.primary : C.muted} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel="AI chatni yopish"
           onPress={onClose}
           style={styles.close}
@@ -266,6 +287,28 @@ export function FloatingAssistant() {
 function StudentAssistant({ userId }: { userId: string }) {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
+  const [floating, setFloating] = useState(false);
+  const { register } = useAssistantAccess();
+  useEffect(() => register(() => setOpen(true)), [register]);
+  useEffect(() => {
+    let active = true;
+    void AsyncStorage.getItem(`@oqi/assistant-floating/${userId}`).then(
+      (value) => {
+        if (active) setFloating(value === "true");
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+  const toggleFloating = () =>
+    setFloating((old) => {
+      void AsyncStorage.setItem(
+        `@oqi/assistant-floating/${userId}`,
+        String(!old),
+      ).catch(() => {});
+      return !old;
+    });
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [positionReady, setPositionReady] = useState(false);
   const position = useRef(new Animated.ValueXY()).current;
@@ -353,7 +396,7 @@ function StudentAssistant({ userId }: { userId: string }) {
       style={StyleSheet.absoluteFill}
       onLayout={(e) => setSize(e.nativeEvent.layout)}
     >
-      {size.width > 0 && positionReady ? (
+      {floating && size.width > 0 && positionReady ? (
         <Animated.View
           {...responder.panHandlers}
           style={[
@@ -387,31 +430,42 @@ function StudentAssistant({ userId }: { userId: string }) {
           </Pressable>
         </Animated.View>
       ) : null}
-      <Modal
-        visible={open}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setOpen(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modal}
+      {open ? (
+        <Modal
+          visible={open}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setOpen(false)}
         >
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            accessibilityLabel="Chat tashqarisini yopish"
-            onPress={() => setOpen(false)}
-          />
-          <View
-            style={[
-              styles.chatShell,
-              { paddingBottom: Math.max(12, insets.bottom), maxHeight: "90%" },
-            ]}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.modal}
           >
-            {open ? <AssistantChat onClose={() => setOpen(false)} /> : null}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              accessibilityLabel="Chat tashqarisini yopish"
+              onPress={() => setOpen(false)}
+            />
+            <View
+              style={[
+                styles.chatShell,
+                {
+                  paddingBottom: Math.max(12, insets.bottom),
+                  maxHeight: "90%",
+                },
+              ]}
+            >
+              {open ? (
+                <AssistantChat
+                  onClose={() => setOpen(false)}
+                  floating={floating}
+                  onToggleFloating={toggleFloating}
+                />
+              ) : null}
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      ) : null}
     </View>
   );
 }

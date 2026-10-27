@@ -49,3 +49,6 @@ yarn-error.*
 # Supabase CLI local project linkage and branch state
 /supabase/.temp/
 /supabase/.branches/
+
+# Browser QR decoder copied from the locked dependency during install/export
+/public/qr/

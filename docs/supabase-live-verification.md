@@ -2,6 +2,12 @@
 
 Maqsad loyiha: `mhqofwuawwnappstcekh`. Natijalar sanasi bilan yuritiladi; lokal testlar, demo va amalda bajarilgan jonli tekshiruvlar aralashtirilmaydi. Sana zonasi: Asia/Tashkent.
 
+## 2026-10-27 — QR kontakt va kabinet mosligi
+
+Jonli Auth sessiyalari bilan vaqtinchalik ikki akkauntda **PASS**: ikki tomonlama public ID lookup, telefon/email yopiq qolishi, kontakt taklifi va qabul, shaxsiy chat, ustozning guruh taklifi, o‘quvchi qabulidan keyingi a’zolik, guruh e’loni va ustoz qayd etgan to‘lovning o‘quvchiga kelishi. Teacher fixture faqat vaqtinchalik sinov identifikatoriga administrator orqali tayinlandi; mavjud akkaunt rollari o‘zgartirilmadi. Xabarlar faqat shu ikkita sinov akkauntiga yuborildi. Barcha test akkauntlari va tegishli yozuvlar tozalandi, dastlabki **3 profil** saqlandi. Yangi migratsiya qo‘llanmadi.
+
+Optik QR dekodlash alohida brauzer sinovida haqiqiy QR tasviri/kamera kadrlari bilan, tashqi tarmoq bloklangan holda tekshirildi. Kamera o‘rniga sinov video kirishi ishlatildi; fizik Android/iOS testi bajarilgani da’vo qilinmaydi. [Batafsil oqim va tekshiruvlar](workspace-polish.md).
+
 ## 2026-10-26 — majburiy o‘qituvchi arizasi
 
 `202610260002_tutor_applications.sql` qo‘llandi. Management API orqali qayta o‘qishda: private ariza jadvalida RLS yoqilgan, klientning bevosita SELECT/yozishi taqiqlangan, ichki mutation/snapshot yordamchilari yopiq, public authenticated mutation ishlaydi, onboarding’dan oldin sertifikat yuklash guard’i o‘rnatilgan. Mavjud **1 profil / 1 moderator** saqlandi; jonli arizalar **0**, ushbu tekshiruvda foydalanuvchi yoki sertifikat yaratilmagan. Admin roli tayinlanmadi va credential o‘zgartirilmadi.

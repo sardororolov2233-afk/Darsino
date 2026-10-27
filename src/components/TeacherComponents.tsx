@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from "./ClassroomUI";
 import { offeringScheduleLabel } from "../state/domain";
 import { LocalizedPressable as Pressable } from "../i18n/native";
 import React from "react";
@@ -18,68 +19,52 @@ import { dateLabel, timeLabel, type Offering } from "../state/domain";
 import { formatPrice } from "../data/catalog";
 
 export function TeacherHeader() {
-  const { user, notifications, requests, market } = useApp();
+  const { user } = useApp();
   const navigation = useAppNavigation();
-  const profile = market.tutorProfiles.find((p) => p.userId === user.id);
-  const pending = requests.filter(
-    (r) => r.tutorId === user.id && r.status === "pending",
-  ).length;
-  const unread = notifications.filter((n) => !n.read).length;
-
   return (
-    <View style={styles.header}>
-      <View style={styles.row}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Ustoz bosh sahifasi"
-          onPress={() => navigation.popTo("Main", { screen: "Home" })}
-          style={styles.brandButton}
-        >
-          <Brand width={80} light />
-        </Pressable>
-        <View style={{ flex: 1 }} />
+    <View
+      style={{
+        backgroundColor: C.white,
+        borderBottomWidth: 1,
+        borderBottomColor: C.border,
+      }}
+    >
+      <WorkspaceHeader title={user.name.split(" ")[0] || "Boshqaruv"} />
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 8,
+          paddingHorizontal: 16,
+          paddingBottom: 12,
+          paddingTop: 2,
+        }}
+      >
         <Button
           title="Test berish"
           icon="target"
-          variant="gold"
+          variant="soft"
+          style={{ flex: 1, paddingHorizontal: 8 }}
           onPress={() => navigation.navigate("AssignDiagnostic")}
-          style={{ minHeight: 44, paddingHorizontal: 10, borderRadius: 12 }}
         />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Bildirishnomalar"
-          onPress={() => navigation.navigate("Notifications")}
-          style={styles.action}
-        >
-          <Icon name="bell" color={C.white} size={18} />
-          {unread || pending ? <View style={styles.dot} /> : null}
-        </Pressable>
-      </View>
-      <View style={uiStyles.between}>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <AppText variant="label" color={C.white} numberOfLines={1}>
-            {user.name || "Ismingizni kiriting"}
-          </AppText>
-          <AppText variant="caption" color="#C6D5F1" numberOfLines={1}>
-            {profile?.subjects.join(" · ") || "Mutaxassislikni kiriting"}
-          </AppText>
-        </View>
-        <View style={styles.row}>
-          <Chip label="Ustoz" tone="gold" />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Chatni ochish"
-            onPress={() => navigation.navigate("Main", { screen: "Chats" })}
-            style={styles.action}
-          >
-            <Icon name="message-circle" color={C.white} size={18} />
-          </Pressable>
-        </View>
+        <Button
+          title="QR skanerlash"
+          icon="maximize"
+          variant="outline"
+          style={{ flex: 1, paddingHorizontal: 8 }}
+          onPress={() => navigation.navigate("ScanContact")}
+        />
+        <Button
+          title=""
+          accessibilityLabel="Chatni ochish"
+          icon="message-circle"
+          variant="soft"
+          style={{ width: 48, paddingHorizontal: 0 }}
+          onPress={() => navigation.navigate("Main", { screen: "Chats" })}
+        />
       </View>
     </View>
   );
 }
-
 export function TeacherMetric({
   title,
   value,
@@ -346,10 +331,10 @@ export function TeacherFinance() {
         Xona rejalari xarajati: {formatPrice(cost)} · taxminiy
       </AppText>
       <Button
-        title="Guruhlar va to‘lovlar"
+        title="Daromad va to‘lovlar"
         variant="gold"
         icon="credit-card"
-        onPress={() => navigation.navigate("TeacherClasses")}
+        onPress={() => navigation.navigate("TeacherFinance")}
       />
     </Card>
   );

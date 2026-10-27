@@ -42,6 +42,13 @@ export type RootStackParamList = {
   TutorProfile: undefined;
   CreateOffering: undefined;
   TeacherClasses: undefined;
+  TeacherFinance: undefined;
+  StudentTests: undefined;
+  StudentGroups: undefined;
+  StudentAttendance: undefined;
+  StudentPayments: undefined;
+  StudentGroup: { id: string };
+  LearningLibrary: { section: "Video darslar" | "Klublar" };
   TeacherRooms: undefined;
   TeacherClubs: undefined;
   TeacherAttendance: undefined;

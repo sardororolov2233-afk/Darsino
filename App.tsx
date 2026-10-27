@@ -1,3 +1,13 @@
+import { AssistantAccessProvider } from "./src/state/AssistantAccess";
+import {
+  StudentTestsScreen,
+  StudentGroupsScreen,
+  StudentAttendanceScreen,
+  StudentPaymentsScreen,
+  StudentGroupScreen,
+  LearningLibraryScreen,
+} from "./src/screens/StudentWorkspaceScreens";
+import { TeacherFinanceScreen } from "./src/screens/TeacherFinanceScreen";
 import { TutorApprovalScreen } from "./src/screens/TutorApprovalScreen";
 import { ClassroomProvider } from "./src/state/ClassroomContext";
 import {
@@ -222,7 +232,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: user.role === "tutor" ? "#4430ED" : C.navy,
+        tabBarActiveTintColor: C.primary,
         tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: {
           fontFamily: font.medium,
@@ -255,28 +265,8 @@ function MainTabs() {
                 ? requests.filter((r) => r.status === "pending").length
                 : undefined,
             tabBarIcon: ({ focused, color }) => (
-              <View
-                style={[
-                  styles.tabIcon,
-                  focused && styles.activeTab,
-                  (tab.name === "Radar" || tab.name === "TeacherTests") &&
-                    styles.radarTab,
-                  tab.name === "TeacherTests" && { backgroundColor: C.purple },
-                ]}
-              >
-                <Icon
-                  name={tab.icon}
-                  color={
-                    tab.name === "Radar" || tab.name === "TeacherTests"
-                      ? C.white
-                      : color
-                  }
-                  size={
-                    tab.name === "Radar" || tab.name === "TeacherTests"
-                      ? 25
-                      : 21
-                  }
-                />
+              <View style={[styles.tabIcon, focused && styles.activeTab]}>
+                <Icon name={tab.icon} color={color} size={22} />
               </View>
             ),
           }}
@@ -338,6 +328,34 @@ function Navigator() {
               <Stack.Screen
                 name="Main"
                 component={approvalRequired ? TutorApprovalScreen : MainTabs}
+              />
+              <Stack.Screen
+                name="StudentGroups"
+                component={StudentGroupsScreen}
+              />
+              <Stack.Screen
+                name="StudentTests"
+                component={StudentTestsScreen}
+              />
+              <Stack.Screen
+                name="StudentAttendance"
+                component={StudentAttendanceScreen}
+              />
+              <Stack.Screen
+                name="StudentPayments"
+                component={StudentPaymentsScreen}
+              />
+              <Stack.Screen
+                name="StudentGroup"
+                component={StudentGroupScreen}
+              />
+              <Stack.Screen
+                name="LearningLibrary"
+                component={LearningLibraryScreen}
+              />
+              <Stack.Screen
+                name="TeacherFinance"
+                component={TeacherFinanceScreen}
               />
               <Stack.Screen
                 name="TeacherClasses"
@@ -505,10 +523,12 @@ export default function App() {
                   <LearningProvider>
                     <TeacherProvider>
                       <ClassroomProvider>
-                        <View style={{ flex: 1 }}>
-                          <Navigator />
-                          <FloatingAssistant />
-                        </View>
+                        <AssistantAccessProvider>
+                          <View style={{ flex: 1 }}>
+                            <Navigator />
+                            <FloatingAssistant />
+                          </View>
+                        </AssistantAccessProvider>
                       </ClassroomProvider>
                     </TeacherProvider>
                   </LearningProvider>
@@ -558,7 +578,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  activeTab: { backgroundColor: C.goldSoft },
+  activeTab: { backgroundColor: C.primarySoft },
   radarTab: {
     width: 50,
     height: 50,

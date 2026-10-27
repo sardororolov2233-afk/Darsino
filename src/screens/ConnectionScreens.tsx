@@ -1,7 +1,14 @@
 import { offeringScheduleLabel } from "../state/domain";
 import React, { useEffect, useRef, useState } from "react";
 import { AppState, Linking, Platform, Share, View } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  CameraView,
+  useCameraPermissions,
+  scanFromURLAsync,
+} from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
+import { prepareQrScanner } from "../services/qrScanner";
+import { WorkspaceHeader } from "../components/ClassroomUI";
 import { useIsFocused } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {
@@ -12,6 +19,7 @@ import {
   EmptyState,
   Field,
   Header,
+  Icon,
   Screen,
   uiStyles,
 } from "../components/ui";
@@ -27,6 +35,7 @@ import {
   contactLink,
   conversationFor,
   normalizePublicId,
+  parseContactQr,
   publicIdOf,
   validPublicId,
   readAccountSettings,
@@ -139,32 +148,81 @@ export function ProfileIdScreen() {
 }
 export function ScanContactScreen() {
   const navigation = useAppNavigation(),
-    action = useAction();
+    action = useAction(),
+    { user } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
-  const [active, setActive] = useState(AppState.currentState === "active");
+  const [active, setActive] = useState(AppState.currentState === "active"),
+    [ready, setReady] = useState(false),
+    [error, setError] = useState(""),
+    [torch, setTorch] = useState(false),
+    [retry, setRetry] = useState(0);
   const focused = useIsFocused(),
-    scanned = useRef(false);
+    scanned = useRef(false),
+    invalid = useRef("");
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) =>
       setActive(state === "active"),
     );
     return () => listener.remove();
   }, []);
+  useEffect(() => {
+    let live = true;
+    setReady(false);
+    void prepareQrScanner()
+      .then(() => {
+        if (live) {
+          setReady(true);
+          setError("");
+        }
+      })
+      .catch(() => {
+        if (live) setError("QR o‘qish tayyorlanmadi. Qayta urinib ko‘ring.");
+      });
+    return () => {
+      live = false;
+    };
+  }, [retry]);
+  const receive = (data: string) => {
+    if (scanned.current) return;
+    const id = parseContactQr(data);
+    if (!id) {
+      if (invalid.current !== data) {
+        invalid.current = data;
+        setError(
+          "Bu O‘qi kontaktining QR kodi emas. O‘qi ilovasidagi QR kodni skanerlang.",
+        );
+      }
+      return;
+    }
+    if (id === publicIdOf(user)) {
+      setError(
+        "Bu o‘zingizning QR kodingiz. Boshqa foydalanuvchining kodini skanerlang.",
+      );
+      return;
+    }
+    scanned.current = true;
+    setError("");
+    navigation.replace("Contacts", { query: id });
+  };
   return (
-    <Screen>
-      <Header title="QR skanerlash" onBack={() => navigation.goBack()} />
+    <Screen
+      lightTop
+      top={<WorkspaceHeader title="Kontaktni QR orqali topish" back />}
+    >
+      <AppText variant="title">Skanerlang va bog‘laning</AppText>
       <AppText color={C.muted}>
-        O‘qi kontaktining QR kodini kamera ichiga joylashtiring.
+        O‘qituvchi yoki o‘quvchining O‘qi QR kodini kamera ichiga joylashtiring.
       </AppText>
       {!permission?.granted ? (
         <Card>
+          <Icon name="camera" size={34} color={C.primary} />
           <AppText>
             Kamera faqat QR kodni o‘qish uchun ishlatiladi. Tasvir serverga
             yuborilmaydi.
           </AppText>
           <Button
             title={
-              permission?.canAskAgain === false
+              permission?.canAskAgain === false && Platform.OS !== "web"
                 ? "Qurilma sozlamalari"
                 : "Kameraga ruxsat berish"
             }
@@ -172,36 +230,121 @@ export function ScanContactScreen() {
             loading={action.busy}
             onPress={() =>
               action.run(async () => {
-                if (permission?.canAskAgain === false) {
+                if (permission?.canAskAgain === false && Platform.OS !== "web")
                   await Linking.openSettings();
-                  return;
-                }
-                await requestPermission();
+                else await requestPermission();
               })
             }
           />
         </Card>
-      ) : focused && active ? (
-        <CameraView
-          style={{ height: 320, borderRadius: 24, overflow: "hidden" }}
-          facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-          onBarcodeScanned={({ data }) => {
-            if (scanned.current) return;
-            const id = normalizePublicId(data);
-            if (!validPublicId(id)) return;
-            scanned.current = true;
-            navigation.replace("Contacts", { query: id });
+      ) : focused && active && ready ? (
+        <View
+          style={{
+            height: 300,
+            backgroundColor: C.navy,
+            borderRadius: 24,
+            overflow: "hidden",
+          }}
+        >
+          <CameraView
+            style={{ flex: 1 }}
+            facing="back"
+            enableTorch={torch}
+            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+            onBarcodeScanned={({ data }) => receive(data)}
+            onMountError={() =>
+              setError(
+                "Kamerani ochib bo‘lmadi. Kamera ruxsatini tekshiring yoki QR rasmini tanlang.",
+              )
+            }
+          />
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 36,
+              bottom: 36,
+              left: 36,
+              right: 36,
+              borderColor: "#FFFFFFCC",
+              borderWidth: 2,
+              borderRadius: 22,
+            }}
+          />
+        </View>
+      ) : (
+        <Card>
+          <AppText color={C.muted}>
+            {ready
+              ? "Kamera sahifaga qaytganda davom etadi."
+              : "QR o‘qish tayyorlanmoqda…"}
+          </AppText>
+        </Card>
+      )}
+      <View style={uiStyles.row}>
+        <Button
+          title="QR rasmini tanlash"
+          icon="image"
+          variant="soft"
+          style={{ flex: 1 }}
+          loading={action.busy}
+          onPress={() =>
+            action.run(async () => {
+              await prepareQrScanner();
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                allowsEditing: false,
+                quality: 1,
+              });
+              if (result.canceled) return;
+              const codes = await scanFromURLAsync(result.assets[0].uri, [
+                "qr",
+              ]);
+              const code = codes.find((c) => parseContactQr(c.data));
+              if (!code)
+                throw new Error(
+                  "Rasmda O‘qi QR kodi topilmadi. Kod to‘liq va tiniq ko‘rinsin.",
+                );
+              receive(code.data);
+            })
+          }
+        />
+        {permission?.granted && Platform.OS !== "web" ? (
+          <Button
+            title=""
+            icon="zap"
+            accessibilityLabel="Fonarni yoqish yoki o‘chirish"
+            variant="outline"
+            style={{ width: 48, paddingHorizontal: 0 }}
+            onPress={() => setTorch((v) => !v)}
+          />
+        ) : null}
+      </View>
+      {error ? (
+        <Button
+          title="Skanerni qayta tayyorlash"
+          icon="refresh-cw"
+          variant="outline"
+          onPress={() => {
+            scanned.current = false;
+            invalid.current = "";
+            setRetry((v) => v + 1);
           }}
         />
       ) : null}
+      <Button
+        title="Mening QR kodim"
+        icon="grid"
+        variant="outline"
+        onPress={() => navigation.replace("ProfileId")}
+      />
       <Button
         title="ID orqali kontakt topish"
         icon="search"
         variant="soft"
         onPress={() => navigation.replace("Contacts")}
       />
-      <Feedback {...action} />
+      <Feedback error={action.error || error} />
     </Screen>
   );
 }
@@ -217,6 +360,9 @@ export function ContactsScreen({
     [view, setView] = useState<"contacts" | "blocked">(
       route.params?.view || "contacts",
     );
+  const lookupRevision = useRef(0),
+    actor = useRef(user.id);
+  actor.current = user.id;
   const [report, setReport] = useState<User | null>(null),
     [reason, setReason] = useState("");
   const blocks = (market.blocks || []).filter((r) => r.userId === user.id);
@@ -232,9 +378,15 @@ export function ContactsScreen({
     .filter((u): u is User => !!u);
   const lookup = (value: string) =>
     action.run(async () => {
+      const ticket = ++lookupRevision.current,
+        owner = user.id;
       setResult(null);
-      setSearched(true);
-      setResult(await findAccount(value, user.id, market));
+      setSearched(false);
+      const person = await findAccount(value, owner, market);
+      if (actor.current === owner && ticket === lookupRevision.current) {
+        setResult(person);
+        setSearched(true);
+      }
     });
   useEffect(() => {
     const value = route.params?.query;
@@ -354,13 +506,29 @@ export function ContactsScreen({
   };
   return (
     <Screen>
-      <Header title="Kontaktlar" onBack={() => navigation.goBack()} />
+      <Header
+        title="Kontaktlar"
+        onBack={() => navigation.goBack()}
+        right={
+          <Button
+            title="Mening QR"
+            icon="grid"
+            variant="soft"
+            onPress={() => navigation.navigate("ProfileId")}
+          />
+        }
+      />
       <Card>
         <Field
           label="ID yoki O‘qi havolasi"
           placeholder="@oqi_..."
           value={query}
-          onChangeText={setQuery}
+          onChangeText={(value) => {
+            lookupRevision.current++;
+            setQuery(value);
+            setResult(null);
+            setSearched(false);
+          }}
           autoCapitalize="none"
           autoCorrect={false}
           onSubmitEditing={() => void lookup(query)}

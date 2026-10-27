@@ -419,7 +419,9 @@ function ScheduleContent() {
             .map((g) => (
               <Card
                 key={g.id}
-                onPress={() => navigation.navigate("Group", { id: g.id })}
+                onPress={() =>
+                  navigation.navigate("StudentGroup", { id: g.id })
+                }
                 accessibilityLabel={`${g.title} guruhini ochish`}
               >
                 <Chip label="Qabul qilingansiz" tone="green" />

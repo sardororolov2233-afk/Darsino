@@ -6,6 +6,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useAppNavigation } from "../navigation";
 import { useApp } from "../state/AppContext";
+import { useAssistantAccess } from "../state/AssistantAccess";
 import { initials } from "../state/model";
 import { C, font } from "../theme";
 import { AppText, Icon } from "./ui";
@@ -20,8 +21,9 @@ export function OqiHeader({
   onChangeQuery?: (text: string) => void;
   onSubmitSearch?: () => void;
 }) {
-  const navigation = useAppNavigation();
-  const { user, notifications, filters } = useApp();
+  const navigation = useAppNavigation(),
+    { user, notifications, filters } = useApp(),
+    assistant = useAssistantAccess();
   const unread = notifications.filter((n) => !n.read).length;
   const filterActive =
     filters.subject !== "Barchasi" ||
@@ -41,66 +43,54 @@ export function OqiHeader({
           accessibilityRole="button"
           accessibilityLabel="O‘qi bosh sahifa"
           onPress={() => navigation.popTo("Main", { screen: "Home" })}
-          style={styles.brandButton}
+          style={{ minHeight: 44, justifyContent: "center" }}
         >
-          <Brand width={96} light />
+          <Brand width={78} />
         </Pressable>
+        <View style={{ flex: 1 }} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Hudud filtrini tanlash"
-          style={styles.location}
-          onPress={openFilters}
+          accessibilityLabel="O‘qi AI yordamchini ochish"
+          style={[styles.icon, { backgroundColor: C.primarySoft }]}
+          onPress={assistant.open}
         >
-          <Icon name="map-pin" color={C.mint} size={13} />
-          <AppText
-            variant="caption"
-            color="#E1E9FA"
-            numberOfLines={1}
-            style={{ flexShrink: 1, fontSize: 10 }}
-          >
-            {user.city}
+          <AppText variant="label" color={C.primary} style={{ fontSize: 12 }}>
+            AI
           </AppText>
         </Pressable>
         <Pressable
-          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="QR skanerlash"
           style={styles.icon}
+          onPress={() => navigation.navigate("ScanContact")}
+        >
+          <Icon name="maximize" size={20} color={C.primary} />
+        </Pressable>
+        <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Bildirishnomalar, ${unread} o‘qilmagan`}
+          style={styles.icon}
           onPress={() => navigation.navigate("Notifications")}
         >
-          <Icon name="bell" size={17} color={C.white} />
+          <Icon name="bell" size={20} />
           {unread ? <View style={styles.dot} /> : null}
         </Pressable>
         <Pressable
-          hitSlop={6}
-          style={styles.icon}
           accessibilityRole="button"
           accessibilityLabel="Chatni ochish"
+          style={styles.icon}
           onPress={() => navigation.navigate("Chats")}
         >
-          <Icon name="message-circle" size={17} color={C.white} />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Profilni ochish"
-          hitSlop={6}
-          style={styles.avatar}
-          onPress={() => navigation.popTo("Main", { screen: "Profile" })}
-        >
-          <UserAvatar
-            userId={user.id}
-            initials={initials(user.name)}
-            size={30}
-          />
+          <Icon name="message-circle" size={20} />
         </Pressable>
       </View>
       <View style={styles.row}>
         <View style={styles.search}>
-          <Icon name="search" size={17} color={C.muted} />
+          <Icon name="search" size={19} color={C.muted} />
           {onChangeQuery ? (
             <TextInput
               accessibilityLabel="Repetitor qidirish"
-              placeholder="Fan, ustoz, dars yoki test..."
+              placeholder="Fan, ustoz yoki guruhni izlang"
               placeholderTextColor={C.muted}
               value={query}
               onChangeText={onChangeQuery}
@@ -112,11 +102,11 @@ export function OqiHeader({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Qidiruvni ochish"
-              style={{ flex: 1, paddingVertical: 13 }}
+              style={{ flex: 1, paddingVertical: 14 }}
               onPress={() => navigation.popTo("Main", { screen: "Search" })}
             >
               <AppText variant="caption" color={C.muted}>
-                Fan, ustoz, dars yoki test...
+                Fan, ustoz yoki guruhni izlang
               </AppText>
             </Pressable>
           )}
@@ -125,9 +115,9 @@ export function OqiHeader({
               accessibilityRole="button"
               accessibilityLabel="Qidiruvni tozalash"
               onPress={() => onChangeQuery?.("")}
-              hitSlop={8}
+              hitSlop={10}
             >
-              <Icon name="x" size={16} color={C.muted} />
+              <Icon name="x" size={16} />
             </Pressable>
           ) : null}
         </View>
@@ -137,17 +127,8 @@ export function OqiHeader({
           style={styles.filter}
           onPress={openFilters}
         >
-          <Icon name="sliders" size={17} />
-          <AppText
-            variant="caption"
-            color={C.navy}
-            style={{ fontFamily: font.extra }}
-          >
-            Filtr
-          </AppText>
-          {filterActive ? (
-            <View style={[styles.dot, { backgroundColor: C.white }]} />
-          ) : null}
+          <Icon name="sliders" size={20} color={C.primary} />
+          {filterActive ? <View style={styles.dot} /> : null}
         </Pressable>
       </View>
     </View>
@@ -155,75 +136,58 @@ export function OqiHeader({
 }
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: C.navy,
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 18,
-    gap: 16,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    backgroundColor: C.white,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
   },
-  row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  brandButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "visible",
-  },
-  location: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: "row",
-    gap: 4,
-    paddingVertical: 7,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#243C6D",
-    borderRadius: 20,
-  },
+  row: { flexDirection: "row", alignItems: "center", gap: 6 },
   icon: {
-    width: 32,
-    height: 36,
+    width: 42,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
-    backgroundColor: "#243C6D",
+    borderRadius: 14,
   },
   dot: {
     position: "absolute",
-    right: 5,
-    top: 6,
+    right: 7,
+    top: 8,
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: C.mint,
+    backgroundColor: C.error,
   },
-  avatar: { borderRadius: 18, borderWidth: 2, borderColor: C.mint },
   search: {
-    backgroundColor: C.white,
+    backgroundColor: C.background,
     flexDirection: "row",
     flex: 1,
     minWidth: 0,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: "center",
-    paddingHorizontal: 12,
-    gap: 8,
-    minHeight: 44,
+    paddingHorizontal: 13,
+    gap: 9,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   input: {
     flex: 1,
     minWidth: 0,
-    minHeight: 44,
+    minHeight: 48,
     color: C.ink,
     fontFamily: font.medium,
-    fontSize: 12,
+    fontSize: 13,
   },
   filter: {
-    backgroundColor: C.mint,
+    backgroundColor: C.primarySoft,
     borderRadius: 14,
-    flexDirection: "row",
+    minHeight: 48,
+    width: 48,
     alignItems: "center",
-    gap: 5,
-    minHeight: 44,
-    paddingHorizontal: 12,
+    justifyContent: "center",
   },
 });

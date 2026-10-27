@@ -1,3 +1,8 @@
+import { useClassroom } from "../state/ClassroomContext";
+import { studentResults, studentWorkspace } from "../state/studentWorkspace";
+import { RadarChart } from "../components/RadarChart";
+import { MockTestCards } from "../components/MockTestCards";
+import { MetricTile } from "../components/WorkspaceCards";
 import { LocalizedPressable as Pressable } from "../i18n/native";
 import React, { useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
@@ -92,44 +97,75 @@ export function LearningLibrary({
 }
 export function RadarScreen() {
   const { market, user } = useApp();
+  const classroom = useClassroom(),
+    learning = useLearning();
   const navigation = useAppNavigation();
   const [subject, setSubject] = useState("Barchasi");
   const incoming = market.messages.flatMap((message) => {
     const invite = validInvitation(market, message);
     return invite?.studentId === user.id ? [{ message, invite }] : [];
   });
+  const results = studentResults(
+    user.id,
+    classroom.data,
+    learning.data.attempts,
+  ).filter((r) => subject === "Barchasi" || r.subject === subject);
+  const average = results.length
+    ? Math.round(
+        results.reduce((sum, r) => sum + r.percentage, 0) / results.length,
+      )
+    : null;
+  const stats = studentWorkspace(market, user.id, classroom.data);
+  const skills = learningStats(
+    learning.data,
+    subject === "Barchasi" ? "Umumiy" : subject,
+  );
   return (
     <Screen top={<OqiHeader />}>
       <AppText variant="title">Bilim radari</AppText>
       <Card
-        style={{
-          alignItems: "center",
-          paddingVertical: 28,
-          backgroundColor: C.purpleSoft,
-          gap: 14,
-        }}
+        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 24 }}
       >
-        <View
-          style={{
-            width: 76,
-            height: 76,
-            borderRadius: 24,
-            backgroundColor: C.white,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon name="target" size={38} color={C.purple} />
-        </View>
-        <Chip label="Tez kunda" tone="purple" icon="clock" />
-        <AppText variant="heading" style={{ textAlign: "center" }}>
-          Bilim radari tez kunda ishga tushadi
+        <AppText variant="caption" color="#CFD9F0">
+          MENING O‘ZLASHTIRISHIM
         </AppText>
-        <AppText color={C.muted} style={{ textAlign: "center" }}>
-          Bilimlaringiz xaritasi va rivojlanish tahlili ustida ishlayapmiz.
-          Hozir ustoz yuborgan testlarni bajarish va natijani ulashish mumkin.
+        <AppText variant="display" color="white">
+          {average === null ? "Hali o‘lchanmagan" : `${average}%`}
+        </AppText>
+        <AppText color="#CFD9F0">
+          {results.length
+            ? `${results.length} ta haqiqiy test natijasi bo‘yicha`
+            : "Birinchi testni ishlang. Natijalar shu yerda saqlanadi."}
         </AppText>
       </Card>
+      <View style={uiStyles.wrap}>
+        <MetricTile
+          title="Tugallangan testlar"
+          value={results.length}
+          icon="check-square"
+        />
+        <MetricTile
+          title="Davomat"
+          value={
+            stats.attendancePercent === null
+              ? "—"
+              : `${stats.attendancePercent}%`
+          }
+          icon="calendar"
+          tone="green"
+          onPress={() => navigation.navigate("StudentAttendance")}
+        />
+      </View>
+      {skills.total ? (
+        <Card>
+          <AppText variant="heading">Bilim ko‘nikmalari</AppText>
+          <RadarChart skills={skills.skills} />
+          <AppText variant="caption" color={C.muted}>
+            Mustaqil diagnostika savollari bo‘yicha o‘lchangan ko‘nikmalar.
+          </AppText>
+        </Card>
+      ) : null}
+      <MockTestCards />
       <AppText variant="heading">
         Ustoz yuborgan testlar · {incoming.length}
       </AppText>
@@ -166,6 +202,24 @@ export function RadarScreen() {
         variant="soft"
         onPress={() => navigation.navigate("Chats")}
       />
+      {results.length ? (
+        <>
+          <AppText variant="heading">So‘nggi natijalar</AppText>
+          {results.slice(0, 5).map((result) => (
+            <Card key={result.id}>
+              <View style={uiStyles.between}>
+                <AppText variant="label" localize={false} style={{ flex: 1 }}>
+                  {result.title}
+                </AppText>
+                <Chip label={`${result.percentage}%`} tone="green" />
+              </View>
+              <AppText variant="caption" color={C.muted}>
+                {result.correct}/{result.total} to‘g‘ri · {result.subject}
+              </AppText>
+            </Card>
+          ))}
+        </>
+      ) : null}
       <AppText variant="heading">Mustaqil bilim diagnostikasi</AppText>
       <FilterSelect
         label="Test fani"

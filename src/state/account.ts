@@ -121,6 +121,12 @@ export function normalizePublicId(value: string) {
 }
 export const validPublicId = (value: string) =>
   /^[a-z][a-z0-9_]{4,23}$/.test(value);
+export function parseContactQr(value: string): string | null {
+  if (value.length > 256 || !/^darsino:\/\/connect\//i.test(value.trim()))
+    return null;
+  const id = normalizePublicId(value);
+  return validPublicId(id) ? id : null;
+}
 export const contactLink = (id: string) =>
   "darsino://connect/" + encodeURIComponent(id);
 export const isBlocked = (market: Marketplace, a: string, b: string) =>
