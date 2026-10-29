@@ -361,7 +361,7 @@ test(
         () => ui.text("Maqsadingiz sari"),
         "returning student skips onboarding",
       );
-      await ui.click("Dars & Klub", "tab");
+      await ui.click("Darslarim", "tab");
       await ui.wait(() => ui.text("IELTS 6.5+ guruhi"), "approved schedule");
       await ui.click("Guruhlar");
       await ui.wait(() => ui.text("Qabul qilingansiz"), "approved group");
@@ -377,9 +377,18 @@ test(
         "student notifications",
       );
       await ui.click("Orqaga");
-      await ui.click("Dars & Klub", "tab");
+      await ui.click("Darslarim", "tab");
       await ui.click("Jadval");
       await ui.click("Ustozga yozish");
+      await ui.click("Kontaktlar");
+      await ui.fill("ID yoki O‘qi havolasi", "oqi_dilnoza");
+      await ui.click("Qidirish");
+      await ui.click("Kontakt taklifi yuborish");
+      await ui.wait(
+        () => ui.text("Kontakt taklifi yuborildi."),
+        "student requests contact consent",
+      );
+      await ui.click("Orqaga");
       await ui.fill("Xabar yozing", "Darsga tayyorman.");
       await ui.click("Xabarni yuborish");
       await ui.wait(() => ui.text("Darsga tayyorman."), "student message");
@@ -388,6 +397,13 @@ test(
       await ui.login("dilnoza@darsino.demo");
       await ui.click("Chatni ochish");
       await ui.click("Suhbat: Sardor Test");
+      await ui.click("Kontaktlar");
+      await ui.click("Qabul qilish");
+      await ui.wait(
+        () => ui.text("Kontaktdan olib tashlash"),
+        "teacher accepts contact consent",
+      );
+      await ui.click("Orqaga");
       await ui.wait(
         () => ui.text("Darsga tayyorman."),
         "tutor receives the same message",

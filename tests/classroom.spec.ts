@@ -174,7 +174,7 @@ test("custom mock test reaches students and feeds teacher progress; group announ
   await expect(page.getByLabel("E’lon matni", { exact: true })).toHaveCount(0);
   await page.screenshot({ path: "test-results/group-chat.png" });
   await actor(page, "classroom-ali");
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page
     .getByRole("button", { name: "Mock testni boshlash", exact: true })
     .click();

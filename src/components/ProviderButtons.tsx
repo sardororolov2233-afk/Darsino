@@ -42,11 +42,13 @@ export function ProviderButtons({
   busy,
   demo,
   dark = false,
+  providers = ["google", "apple"],
 }: {
   onPress: (provider: SocialProvider) => void;
   busy: boolean;
   demo: boolean;
   dark?: boolean;
+  providers?: SocialProvider[];
 }) {
   const [nativeApple, setNativeApple] = useState(false);
   useEffect(() => {
@@ -63,7 +65,7 @@ export function ProviderButtons({
   }, [demo]);
   return (
     <View style={{ gap: 12 }}>
-      {(["google", "apple"] as const).map((provider) =>
+      {providers.map((provider) =>
         provider === "apple" && nativeApple ? (
           <View
             key={provider}

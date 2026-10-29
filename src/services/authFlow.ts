@@ -88,3 +88,38 @@ export function createOAuthCallbackHandler(
     return operation;
   };
 }
+
+export function createPasswordRecovery(client: SupabaseClient) {
+  return {
+    async request(value: string, redirectTo: string) {
+      const email = normalizeEmail(value);
+      if (!validEmail(email))
+        throw new Error("To‘g‘ri email manzilini kiriting.");
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+      if (error)
+        throw new Error(
+          error.status === 429
+            ? "Juda ko‘p urinish. Keyinroq urinib ko‘ring."
+            : "Tiklash xatini yuborib bo‘lmadi. Keyinroq urinib ko‘ring.",
+        );
+    },
+    async update(password: string, confirmation: string) {
+      if (password.length < 8)
+        throw new Error("Parol kamida 8 ta belgidan iborat bo‘lsin.");
+      if (password !== confirmation)
+        throw new Error("Parollar mos kelmadi. Qayta tekshiring.");
+      const { error } = await client.auth.updateUser({ password });
+      if (error)
+        throw new Error(
+          "Parolni yangilab bo‘lmadi. Tiklash havolasini qayta oching.",
+        );
+      const result = await client.auth.signOut({ scope: "local" });
+      if (result.error)
+        throw new Error(
+          "Parol yangilandi. Ilovani qayta ochib, yangi parol bilan kiring.",
+        );
+    },
+  };
+}

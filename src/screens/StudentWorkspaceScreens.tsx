@@ -1,3 +1,5 @@
+import { publicIdOf } from "../state/account";
+import { HomeworkCards } from "./HomeworkScreens";
 import React, { useState } from "react";
 import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -270,10 +272,25 @@ export function StudentGroupScreen({
           }
         />
       </View>
+      <Button
+        title="Ustoz bilan kontakt bog‘lash"
+        icon="user-plus"
+        variant="outline"
+        onPress={() =>
+          navigation.navigate("Contacts", {
+            query: publicIdOf({
+              id: group.tutorId,
+              publicId: market.users.find((u) => u.id === group.tutorId)
+                ?.publicId,
+            }),
+          })
+        }
+      />
       <FilterOptions
         label="Guruh materiallari va darslar"
         options={filterChoices([
           "Jadval",
+          "Vazifalar",
           "Materiallar",
           "Testlar",
           "To‘lovlar",
@@ -310,6 +327,8 @@ export function StudentGroupScreen({
             />
           </Card>
         ))
+      ) : tab === "Vazifalar" ? (
+        <HomeworkCards offeringId={group.id} />
       ) : tab === "Materiallar" ? (
         <LessonMaterials offeringId={group.id} />
       ) : tab === "Testlar" ? (

@@ -78,3 +78,7 @@ Lokal SQL testlari haqiqiy PostgreSQL funksiyalari va ruxsatlarini tekshiradi. J
 ## Ilova bo‘limlari
 
 [Onboarding](docs/onboarding.md), [O‘qi interfeysi](docs/oqi-ui.md), [guruh boshqaruvi](docs/group-management.md), [profil, besh til, MFA, ID/QR va takliflar](docs/profile-settings.md).
+
+## 2026-10-29 o‘quvchi roadmap’i
+
+[Bajarilgan ishlar, ekranlar va chiqarish shartlari](docs/student-roadmap-implementation.md): yangi ichki logotip va launcher icon, yangi/faol o‘quvchiga mos bosh sahifa, to‘liq uy vazifalari oqimi, private PDF/rasm fayllari, feedback va qayta topshirish, “Bilimim”, qidiruvning kun/vaqt filtrlari, profil afzalliklari va parolni tiklash. [Asl roadmap](docs/plans/student-roadmap-source.md) ham saqlangan. Uch yangi SQL yangilanishi jonli loyihada tekshirildi; eski ma’lumotlar saqlandi.

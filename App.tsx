@@ -1,4 +1,16 @@
+import { AppErrorBoundary } from "./src/components/AppErrorBoundary";
+import {
+  RequestPasswordResetScreen,
+  ResetPasswordScreen,
+  RestoreSessionScreen,
+} from "./src/screens/PasswordRecoveryScreens";
 import { AssistantAccessProvider } from "./src/state/AssistantAccess";
+import { HomeworkProvider } from "./src/state/HomeworkContext";
+import {
+  AssignmentsScreen,
+  CreateAssignmentScreen,
+  AssignmentDetailScreen,
+} from "./src/screens/HomeworkScreens";
 import {
   StudentTestsScreen,
   StudentGroupsScreen,
@@ -160,14 +172,14 @@ function MainTabs() {
     },
     {
       name: "Radar",
-      title: "Radar",
+      title: "Bilimim",
       icon: "target" as const,
       component: RadarScreen,
     },
     {
       name: "Lessons",
-      title: "Dars & Klub",
-      icon: "video" as const,
+      title: "Darslarim",
+      icon: "book-open" as const,
       component: LessonsScreen,
     },
     {
@@ -276,7 +288,17 @@ function MainTabs() {
   );
 }
 function Navigator() {
-  const { ready, signedIn, authenticated, user, market } = useApp();
+  const {
+    ready,
+    signedIn,
+    authenticated,
+    user,
+    market,
+    passwordRecovery,
+    restoringSession,
+    mode,
+    syncError,
+  } = useApp();
   const approvalRequired =
     user.role === "tutor" &&
     !market.tutorProfiles.some(
@@ -284,16 +306,18 @@ function Navigator() {
     );
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const [navigationReady, setNavigationReady] = useState(false);
-  if (!ready)
+  if (!ready || restoringSession)
     return (
       <View style={styles.loading}>
         <Image
-          source={require("./assets/oqi_loading.gif")}
+          source={require("./assets/oqi-wordmark.png")}
           style={styles.loadingGif}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       </View>
     );
+  if (mode === "supabase" && !authenticated && syncError && !passwordRecovery)
+    return <RestoreSessionScreen />;
   return (
     <NavigationContainer
       ref={navigationRef}
@@ -313,10 +337,21 @@ function Navigator() {
             animation: "slide_from_right",
           }}
         >
-          {!signedIn && !authenticated ? (
+          {passwordRecovery ? (
+            <Stack.Group navigationKey="password-recovery">
+              <Stack.Screen
+                name="ResetPassword"
+                component={ResetPasswordScreen}
+              />
+            </Stack.Group>
+          ) : !signedIn && !authenticated ? (
             <Stack.Group navigationKey="auth">
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
               <Stack.Screen name="SignIn" component={SignInScreen} />
+              <Stack.Screen
+                name="RequestPasswordReset"
+                component={RequestPasswordResetScreen}
+              />
               <Stack.Screen name="Providers" component={ProviderScreen} />
             </Stack.Group>
           ) : !signedIn ? (
@@ -332,6 +367,15 @@ function Navigator() {
               <Stack.Screen
                 name="StudentGroups"
                 component={StudentGroupsScreen}
+              />
+              <Stack.Screen name="Assignments" component={AssignmentsScreen} />
+              <Stack.Screen
+                name="CreateAssignment"
+                component={CreateAssignmentScreen}
+              />
+              <Stack.Screen
+                name="AssignmentDetail"
+                component={AssignmentDetailScreen}
               />
               <Stack.Screen
                 name="StudentTests"
@@ -517,30 +561,34 @@ export default function App() {
           <StatusBar style="dark" />
           {fontsLoaded || fontError ? (
             <I18nProvider>
-              <MfaGate>
-                <AppProvider>
-                  <LocaleBridge />
-                  <LearningProvider>
-                    <TeacherProvider>
-                      <ClassroomProvider>
-                        <AssistantAccessProvider>
-                          <View style={{ flex: 1 }}>
-                            <Navigator />
-                            <FloatingAssistant />
-                          </View>
-                        </AssistantAccessProvider>
-                      </ClassroomProvider>
-                    </TeacherProvider>
-                  </LearningProvider>
-                </AppProvider>
-              </MfaGate>
+              <AppErrorBoundary>
+                <MfaGate>
+                  <AppProvider>
+                    <LocaleBridge />
+                    <LearningProvider>
+                      <TeacherProvider>
+                        <ClassroomProvider>
+                          <HomeworkProvider>
+                            <AssistantAccessProvider>
+                              <View style={{ flex: 1 }}>
+                                <Navigator />
+                                <FloatingAssistant />
+                              </View>
+                            </AssistantAccessProvider>
+                          </HomeworkProvider>
+                        </ClassroomProvider>
+                      </TeacherProvider>
+                    </LearningProvider>
+                  </AppProvider>
+                </MfaGate>
+              </AppErrorBoundary>
             </I18nProvider>
           ) : (
             <View style={styles.loading}>
               <Image
-                source={require("./assets/oqi_loading.gif")}
+                source={require("./assets/oqi-wordmark.png")}
                 style={styles.loadingGif}
-                resizeMode="cover"
+                resizeMode="contain"
               />
             </View>
           )}
@@ -565,11 +613,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: C.navy,
+    backgroundColor: C.background,
   },
   loadingGif: {
-    width: "100%",
-    height: "100%",
+    width: 200,
+    height: 150,
   },
   tabIcon: {
     width: 44,

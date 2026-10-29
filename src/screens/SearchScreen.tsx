@@ -34,7 +34,7 @@ import { useAction, Feedback } from "../components/feedback";
 import { isClubOffering } from "../state/teacher";
 import { C } from "../theme";
 export function SearchScreen() {
-  const { tutors, groups, filters, setFilters, favorites, user, mode } =
+  const { tutors, groups, filters, setFilters, favorites, user, mode, market } =
     useApp();
   const { data, rememberSearch, clearSearches, ready, error } = useLearning();
   const [query, setQuery] = useState("");
@@ -42,6 +42,33 @@ export function SearchScreen() {
   const [view, setView] = useState("Ro‘yxat");
   const [quick, setQuick] = useState<string[]>([]);
   const [sort, setSort] = useState("Mosligi");
+  const [verifiedOnly, setVerifiedOnly] = useState(false),
+    [weekday, setWeekday] = useState("all"),
+    [period, setPeriod] = useState("all");
+  const available = (tutorId: string, offeringId?: string) => {
+    if (weekday === "all" && period === "all") return true;
+    return market.sessions.some((s) => {
+      const g = market.offerings.find((g) => g.id === s.offeringId);
+      if (
+        !g ||
+        g.tutorId !== tutorId ||
+        (offeringId && s.offeringId !== offeringId) ||
+        Date.parse(s.startsAt) < Date.now()
+      )
+        return false;
+      const d = new Date(Date.parse(s.startsAt) + 5 * 3600000),
+        hour = d.getUTCHours();
+      return (
+        (weekday === "all" || d.getUTCDay() === Number(weekday)) &&
+        (period === "all" ||
+          (period === "morning"
+            ? hour < 12
+            : period === "afternoon"
+              ? hour >= 12 && hour < 18
+              : hour >= 18))
+      );
+    });
+  };
   const action = useAction();
   const navigation = useAppNavigation();
   const results = useMemo(() => {
@@ -57,14 +84,43 @@ export function SearchScreen() {
           t.modes.includes("Onlayn")) &&
         (!quick.includes("Top reyting 4.9+") || t.rating >= 4.9) &&
         (!quick.includes("Bepul sinov") || t.freeTrial) &&
-        (!quick.includes("Saqlangan") || favorites.includes(t.id)),
+        (!quick.includes("Saqlangan") || favorites.includes(t.id)) &&
+        (!verifiedOnly || t.verified) &&
+        available(t.id),
     );
     return sort === "Arzonroq"
       ? list.sort((a, b) => a.price - b.price)
       : sort === "Reyting"
         ? list.sort((a, b) => b.rating - a.rating)
-        : list;
-  }, [tutors, filters, query, quick, user.area, favorites, sort]);
+        : list.sort(
+            (a, b) =>
+              Number(
+                user.interests.some((s) =>
+                  (b.subjects || [b.subject]).includes(s),
+                ),
+              ) -
+                Number(
+                  user.interests.some((s) =>
+                    (a.subjects || [a.subject]).includes(s),
+                  ),
+                ) ||
+              Number(b.area === user.area) - Number(a.area === user.area) ||
+              b.rating - a.rating,
+          );
+  }, [
+    tutors,
+    filters,
+    query,
+    quick,
+    user.area,
+    favorites,
+    sort,
+    verifiedOnly,
+    weekday,
+    period,
+    market,
+    user.interests,
+  ]);
   const matchesSubject = (subject: string) =>
     filters.subject === "Barchasi" || subject === filters.subject;
   const videos = openLessons.filter(
@@ -77,7 +133,7 @@ export function SearchScreen() {
       matchesSubject(t.subject) &&
       matchesSearch(`${t.title} ${t.subject}`, query),
   );
-  const communities = clubs.filter(
+  const communities = (mode === "demo" ? clubs : []).filter(
     (c) =>
       matchesSubject(c.subject) &&
       matchesSearch(`${c.title} ${c.subject} ${c.description}`, query),
@@ -95,6 +151,7 @@ export function SearchScreen() {
   const studyGroups = groups.filter(
     (g) =>
       !isClubOffering(g) &&
+      available(g.tutorId, g.id) &&
       g.price >= filters.minPrice &&
       g.price <= filters.maxPrice &&
       matchesSubject(g.subject) &&
@@ -128,6 +185,9 @@ export function SearchScreen() {
     );
   const reset = () => {
     setFilters(defaultFilters);
+    setVerifiedOnly(false);
+    setWeekday("all");
+    setPeriod("all");
     setQuick([]);
     setQuery("");
   };
@@ -174,13 +234,54 @@ export function SearchScreen() {
           ) +
           Number(filters.minRating > 0) +
           quick.length +
-          Number(sort !== "Mosligi")
+          Number(sort !== "Mosligi") +
+          Number(verifiedOnly) +
+          Number(weekday !== "all") +
+          Number(period !== "all")
         }
         onReset={() => {
           reset();
           setSort("Mosligi");
         }}
       >
+        <Chip
+          label="Faqat tasdiqlangan ustozlar"
+          selected={verifiedOnly}
+          onPress={() => setVerifiedOnly((v) => !v)}
+        />
+        <FilterSelect
+          label="Dars kuni"
+          value={weekday}
+          onChange={setWeekday}
+          options={[
+            { value: "all", label: "Barcha kunlar" },
+            ...[
+              "Yakshanba",
+              "Dushanba",
+              "Seshanba",
+              "Chorshanba",
+              "Payshanba",
+              "Juma",
+              "Shanba",
+            ].map((label, i) => ({ value: String(i), label })),
+          ]}
+        />
+        <FilterSelect
+          label="Dars vaqti"
+          value={period}
+          onChange={setPeriod}
+          options={[
+            { value: "all", label: "Istalgan vaqt" },
+            { value: "morning", label: "Ertalab · 12:00 gacha" },
+            { value: "afternoon", label: "Kunduzi · 12:00–18:00" },
+            { value: "evening", label: "Kechqurun · 18:00 dan" },
+          ]}
+        />
+        {weekday !== "all" || period !== "all" ? (
+          <AppText variant="caption" color={C.muted}>
+            Vaqt filtri e’lon qilingan kelgusi darslar jadvaliga asoslanadi.
+          </AppText>
+        ) : null}
         <FilterSelect
           label="Fan"
           options={filterChoices(["Barchasi", ...SUBJECTS])}

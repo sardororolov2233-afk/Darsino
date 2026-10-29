@@ -13,7 +13,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await login(page, "oqi@example.com");
-  await page.getByRole("tab", { name: "Radar", exact: true }).click();
+  await page.getByRole("tab", { name: "Bilimim", exact: true }).click();
   await expect(
     page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
@@ -41,7 +41,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
     page.getByText("2/5", { exact: true }).filter({ visible: true }).first(),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Radarga qaytish", exact: true })
+    .getByRole("button", { name: "Bilimimga qaytish", exact: true })
     .click();
   await expect(
     page
@@ -49,7 +49,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
       .filter({ visible: true })
       .first(),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "Klublar", exact: true }).click();
   await page
     .getByRole("button", { name: "Klubni kuzatish", exact: true })
@@ -59,7 +59,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
     page.getByRole("button", { name: "Kuzatilmoqda", exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("tab", { name: "Radar", exact: true }).click();
+  await page.getByRole("tab", { name: "Bilimim", exact: true }).click();
   await expect(
     page
       .getByText("40% to‘g‘ri", { exact: true })
@@ -80,7 +80,7 @@ test("diagnostic results and followed clubs persist and remain private to each a
     .getByRole("button", { name: "Chiqishni tasdiqlash", exact: true })
     .click();
   await login(page, "other-oqi@example.com");
-  await page.getByRole("tab", { name: "Radar", exact: true }).click();
+  await page.getByRole("tab", { name: "Bilimim", exact: true }).click();
   await expect(
     page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
@@ -101,6 +101,13 @@ test("search respects multiple words, map filtering, recent searches and narrow 
   await page.goto("/");
   await login(page, "search-oqi@example.com");
   await page.getByRole("tab", { name: "Qidirish", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Filtrlarni ochish yoki yopish", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Tozalash", exact: true })
+    .first()
+    .click();
   const field = page.getByRole("textbox", {
     name: "Repetitor qidirish",
     exact: true,

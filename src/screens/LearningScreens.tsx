@@ -1,10 +1,15 @@
+import { uid, dateLabel } from "../state/domain";
 import { useClassroom } from "../state/ClassroomContext";
-import { studentResults, studentWorkspace } from "../state/studentWorkspace";
+import {
+  studentResults,
+  studentWorkspace,
+  comparableGrowth,
+} from "../state/studentWorkspace";
 import { RadarChart } from "../components/RadarChart";
 import { MockTestCards } from "../components/MockTestCards";
 import { MetricTile } from "../components/WorkspaceCards";
 import { LocalizedPressable as Pressable } from "../i18n/native";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAppNavigation, type RootStackParamList } from "../navigation";
@@ -27,6 +32,7 @@ import {
 } from "../components/FilterControls";
 import {
   ClubCard,
+  LearningSync,
   DiagnosticCard,
   OpenLessonCard,
 } from "../components/LearningCards";
@@ -47,7 +53,7 @@ export function LearningLibrary({
   section: "Video darslar" | "Klublar";
 }) {
   const [subject, setSubject] = useState("Barchasi");
-  const { groups } = useApp();
+  const { groups, mode } = useApp();
   const publicClubs = groups.filter(isClubOffering);
   return (
     <>
@@ -58,7 +64,9 @@ export function LearningLibrary({
       </AppText>
       <AppText variant="caption" color={C.muted}>
         {section === "Klublar"
-          ? "Ustozlar klublariga ariza yuboring. Qiziqishlar katalogidagi namuna klublarni esa kuzatishingiz mumkin."
+          ? mode === "demo"
+            ? "Namuna klublar va haqiqiy guruhlarga kirish oqimini sinang."
+            : "Ustozlar e’lon qilgan klublarga ariza yuboring."
           : "Khan Academy va British Council ochiq videolari. Darslar manba saytida ochiladi."}
       </AppText>
       {section === "Klublar" && publicClubs.length ? (
@@ -89,9 +97,14 @@ export function LearningLibrary({
               <OpenLessonCard key={l.id} lesson={l} />
             ))}
         </>
-      ) : (
+      ) : mode === "demo" ? (
         clubs.map((c) => <ClubCard key={c.id} club={c} />)
-      )}
+      ) : !publicClubs.length ? (
+        <EmptyState
+          title="Klublar hali ochilmagan"
+          subtitle="Ustoz e’lon qilgan klublar shu yerda ko‘rinadi."
+        />
+      ) : null}
     </>
   );
 }
@@ -110,11 +123,8 @@ export function RadarScreen() {
     classroom.data,
     learning.data.attempts,
   ).filter((r) => subject === "Barchasi" || r.subject === subject);
-  const average = results.length
-    ? Math.round(
-        results.reduce((sum, r) => sum + r.percentage, 0) / results.length,
-      )
-    : null;
+  const latestResult = results[0];
+  const growth = comparableGrowth(results);
   const stats = studentWorkspace(market, user.id, classroom.data);
   const skills = learningStats(
     learning.data,
@@ -122,7 +132,8 @@ export function RadarScreen() {
   );
   return (
     <Screen top={<OqiHeader />}>
-      <AppText variant="title">Bilim radari</AppText>
+      <AppText variant="title">Bilimim</AppText>
+      <LearningSync />
       <Card
         style={{
           backgroundColor: C.action,
@@ -131,14 +142,14 @@ export function RadarScreen() {
         }}
       >
         <AppText variant="caption" color={C.primary}>
-          MENING O‘ZLASHTIRISHIM
+          SO‘NGGI NATIJAM
         </AppText>
         <AppText variant="display" color={C.navy}>
-          {average === null ? "Hali o‘lchanmagan" : `${average}%`}
+          {!latestResult ? "Hali o‘lchanmagan" : `${latestResult.percentage}%`}
         </AppText>
         <AppText color={C.primary}>
           {results.length
-            ? `${results.length} ta haqiqiy test natijasi bo‘yicha`
+            ? `${latestResult.title} · ${latestResult.method}`
             : "Birinchi testni ishlang. Natijalar shu yerda saqlanadi."}
         </AppText>
       </Card>
@@ -166,6 +177,19 @@ export function RadarScreen() {
           <RadarChart skills={skills.skills} />
           <AppText variant="caption" color={C.muted}>
             Mustaqil diagnostika savollari bo‘yicha o‘lchangan ko‘nikmalar.
+          </AppText>
+        </Card>
+      ) : null}
+      {growth ? (
+        <Card>
+          <AppText variant="heading">Bir xil testdagi o‘zgarish</AppText>
+          <AppText color={C.primary}>
+            {growth.delta > 0 ? "+" : ""}
+            {growth.delta} foiz punkt
+          </AppText>
+          <AppText variant="caption" color={C.muted}>
+            {growth.current.title} · faqat shu testning oldingi urinishi bilan
+            taqqoslandi.
           </AppText>
         </Card>
       ) : null}
@@ -218,7 +242,10 @@ export function RadarScreen() {
                 <Chip label={`${result.percentage}%`} tone="green" />
               </View>
               <AppText variant="caption" color={C.muted}>
-                {result.correct}/{result.total} to‘g‘ri · {result.subject}
+                {result.score}/{result.maxScore} ball · {result.subject} ·{" "}
+                {result.method}
+                {" · "}
+                {dateLabel(result.date)}
               </AppText>
             </Card>
           ))}
@@ -254,6 +281,7 @@ export function QuizScreen({
   );
   const invite = inviteMessage && validInvitation(market, inviteMessage);
   const test = diagnostics.find((t) => t.id === route.params.id);
+  const attemptId = useRef(uid("quiz"));
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
@@ -279,7 +307,7 @@ export function QuizScreen({
     if (selected === null) return;
     if (index === test.questions.length - 1) {
       void action.run(
-        () => finishQuiz(test.id, finalAnswers),
+        () => finishQuiz(test.id, finalAnswers, attemptId.current),
         () => setDone(true),
       );
     } else {
@@ -345,7 +373,7 @@ export function QuizScreen({
             />
           ) : null}
           <Button
-            title="Radarga qaytish"
+            title="Bilimimga qaytish"
             icon="target"
             onPress={() => navigation.popTo("Main", { screen: "Radar" })}
           />
@@ -353,6 +381,7 @@ export function QuizScreen({
             title="Qayta ishlash"
             variant="outline"
             onPress={() => {
+              attemptId.current = uid("quiz");
               setAnswers([]);
               setSelected(null);
               setChecked(false);

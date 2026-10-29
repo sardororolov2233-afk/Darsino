@@ -4,7 +4,7 @@ import {
   validateDemoTutorApplication,
 } from "./tutorApplication";
 import { applyAccountCommand } from "./accountMarket";
-import { canContactMessage } from "./account";
+import { canContactMessage, studentPrivacyDefaults } from "./account";
 import {
   dmId,
   timeLabel,
@@ -175,6 +175,14 @@ export function applyMarketCommand(
         actor.onboarded || actor.role !== "tutor" || c.tutor,
         "Repetitor profilini to‘ldiring.",
       );
+      if (
+        !actor.onboarded &&
+        actor.role === "student" &&
+        !m.accountSettings?.[actorId]
+      ) {
+        m.accountSettings = m.accountSettings || {};
+        m.accountSettings[actorId] = { ...studentPrivacyDefaults };
+      }
       Object.assign(actor, p, {
         name: p.name.trim(),
         city: p.city.trim(),

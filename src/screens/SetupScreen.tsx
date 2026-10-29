@@ -237,6 +237,12 @@ export function SetupScreen() {
         </>
       }
     >
+      {!isTutor && draft.step === finalStep ? (
+        <AppText color={OB.muted} variant="caption">
+          Profilingiz standart holatda yopiq. Sizni ID orqali topish va kontakt
+          ruxsatlarini keyin Maxfiylik bo‘limida boshqarasiz.
+        </AppText>
+      ) : null}
       {loaded ? (
         <View pointerEvents={action.busy ? "none" : "auto"} style={{ gap: 16 }}>
           {draft.step === 0 ? (

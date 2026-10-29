@@ -768,7 +768,7 @@ test(
           );
         assert.equal(
           (await db.query("select id from storage.buckets")).rows.length,
-          5,
+          6,
         );
       } finally {
         await db.close();

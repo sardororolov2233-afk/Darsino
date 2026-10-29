@@ -17,14 +17,18 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/icon.png",
       "lang": "uz",
       "themeColor": "#B5E6B8",
-      "description": "O‘qi — ustozlar, ochiq darslar va bilim radari. O‘zingizga mos ta’lim yo‘lini toping."
+      "description": "O‘qi — mos ustoz topish, darslar, uy vazifalari va ta’lim natijalari."
     },
     "plugins": [
       [

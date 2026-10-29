@@ -1,3 +1,4 @@
+import { useHomework } from "../state/HomeworkContext";
 import {
   LocalizedPressable as Pressable,
   LocalizedTextInput as TextInput,
@@ -24,7 +25,10 @@ export function OqiHeader({
   const navigation = useAppNavigation(),
     { user, notifications, filters } = useApp(),
     assistant = useAssistantAccess();
-  const unread = notifications.filter((n) => !n.read).length;
+  const homework = useHomework();
+  const unread =
+    notifications.filter((n) => !n.read).length +
+    homework.data.events.filter((e) => !e.read).length;
   const filterActive =
     filters.subject !== "Barchasi" ||
     filters.mode !== "Barchasi" ||

@@ -12,7 +12,7 @@ export function BottomNavigation({ active }: { active: TabName }) {
       {[
         { name: "Home" as const, title: "Bosh", icon: "home" as const },
         { name: "Search" as const, title: "Qidirish", icon: "search" as const },
-        { name: "Radar" as const, title: "Radar", icon: "target" as const },
+        { name: "Radar" as const, title: "Bilimim", icon: "target" as const },
         {
           name: "Lessons" as const,
           title: "Darslarim",

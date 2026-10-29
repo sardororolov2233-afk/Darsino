@@ -38,7 +38,13 @@ export function readLearning(raw: string | null): LearningState {
   )
     throw new Error("O‘quv progressi formati noto‘g‘ri.");
   const attempts = retainAttempts(
-    value.attempts.filter((a) => {
+    [
+      ...new Map(
+        value.attempts
+          .filter((a) => a && typeof a.id === "string")
+          .map((a) => [a.id, a]),
+      ).values(),
+    ].filter((a) => {
       const test = diagnostics.find((t) => t.id === a?.testId);
       return (
         test &&

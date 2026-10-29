@@ -294,6 +294,7 @@ export function Chip({
       accessibilityRole={onPress ? "button" : undefined}
       accessibilityLabel={onPress ? label : undefined}
       accessibilityState={onPress ? { selected } : undefined}
+      aria-pressed={onPress ? selected : undefined}
       style={[
         styles.chip,
         { backgroundColor: bg, borderColor: selected ? C.primary : C.border },

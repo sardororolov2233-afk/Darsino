@@ -1,9 +1,14 @@
+import { REGIONS } from "../data/regions";
+import { ONBOARDING_GOALS, needsSubjects } from "../state/onboarding";
+import { useHomework } from "../state/HomeworkContext";
+import { HomeworkNotifications } from "./HomeworkScreens";
 import { offeringScheduleLabel } from "../state/domain";
 import { MockTestCards } from "../components/MockTestCards";
 import { readAccountSettings } from "../state/account";
 import { StudentPayments } from "../components/GroupPayments";
 import {
   FilterOptions,
+  FilterSelect,
   FilterPanel,
   filterChoices,
 } from "../components/FilterControls";
@@ -460,25 +465,38 @@ function ScheduleContent() {
 }
 export { ChatsScreen, ConversationScreen } from "./ChatScreens";
 export function NotificationsScreen() {
+  const homework = useHomework();
   const navigation = useAppNavigation(),
-    { notifications, command, refresh, user } = useApp(),
+    { notifications, command, refresh, user, market } = useApp(),
     action = useAction();
   return (
     <Screen>
       <Header title="Bildirishnomalar" onBack={() => navigation.goBack()} />
+      <HomeworkNotifications />
       <View style={uiStyles.row}>
         <Button
           title="Yangilash"
           variant="soft"
           loading={action.busy}
-          onPress={() => action.run(refresh)}
+          onPress={() =>
+            action.run(async () => {
+              await refresh();
+              await homework.refresh();
+            })
+          }
         />
         <Button
           title="O‘qildi deb belgilash"
           variant="outline"
-          disabled={!notifications.some((n) => !n.read)}
+          disabled={
+            !notifications.some((n) => !n.read) &&
+            !homework.data.events.some((e) => !e.read)
+          }
           onPress={() =>
-            action.run(() => command({ type: "read-notifications" }))
+            action.run(async () => {
+              await command({ type: "read-notifications" });
+              await homework.readEvents();
+            })
           }
           style={{ flex: 1 }}
         />
@@ -512,16 +530,50 @@ export function NotificationsScreen() {
           <AppText variant="caption" color={C.muted}>
             {dateLabel(n.createdAt)} · {timeLabel(n.createdAt)}
           </AppText>
-          {n.offeringId && user.role === "student" ? (
-            <Button
-              title="Darsni ko‘rish"
-              variant="soft"
-              onPress={() => navigation.popTo("Main", { screen: "Lessons" })}
-            />
-          ) : null}
+          <Button
+            title="Xabarni ochish"
+            variant="soft"
+            onPress={() => {
+              if (n.title.toLowerCase().includes("kontakt"))
+                navigation.navigate("Contacts");
+              else if (n.title.toLowerCase().includes("taklif"))
+                navigation.navigate("Invitations");
+              else if (n.offeringId && user.role === "tutor") {
+                if (n.title.toLowerCase().includes("ariza"))
+                  navigation.navigate("Applications", {
+                    offeringId: n.offeringId,
+                  });
+                else
+                  navigation.navigate("ManageClass", {
+                    id: n.offeringId,
+                    tab: n.title.toLowerCase().includes("test")
+                      ? "Testlar"
+                      : "O‘quvchilar",
+                  });
+              } else if (n.offeringId && user.role === "student") {
+                const application = market.applications.find(
+                  (a) => a.groupId === n.offeringId && a.studentId === user.id,
+                );
+                if (
+                  market.enrollments.some(
+                    (e) =>
+                      e.offeringId === n.offeringId &&
+                      e.studentId === user.id &&
+                      e.active,
+                  )
+                )
+                  navigation.navigate("StudentGroup", { id: n.offeringId });
+                else if (application)
+                  navigation.navigate("Request", { id: application.id });
+                else navigation.navigate("Main", { screen: "Lessons" });
+              } else if (user.role === "moderator")
+                navigation.navigate("Main", { screen: "Moderation" });
+              else navigation.navigate("Chats");
+            }}
+          />
         </Card>
       ))}
-      {!notifications.length ? (
+      {!notifications.length && !homework.data.events.length ? (
         <EmptyState
           title="Yangi xabar yo‘q"
           subtitle="Profil va ariza bo‘yicha javoblar shu yerga keladi."
@@ -602,6 +654,12 @@ export function EditProfileScreen() {
     [area, setArea] = useState(user.area),
     [goal, setGoal] = useState(user.goal),
     [interests, setInterests] = useState(user.interests);
+  const [studyMode, setStudyMode] = useState<"Onlayn" | "Oflayn">(
+      user.studyMode || "Onlayn",
+    ),
+    [studySupport, setStudySupport] = useState<"Mustaqil" | "Ustoz bilan">(
+      user.studySupport || "Ustoz bilan",
+    );
   return (
     <Screen
       bottom={
@@ -613,7 +671,15 @@ export function EditProfileScreen() {
               () =>
                 command({
                   type: "profile",
-                  profile: { name, city, area, goal, interests },
+                  profile: {
+                    name,
+                    city,
+                    area,
+                    goal,
+                    interests,
+                    studyMode,
+                    studySupport,
+                  },
                 }),
               () => navigation.goBack(),
             )
@@ -626,18 +692,41 @@ export function EditProfileScreen() {
         <AvatarEditor />
       </Card>
       <Field label="Ism va familiya" value={name} onChangeText={setName} />
-      <Field label="Shahar" value={city} onChangeText={setCity} />
-      <Field label="Hudud" value={area} onChangeText={setArea} />
-      <View style={uiStyles.wrap}>
-        {AREAS.slice(0, 3).map((v) => (
-          <Chip
-            key={v}
-            label={v}
-            selected={area === v}
-            onPress={() => setArea(v)}
-          />
-        ))}
-      </View>
+      <FilterSelect
+        label="Viloyat"
+        value={city}
+        onChange={(v) => {
+          setCity(v);
+          setArea("");
+        }}
+        options={filterChoices([
+          ...new Set([city, ...REGIONS.map((r) => r.name)]),
+        ])}
+      />
+      <FilterSelect
+        label="Tuman / shahar"
+        value={area}
+        disabled={!city}
+        onChange={setArea}
+        options={filterChoices([
+          ...new Set([
+            ...(area ? [area] : []),
+            ...(REGIONS.find((r) => r.name === city)?.districts || []),
+          ]),
+        ])}
+      />
+      <FilterOptions
+        label="Dars shakli"
+        value={studyMode}
+        onChange={(v) => setStudyMode(v as "Onlayn" | "Oflayn")}
+        options={filterChoices(["Onlayn", "Oflayn"])}
+      />
+      <FilterOptions
+        label="Tayyorgarlik usuli"
+        value={studySupport}
+        onChange={(v) => setStudySupport(v as "Mustaqil" | "Ustoz bilan")}
+        options={filterChoices(["Mustaqil", "Ustoz bilan"])}
+      />
       {user.role === "student" ? (
         <>
           <AppText variant="heading">Fanlar</AppText>
@@ -657,14 +746,19 @@ export function EditProfileScreen() {
           </View>
           <AppText variant="heading">O‘qish maqsadi</AppText>
           <View style={uiStyles.wrap}>
-            {GOALS.map((v) => (
-              <Chip
-                key={v}
-                label={v}
-                selected={goal === v}
-                onPress={() => setGoal(v)}
-              />
-            ))}
+            {[...new Set([goal, ...ONBOARDING_GOALS.map((g) => g.title)])].map(
+              (v) => (
+                <Chip
+                  key={v}
+                  label={v}
+                  selected={goal === v}
+                  onPress={() => {
+                    setGoal(v);
+                    setInterests(needsSubjects(v) ? [] : ["Ingliz tili"]);
+                  }}
+                />
+              ),
+            )}
           </View>
         </>
       ) : null}

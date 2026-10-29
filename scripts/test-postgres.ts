@@ -353,6 +353,90 @@ async function storageLifecycleRace() {
   );
 }
 
+async function homeworkSubmissionRace(groupId: string) {
+  const assignment = "81000000-0000-4000-8000-000000000091",
+    submission = "82000000-0000-4000-8000-000000000091";
+  await sql(
+    `insert into public.darsino_enrollments(offering_id,student_id) values(${quote(groupId)},${quote(ids.d)}) on conflict do nothing;`,
+  );
+  const payload = {
+    id: assignment,
+    offeringId: groupId,
+    title: "Concurrent homework",
+    description: "Race fixture",
+    subject: "Ingliz tili",
+    status: "published",
+    dueAt: new Date(Date.now() + 86400000).toISOString(),
+    recipientIds: [ids.d],
+    fileIds: [],
+    revision: 0,
+  };
+  await sql(
+    authenticatedSql(
+      ids.tutor,
+      `select public.oqi_assignment_save(${quote(JSON.stringify(payload))}::jsonb);`,
+      "oqi-homework-seed",
+    ),
+  );
+  const barrier = startProcess(psqlArgs),
+    workers: ReturnType<typeof startProcess>[] = [];
+  barrier.child.stdin.write(
+    `begin;select id from public.oqi_assignments where id=${quote(assignment)} for update;select 'HOMEWORK_BARRIER';\n`,
+  );
+  try {
+    await until(
+      () => barrier.output().includes("HOMEWORK_BARRIER"),
+      "homework barrier",
+    );
+    for (const index of [0, 1]) {
+      const worker = startProcess(psqlArgs);
+      worker.child.stdin.end(
+        authenticatedSql(
+          ids.d,
+          `select public.oqi_assignment_submit(${quote(submission)},${quote(assignment)},'Same answer','{}');`,
+          `oqi-homework-race-${index}`,
+        ),
+      );
+      workers.push(worker);
+    }
+    await until(
+      async () =>
+        Number(
+          await sql(
+            "select count(*) from pg_stat_activity where application_name in ('oqi-homework-race-0','oqi-homework-race-1') and wait_event_type='Lock';",
+          ),
+        ) === 2,
+      "concurrent homework submissions",
+    );
+  } finally {
+    barrier.child.stdin.end("commit;\n");
+    assert.equal((await barrier.done).code, 0);
+  }
+  for (const result of await Promise.all(workers.map((w) => w.done))) {
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(result.stdout.trim(), submission);
+  }
+  assert.equal(
+    Number(
+      await sql(
+        `select count(*) from public.oqi_assignment_submissions where assignment_id=${quote(assignment)};`,
+      ),
+    ),
+    1,
+  );
+  assert.equal(
+    Number(
+      await sql(
+        `select count(*) from public.oqi_assignment_events where event_key=${quote("submitted:" + submission)};`,
+      ),
+    ),
+    1,
+  );
+  console.log(
+    "PASS F: simultaneous homework retries create one response version and one teacher notification.",
+  );
+}
+
 async function main() {
   let cleanupRequired = false;
   try {
@@ -565,7 +649,8 @@ async function main() {
       "PASS D: concurrent identical keys return one message, one receipt and one notification.",
     );
     await storageLifecycleRace();
-    console.log("All 5 PostgreSQL concurrency checks passed.");
+    await homeworkSubmissionRace(a1.id);
+    console.log("All 6 PostgreSQL concurrency checks passed.");
   } finally {
     if (cleanupRequired) {
       const removed = await docker(["rm", "--force", "--volumes", container]);

@@ -31,7 +31,7 @@ Ustoz kartasi haqiqiy marketplace ma’lumotlarini, narx va sharhlardan hisoblan
 | Kunlik maqsad  | Uchta alohida dars/test; kunlar Asia/Tashkent bo‘yicha hisoblanadi                                                                    |
 | Video darslar  | Manbada ochiladi; foydalanuvchi qaytib «O‘rgandim» deb belgilaydi                                                                     |
 | Klublar        | Haqiqiy ustoz klublari: e’lon → ariza → ustoz tasdig‘i → a’zolik. Namuna katalogi va kuzatish alohida ko‘rsatiladi                    |
-| Progress       | Har akkauntga alohida AsyncStorage; Supabase progress sinxronlashuvi hali ulanmagan                                                   |
+| Progress       | Supabase private state — asosiy manba; akkauntga alohida cache, revision/CAS va qayta sinxronlash                                     |
 
 Ko‘rinadigan brend va ilova ikonasi **O‘qi**. Mavjud baza, saqlangan sessiyalar va OAuth sozlamalarini saqlash uchun `darsino_*` SQL/RPC, `@darsino/*` marketplace kalitlari, `uz.darsino.app` paket identifikatori va `darsino://` qaytish sxemasi saqlangan. Repo nomi o‘zgartirilmagan.
 
@@ -54,7 +54,7 @@ Ustoz rasmlarida namuna sifatida uch o‘quvchi va ular ulashgan javoblar ishlat
 - **Tahlil va guruhlar:** o‘z guruhlarining faol a’zolari, haqiqiy arizalar, boshlangan darslarga belgilangan davomat, oldindan band o‘rinlar va yaqin dars. Radar ulashilgan test javoblaridan hisoblanadi; sun’iy o‘zlashtirish yoki davomat foizi yo‘q.
 - **Diagnostika:** ustoz guruhning faol o‘quvchilariga mavjud shaxsiy chat orqali topshiriq yuboradi. O‘quvchi besh savolni tugatib, natijasini alohida tugma bilan ulashadi. Faqat haqiqiy ustoz topshirig‘i va taklif qilingan o‘quvchi javobi olinadi; ball qayta hisoblanadi. Boshqa shaxsiy progress uzatilmaydi.
 - **Klublar:** tasdiqlangan ustoz bepul yoki pullik klub / tadbirni mavjud marketplace RPC orqali e’lon qiladi. Hech kim avtomatik a’zo qilinmaydi. O‘quvchi uni qidiruv va klublarda topadi, ariza yuboradi, ustoz tasdiqlaydi. Live bepul e’lon uchun [yangi SQL migratsiyasi](../supabase/migrations/202610150001_free_clubs.sql) zarur.
-- **Xonalar:** namuna katalogi, hudud va sig‘im filtrlari, sxema, akkauntga alohida mahalliy reja, taxminiy xarajat va rejani olib tashlash. Guruh egasi, oflayn shakl, sig‘im, sana va reja vaqtlari to‘qnashuvi tekshiriladi. Bu haqiqiy bron yoki to‘lov emas; xona mavjudligi egasi bilan tasdiqlanadi. Xona rejasi Supabase’ga sinxronlanmaydi.
+- **Xonalar:** namuna katalogi, hudud va sig‘im filtrlari, sxema, akkauntga alohida mahalliy reja, taxminiy xarajat va rejani olib tashlash. Guruh egasi, oflayn shakl, sig‘im, sana va reja vaqtlari to‘qnashuvi tekshiriladi. Bu haqiqiy bron yoki to‘lov emas; xona mavjudligi egasi bilan tasdiqlanadi. Xona rejasi ham akkauntga tegishli private workspace orqali Supabase’ga sinxronlanadi.
 - **Profil:** haqiqiy fanlar, tajriba, sharhlardan hisoblangan reyting, faol a’zolar va xona xarajati rejasi. Pro obuna, tushum, balans yoki pul yechish xizmati ko‘rsatilmaydi.
 
 ## Tekshiruv

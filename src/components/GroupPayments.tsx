@@ -350,6 +350,10 @@ export function StudentPayments({ offeringId }: { offeringId?: string } = {}) {
     });
   return (
     <View style={{ gap: 14 }}>
+      <AppText variant="caption" color={C.muted}>
+        Bu ustoz yuritadigan to‘lov daftari. Bank tranzaksiyasi yoki karta
+        to‘lovi tasdig‘i emas.
+      </AppText>
       <MonthPicker month={month} onChange={setMonth} />
       {groups.map(({ group, row }) => (
         <Card key={group.id}>

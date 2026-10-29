@@ -1,3 +1,4 @@
+import { clearAccountCache } from "../services/accountCache";
 import { readAccountSettings } from "./account";
 import React, {
   createContext,
@@ -84,6 +85,9 @@ type AppContextType = {
   ready: boolean;
   signedIn: boolean;
   authenticated: boolean;
+  passwordRecovery: boolean;
+  restoringSession: boolean;
+  retrySession: () => Promise<void>;
   user: User;
   market: Marketplace;
   mode: "demo" | "supabase";
@@ -127,6 +131,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const [syncError, setSyncError] = useState("");
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [restoringSession, setRestoringSession] = useState(false);
   const [filters, setCurrentFilters] = useState<Filters>({ ...defaultFilters });
   const marketRef = useRef(market),
     userRef = useRef(user),
@@ -143,6 +149,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   userRef.current = user;
   actorRef.current = actorId;
   const adopt = useCallback((snapshot: Snapshot) => {
+    if (
+      (actorRef.current !== snapshot.user.id || !userRef.current.onboarded) &&
+      snapshot.user.onboarded &&
+      snapshot.user.role === "student"
+    )
+      setCurrentFilters({
+        ...defaultFilters,
+        subject: snapshot.user.interests[0] || "Barchasi",
+        mode: snapshot.user.studyMode || "Barchasi",
+      });
     marketRef.current = snapshot.market;
     userRef.current = snapshot.user;
     actorRef.current = snapshot.user.id;
@@ -233,6 +249,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const hydrate = () => loadLiveAccount().catch(() => {});
     const auth = client?.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
+        const departed = actorRef.current;
+        if (departed) void clearAccountCache(departed).catch(() => {});
+        setPasswordRecovery(false);
         passwordAttempt.current++;
         epoch.current++;
         authUserId.current = null;
@@ -249,8 +268,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         (event === "SIGNED_IN" ||
           event === "INITIAL_SESSION" ||
           event === "TOKEN_REFRESHED" ||
-          event === "MFA_CHALLENGE_VERIFIED")
+          event === "MFA_CHALLENGE_VERIFIED" ||
+          event === "PASSWORD_RECOVERY")
       ) {
+        if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
         if (authUserId.current !== session.user.id) {
           authUserId.current = session.user.id;
           epoch.current++;
@@ -603,6 +624,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [command],
   );
   const signOut = useCallback(async () => {
+    const departing = actorRef.current;
     passwordAttempt.current++;
     if (supabase) {
       const { error } = await supabase.auth.signOut({ scope: "local" });
@@ -618,6 +640,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSyncError("");
     await AsyncStorage.removeItem(pendingRoleKey);
     if (backendMode === "supabase") {
+      if (departing)
+        await clearAccountCache(departing).catch(() => setStorageError(true));
       marketRef.current = emptyMarketplace();
       setMarket(marketRef.current);
     }
@@ -636,6 +660,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ready,
       signedIn: !!actorId && user.onboarded,
       authenticated: !!actorId,
+      passwordRecovery,
+      restoringSession,
+      retrySession: async () => {
+        setRestoringSession(true);
+        setSyncError("");
+        try {
+          await loadLiveAccount();
+        } finally {
+          setRestoringSession(false);
+        }
+      },
       user,
       market,
       mode: backendMode,
@@ -698,6 +733,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     storageError,
     syncError,
     filters,
+    passwordRecovery,
+    restoringSession,
+    loadLiveAccount,
     refresh,
     signUpWithPassword,
     signInWithPassword,
