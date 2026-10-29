@@ -30,6 +30,8 @@ export function MetricTile({
         gap: 12,
         padding: 16,
         borderRadius: 20,
+        backgroundColor: tone === "red" ? C.white : C.primarySoft,
+        borderColor: tone === "red" ? C.border : C.primaryBorder,
       }}
     >
       <View style={uiStyles.between}>
@@ -45,7 +47,7 @@ export function MetricTile({
                 ? C.greenSoft
                 : tone === "red"
                   ? C.errorSoft
-                  : C.primarySoft,
+                  : C.white,
           }}
         >
           <Icon name={icon} size={18} color={color} />

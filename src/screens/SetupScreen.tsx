@@ -261,7 +261,7 @@ export function SetupScreen() {
               </View>
               {needsSubjects(draft.goal) || (isTutor && draft.goal) ? (
                 <>
-                  <AppText variant="heading" color="white">
+                  <AppText variant="heading" color={OB.ink}>
                     {isTutor
                       ? "Qaysi fanlardan dars berasiz?"
                       : "Qaysi fanlar kerak?"}
@@ -276,7 +276,7 @@ export function SetupScreen() {
           ) : null}
           {draft.step === 1 ? (
             <>
-              <AppText variant="label" color="white">
+              <AppText variant="label" color={OB.ink}>
                 Ta’lim shakli
               </AppText>
               <View style={{ flexDirection: "row", gap: 12 }}>
@@ -301,7 +301,7 @@ export function SetupScreen() {
               </View>
               {!isTutor ? (
                 <>
-                  <AppText variant="label" color="white">
+                  <AppText variant="label" color={OB.ink}>
                     Tayyorgarlik usuli
                   </AppText>
                   <View style={{ flexDirection: "row", gap: 12 }}>
@@ -473,7 +473,7 @@ export function SetupScreen() {
                   gap: 8,
                 }}
               >
-                <AppText variant="label" color="white">
+                <AppText variant="label" color={OB.ink}>
                   {draft.goal}
                 </AppText>
                 <AppText color={OB.muted} variant="caption">

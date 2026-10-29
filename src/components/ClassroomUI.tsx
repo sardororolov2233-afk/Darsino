@@ -13,7 +13,7 @@ import {
   weekdayOf,
   WEEKDAYS,
 } from "../state/teacherDashboard";
-export const WORKSPACE = "#4430ED";
+export const WORKSPACE = C.primary;
 
 export function WorkspaceHeader({
   title,
@@ -143,7 +143,7 @@ export function TeacherSchedule({
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const weekday = WEEKDAYS.find((d) => d.day === weekdayOf(day))?.label || "";
   return (
-    <Card style={{ gap: 16, borderRadius: 20, borderColor: "#C9D7F6" }}>
+    <Card style={{ gap: 16, borderRadius: 20, borderColor: C.primaryBorder }}>
       <View style={uiStyles.between}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <AppText variant="heading">
@@ -198,20 +198,20 @@ export function TeacherSchedule({
           >
             <View style={styles.lessonLine} />
             <View style={{ flex: 1, gap: 6 }}>
-              <AppText variant="label" color="#1462D9" localize={false}>
+              <AppText variant="label" color={C.primary} localize={false}>
                 {session.title}
               </AppText>
-              <AppText variant="caption" color="#4A83DF">
+              <AppText variant="caption" color={C.muted}>
                 {group?.subject} ·{" "}
                 {group?.type === "individual" ? "Individual" : "Guruh darsi"}
               </AppText>
               <View style={[uiStyles.row, { flexWrap: "wrap" }]}>
-                <AppText color="#1462D9">
+                <AppText color={C.primary}>
                   {timeLabel(session.startsAt)}–{timeLabel(session.endsAt)}
                 </AppText>
                 <AppText
                   variant="caption"
-                  color="#1462D9"
+                  color={C.primary}
                   style={styles.location}
                 >
                   {session.location}
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 5,
     padding: 5,
-    backgroundColor: "#EDF0F6",
+    backgroundColor: C.primarySoft,
     borderRadius: 15,
   },
   tab: {
@@ -293,15 +293,15 @@ const styles = StyleSheet.create({
   lesson: {
     flexDirection: "row",
     gap: 10,
-    backgroundColor: "#E6F3FF",
+    backgroundColor: C.primarySoft,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#D8EAFC",
+    borderColor: C.primaryBorder,
   },
-  lessonLine: { width: 3, borderRadius: 3, backgroundColor: "#1768F5" },
+  lessonLine: { width: 3, borderRadius: 3, backgroundColor: C.primary },
   location: {
-    backgroundColor: "#CDE3FF",
+    backgroundColor: C.primaryBorder,
     borderRadius: 9,
     paddingHorizontal: 7,
     flexShrink: 1,

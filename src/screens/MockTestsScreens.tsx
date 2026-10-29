@@ -330,7 +330,7 @@ export function UploadMockTestScreen({
             }
             loading={action.busy}
             onPress={() => save("published")}
-            style={{ backgroundColor: WORKSPACE }}
+            style={{ backgroundColor: C.action }}
           />
           <Button
             title="Qoralama sifatida saqlash"
@@ -342,7 +342,9 @@ export function UploadMockTestScreen({
         </View>
       }
     >
-      <Card style={{ backgroundColor: "#EFEDFF", borderColor: "#DEDAFE" }}>
+      <Card
+        style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
+      >
         <View style={uiStyles.row}>
           <View
             style={{
@@ -383,7 +385,7 @@ export function UploadMockTestScreen({
         <Card
           style={{
             borderStyle: "dashed",
-            borderColor: "#C9C2FF",
+            borderColor: C.primaryBorder,
             alignItems: "center",
             paddingVertical: 25,
           }}
@@ -404,7 +406,7 @@ export function UploadMockTestScreen({
             onPress={upload}
             disabled={locked || !group}
             loading={action.busy}
-            style={{ backgroundColor: WORKSPACE, alignSelf: "stretch" }}
+            style={{ backgroundColor: C.action, alignSelf: "stretch" }}
           />
           {file?.group === group ? (
             <View style={uiStyles.row}>
@@ -643,7 +645,7 @@ export function UploadMockTestScreen({
                   key={text}
                   style={{
                     flex: 1,
-                    backgroundColor: "#F1EEFF",
+                    backgroundColor: C.primarySoft,
                     borderRadius: 10,
                     padding: 8,
                   }}
@@ -890,7 +892,9 @@ export function MockTestScreen({
         ) : undefined
       }
     >
-      <Card style={{ backgroundColor: "#F0EDFF", borderColor: "#DCD6FE" }}>
+      <Card
+        style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
+      >
         <AppText variant="title" localize={false}>
           {test.title}
         </AppText>
@@ -987,7 +991,7 @@ export function MockTestScreen({
             icon="play"
             loading={action.busy}
             onPress={() => action.run(() => classroom.beginTest(test.id))}
-            style={{ backgroundColor: WORKSPACE }}
+            style={{ backgroundColor: C.action }}
           />
           <Feedback {...action} />
         </Card>
@@ -1024,7 +1028,7 @@ export function MockTestScreen({
                         borderColor:
                           answers[index] === i ? WORKSPACE : C.border,
                         backgroundColor:
-                          answers[index] === i ? "#F0EDFF" : "white",
+                          answers[index] === i ? C.primarySoft : "white",
                         padding: 13,
                         borderRadius: 12,
                       }}

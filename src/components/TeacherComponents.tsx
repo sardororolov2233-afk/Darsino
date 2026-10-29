@@ -92,8 +92,8 @@ export function TeacherMetric({
         minWidth: 0,
         padding: 13,
         gap: 6,
-        backgroundColor: dark ? C.navy : C.white,
-        borderColor: dark ? C.navy : C.border,
+        backgroundColor: dark ? C.action : C.white,
+        borderColor: dark ? C.primaryBorder : C.border,
         borderRadius: 20,
       }}
       onPress={onPress}
@@ -102,7 +102,7 @@ export function TeacherMetric({
       <View style={uiStyles.between}>
         <AppText
           variant="caption"
-          color={dark ? "#C6D5F1" : C.muted}
+          color={dark ? C.primary : C.muted}
           style={{ flex: 1, fontSize: 11, fontFamily: font.bold }}
         >
           {title}
@@ -110,16 +110,16 @@ export function TeacherMetric({
         <View
           style={[
             styles.metricIcon,
-            { backgroundColor: dark ? "#FFFFFF18" : "#EEF2FF" },
+            { backgroundColor: dark ? C.white : C.primarySoft },
           ]}
         >
-          <Icon name={icon} color={dark ? C.mint : C.purple} size={16} />
+          <Icon name={icon} color={C.primary} size={16} />
         </View>
       </View>
       <View style={{ gap: 6 }}>
         <AppText
           variant="title"
-          color={dark ? C.mint : C.ink}
+          color={dark ? C.navy : C.ink}
           style={{ fontSize: 18, fontFamily: font.extra }}
         >
           {value}
@@ -151,11 +151,7 @@ export function TeacherMetric({
           />
         </View>
       ) : null}
-      <AppText
-        variant="caption"
-        color={dark ? "#D0DEF5" : C.muted}
-        style={{ fontSize: 10 }}
-      >
+      <AppText variant="caption" color={C.muted} style={{ fontSize: 10 }}>
         {subtitle}
       </AppText>
     </Card>
@@ -314,20 +310,22 @@ export function TeacherFinance() {
     .filter((p) => paymentMonth(new Date(p.startsAt)) === month)
     .reduce((sum, p) => sum + p.estimatedCost, 0);
   return (
-    <Card style={{ backgroundColor: C.navy, borderColor: C.navy }}>
-      <AppText variant="caption" color="#C6D5F1">
+    <Card
+      style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
+    >
+      <AppText variant="caption" color={C.primary}>
         Oylik hisobot · {monthLabel(month)}
       </AppText>
-      <AppText variant="title" color={C.mint}>
+      <AppText variant="title" color={C.navy}>
         {formatPrice(summary.received)}
       </AppText>
-      <AppText variant="caption" color={C.white}>
+      <AppText variant="caption" color={C.ink}>
         To‘langan · {summary.paidCount} o‘quvchi
       </AppText>
-      <AppText variant="caption" color="#C6D5F1">
+      <AppText variant="caption" color={C.muted}>
         To‘lov qoldig‘i: {formatPrice(summary.outstanding)}
       </AppText>
-      <AppText variant="caption" color="#C6D5F1">
+      <AppText variant="caption" color={C.muted}>
         Xona rejalari xarajati: {formatPrice(cost)} · taxminiy
       </AppText>
       <Button

@@ -41,6 +41,10 @@ Android APK, development client va production build uchun [EAS yo‘riqnomasi](d
 
 O‘qituvchi uchun telefon va PDF/rasm sertifikat majburiy. Ariza admin navbatiga tushadi; tasdiqlanmaguncha ustoz kabineti yopiq. Telefon va hujjat faqat egasi hamda adminga ko‘rinadi. [Oqim va server qoidalari](docs/tutor-approval.md).
 
+## 2026-10-29 och yashil dizayn
+
+[Yangi palitra va ekranlar](docs/light-green-design.md): och yashil asosiy tugmalar va kartalar, logotipga mos to‘q ko‘k matnlar, och login/onboarding, yagona guruh, chat, test va moliya ranglari. 320/390 px ko‘rinishlar, 26 brauzer ssenariysi va web/Android/iOS bundle eksportlari tekshirilgan.
+
 ## Backendni o‘rnatish
 
 - Belgilangan Supabase loyihasiga ulash: [CLI, preflight va deploy tartibi](docs/supabase-deployment.md).

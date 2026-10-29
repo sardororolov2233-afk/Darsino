@@ -189,14 +189,14 @@ export function Button({
   accessibilityLabel?: string;
 }) {
   const bg = {
-    primary: C.primary,
-    gold: C.primary,
-    soft: C.blueSoft,
+    primary: C.action,
+    gold: C.action,
+    soft: C.primarySoft,
     outline: C.white,
   }[variant];
   const fg =
     variant === "primary" || variant === "gold"
-      ? C.white
+      ? C.onAction
       : variant === "soft"
         ? C.primary
         : C.navy;
@@ -211,8 +211,8 @@ export function Button({
         styles.button,
         {
           backgroundColor: bg,
-          borderWidth: variant === "outline" ? 1 : 0,
-          borderColor: C.border,
+          borderWidth: 1,
+          borderColor: variant === "outline" ? C.borderStrong : C.primaryBorder,
           opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
         },
         style,
@@ -279,7 +279,7 @@ export function Chip({
   icon?: IconName;
 }) {
   const bg = selected
-    ? C.navy
+    ? C.action
     : tone === "gold"
       ? C.goldSoft
       : tone === "green"
@@ -296,7 +296,7 @@ export function Chip({
       accessibilityState={onPress ? { selected } : undefined}
       style={[
         styles.chip,
-        { backgroundColor: bg, borderColor: selected ? C.navy : C.border },
+        { backgroundColor: bg, borderColor: selected ? C.primary : C.border },
         style,
       ]}
     >
@@ -304,12 +304,12 @@ export function Chip({
         <Icon
           name={icon}
           size={14}
-          color={selected ? C.white : tone === "green" ? C.green : C.muted}
+          color={selected ? C.onAction : tone === "green" ? C.green : C.muted}
         />
       ) : null}
       <AppText
         variant="caption"
-        color={selected ? C.white : tone === "green" ? C.green : C.muted}
+        color={selected ? C.onAction : tone === "green" ? C.green : C.muted}
         style={{ flexShrink: 1 }}
       >
         {label}

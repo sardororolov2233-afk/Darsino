@@ -104,16 +104,20 @@ export function TeacherFinanceScreen() {
         }}
       />
       <Card
-        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 24 }}
+        style={{
+          backgroundColor: C.action,
+          borderColor: C.primaryBorder,
+          padding: 24,
+        }}
       >
-        <AppText variant="caption" color="#CAD6EF">
+        <AppText variant="caption" color={C.primary}>
           OLINGAN DAROMAD
         </AppText>
-        <AppText variant="display" color="white">
+        <AppText variant="display" color={C.navy}>
           {formatPrice(finance.received)}
         </AppText>
         <View style={[uiStyles.between, { gap: 12 }]}>
-          <AppText variant="caption" color="#CAD6EF">
+          <AppText variant="caption" color={C.primary}>
             {finance.paidCount} ta to‘lov · {monthLabel(month)}
           </AppText>
           <Chip label={`${finance.percent}% yig‘ildi`} tone="green" />
@@ -122,7 +126,7 @@ export function TeacherFinanceScreen() {
           style={{
             height: 6,
             borderRadius: 6,
-            backgroundColor: "#FFFFFF20",
+            backgroundColor: C.white,
             overflow: "hidden",
           }}
         >
@@ -130,7 +134,7 @@ export function TeacherFinanceScreen() {
             style={{
               width: `${finance.percent}%`,
               height: 6,
-              backgroundColor: C.mint,
+              backgroundColor: C.primary,
             }}
           />
         </View>
@@ -187,7 +191,8 @@ export function TeacherFinanceScreen() {
                   minWidth: 20,
                   width: "65%",
                   borderRadius: 8,
-                  backgroundColor: h.month === month ? C.primary : "#DCD7FD",
+                  backgroundColor:
+                    h.month === month ? C.primary : C.primaryBorder,
                 }}
               />
               <AppText variant="caption" color={C.muted}>

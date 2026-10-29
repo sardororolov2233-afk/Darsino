@@ -23,7 +23,7 @@
       "bundler": "metro",
       "favicon": "./assets/icon.png",
       "lang": "uz",
-      "themeColor": "#0F265C",
+      "themeColor": "#B5E6B8",
       "description": "O‘qi — ustozlar, ochiq darslar va bilim radari. O‘zingizga mos ta’lim yo‘lini toping."
     },
     "plugins": [

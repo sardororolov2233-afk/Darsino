@@ -34,9 +34,9 @@ export function RadarChart({
               const p = point(i, 85 * r);
               return `${p.x},${p.y}`;
             }).join(" ")}
-            fill={r === 1 ? "#EEF2FF" : "none"}
+            fill={r === 1 ? C.primarySoft : "none"}
             fillOpacity={r === 1 ? 0.45 : 1}
-            stroke="#CBD5E1"
+            stroke={C.borderStrong}
             strokeWidth={0.8}
           />
         ))}
@@ -50,7 +50,7 @@ export function RadarChart({
                 y1="135"
                 x2={p.x}
                 y2={p.y}
-                stroke="#CBD5E1"
+                stroke={C.borderStrong}
                 strokeWidth={0.8}
               />
               <SvgText

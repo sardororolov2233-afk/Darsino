@@ -124,15 +124,19 @@ export function RadarScreen() {
     <Screen top={<OqiHeader />}>
       <AppText variant="title">Bilim radari</AppText>
       <Card
-        style={{ backgroundColor: C.navy, borderColor: C.navy, padding: 24 }}
+        style={{
+          backgroundColor: C.action,
+          borderColor: C.primaryBorder,
+          padding: 24,
+        }}
       >
-        <AppText variant="caption" color="#CFD9F0">
+        <AppText variant="caption" color={C.primary}>
           MENING O‘ZLASHTIRISHIM
         </AppText>
-        <AppText variant="display" color="white">
+        <AppText variant="display" color={C.navy}>
           {average === null ? "Hali o‘lchanmagan" : `${average}%`}
         </AppText>
-        <AppText color="#CFD9F0">
+        <AppText color={C.primary}>
           {results.length
             ? `${results.length} ta haqiqiy test natijasi bo‘yicha`
             : "Birinchi testni ishlang. Natijalar shu yerda saqlanadi."}
@@ -492,18 +496,18 @@ export function OpenLessonScreen({
   return (
     <Screen>
       <Header title="Ochiq video dars" onBack={() => navigation.goBack()} />
-      <Card style={{ backgroundColor: lesson.color, padding: 26, gap: 22 }}>
+      <Card style={{ backgroundColor: C.action, padding: 26, gap: 22 }}>
         <Chip label={lesson.subject} />
         <AppText
-          color="white"
+          color={C.navy}
           style={{ fontFamily: font.extra, fontSize: 38, lineHeight: 48 }}
         >
           {lesson.icon}
         </AppText>
-        <AppText variant="title" color="white">
+        <AppText variant="title" color={C.navy}>
           {lesson.title}
         </AppText>
-        <AppText variant="caption" color="#FFFFFFDD">
+        <AppText variant="caption" color={C.primary}>
           {lesson.author} · {lesson.language}
         </AppText>
       </Card>

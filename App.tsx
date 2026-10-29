@@ -134,12 +134,12 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: C.navy,
+    primary: C.primary,
     background: C.background,
     card: C.white,
     text: C.ink,
     border: C.border,
-    notification: C.gold,
+    notification: C.error,
   },
 };
 function MainTabs() {
@@ -552,7 +552,7 @@ export default function App() {
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-    backgroundColor: Platform.OS === "web" ? "#0B1222" : C.background,
+    backgroundColor: C.primarySoft,
     alignItems: "center",
   },
   app: {

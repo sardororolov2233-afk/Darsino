@@ -116,7 +116,11 @@ export function TeacherStudentsScreen() {
   return (
     <Screen lightTop top={<WorkspaceHeader title="O‘quvchilar" />}>
       <Card
-        style={{ backgroundColor: "#F0EEFF", borderColor: "#DBD5FF", gap: 14 }}
+        style={{
+          backgroundColor: C.primarySoft,
+          borderColor: C.primaryBorder,
+          gap: 14,
+        }}
       >
         <View style={uiStyles.between}>
           <View style={{ flex: 1 }}>
@@ -137,7 +141,7 @@ export function TeacherStudentsScreen() {
         <View
           style={{
             height: 9,
-            backgroundColor: "#DED9F9",
+            backgroundColor: C.primaryBorder,
             borderRadius: 10,
             overflow: "hidden",
           }}
@@ -175,7 +179,7 @@ export function TeacherStudentsScreen() {
               count: measured.filter((r) => r.score! >= 70 && r.score! < 85)
                 .length,
               color: WORKSPACE,
-              background: "#F4F1FF",
+              background: C.primarySoft,
             },
             {
               label: "Qoniqarli (50–69%)",

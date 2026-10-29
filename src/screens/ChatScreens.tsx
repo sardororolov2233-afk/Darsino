@@ -127,7 +127,7 @@ export function ChatsScreen() {
           icon="edit"
           onPress={() => open("private")}
           style={{
-            backgroundColor: WORKSPACE,
+            backgroundColor: C.action,
             alignSelf: "flex-end",
             borderRadius: 26,
           }}
@@ -151,7 +151,7 @@ export function ChatsScreen() {
               <AppText variant="heading" color="white">
                 Tezkor e’lon yuborish
               </AppText>
-              <AppText variant="caption" color="#DBD6FF">
+              <AppText variant="caption" color={C.primarySoft}>
                 {members.length} ta o‘quvchi · {own.length} ta o‘quv guruhi
               </AppText>
             </View>
@@ -211,7 +211,7 @@ export function ChatsScreen() {
                     styles.roomIcon,
                     {
                       backgroundColor: group.announcement
-                        ? "#ECE8FF"
+                        ? C.primarySoft
                         : "#DDF8EF",
                     },
                   ]}
@@ -387,7 +387,7 @@ export function ChatsScreen() {
                       icon="send"
                       loading={action.busy}
                       disabled={!selected.length || !text.trim()}
-                      style={{ backgroundColor: WORKSPACE }}
+                      style={{ backgroundColor: C.action }}
                       onPress={() =>
                         action.run(async () => {
                           for (const group of selected) {
@@ -496,7 +496,7 @@ function Composer({
         disabled={!text.trim() || busy}
         loading={busy}
         onPress={send}
-        style={{ width: 46, paddingHorizontal: 0, backgroundColor: WORKSPACE }}
+        style={{ width: 46, paddingHorizontal: 0, backgroundColor: C.action }}
       />
     </View>
   );
@@ -611,7 +611,7 @@ export function GroupConversationScreen({
           onPress={() => navigation.goBack()}
           style={{ paddingHorizontal: 10 }}
         />
-        <View style={[styles.roomIcon, { backgroundColor: "#EFECFF" }]}>
+        <View style={[styles.roomIcon, { backgroundColor: C.primarySoft }]}>
           <Icon name="users" color={WORKSPACE} />
         </View>
         <View style={{ flex: 1 }}>
@@ -699,7 +699,7 @@ export function GroupConversationScreen({
                   alignSelf:
                     message.senderId === user.id ? "flex-end" : "flex-start",
                   backgroundColor:
-                    message.senderId === user.id ? WORKSPACE : "white",
+                    message.senderId === user.id ? C.action : C.white,
                 },
               ]}
             >
@@ -714,22 +714,16 @@ export function GroupConversationScreen({
                 </AppText>
               ) : null}
               {message.announcement ? (
-                <AppText
-                  variant="caption"
-                  color={message.senderId === user.id ? "#DDD7FF" : C.purple}
-                >
+                <AppText variant="caption" color={C.primary}>
                   E’lon
                 </AppText>
               ) : null}
-              <AppText
-                localize={false}
-                color={message.senderId === user.id ? "white" : C.ink}
-              >
+              <AppText localize={false} color={C.ink}>
                 {message.text}
               </AppText>
               <AppText
                 variant="caption"
-                color={message.senderId === user.id ? "#DDD7FF" : C.muted}
+                color={C.muted}
                 style={{ alignSelf: "flex-end" }}
               >
                 {timeLabel(message.createdAt)}
@@ -863,7 +857,7 @@ export function ConversationScreen({
                 styles.bubble,
                 {
                   alignSelf: message.mine ? "flex-end" : "flex-start",
-                  backgroundColor: message.mine ? C.navy : "white",
+                  backgroundColor: message.mine ? C.action : C.white,
                 },
               ]}
             >
@@ -889,7 +883,7 @@ export function ConversationScreen({
               ))}
               <AppText
                 variant="caption"
-                color={message.mine ? "#CBD7E5" : C.muted}
+                color={C.muted}
                 style={{ alignSelf: "flex-end" }}
               >
                 {message.time}
@@ -946,11 +940,11 @@ const styles = StyleSheet.create({
     borderColor: "#14213D06",
   },
   pinned: {
-    backgroundColor: "#F0EDFF",
+    backgroundColor: C.primarySoft,
     padding: 13,
     flexDirection: "row",
     gap: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#DDD7FF",
+    borderBottomColor: C.primaryBorder,
   },
 });

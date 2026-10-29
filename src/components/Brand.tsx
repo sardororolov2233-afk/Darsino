@@ -39,7 +39,7 @@ export function Brand({
           width="64"
           height="64"
           rx="20"
-          fill={light ? "#24457C" : C.navy}
+          fill={light ? C.navyLight : C.navy}
         />
         <Circle
           cx="29"
