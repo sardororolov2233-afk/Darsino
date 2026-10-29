@@ -113,7 +113,7 @@ test("teacher assigns a test, student shares results and teacher radar and atten
     page.getByRole("button", { name: "Natija ustozga yuborildi", exact: true }),
   ).toBeDisabled();
   await page
-    .getByRole("button", { name: "Radarga qaytish", exact: true })
+    .getByRole("button", { name: "Bilimimga qaytish", exact: true })
     .click();
   await logout(page);
   await login(page, "dilnoza@darsino.demo");
@@ -173,7 +173,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   ).toBeVisible();
   await logout(page);
   await login(page, "teacher-student@example.com");
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "Klublar", exact: true }).click();
   await page
     .getByRole("button", {
@@ -199,7 +199,7 @@ test("free teacher club is discoverable and student admission requires teacher a
   ).toBeVisible();
   await logout(page);
   await login(page, "teacher-student@example.com");
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await expect(
     page.getByRole("button", {

@@ -29,6 +29,14 @@ export const defaultAccountSettings: AccountSettings = {
   invitePolicy: "everyone",
   lessonReminders: true,
 };
+export const studentPrivacyDefaults: AccountSettings = {
+  ...defaultAccountSettings,
+  discoverable: false,
+  showArea: false,
+  avatarVisibility: "contacts",
+  messagePolicy: "contacts",
+  invitePolicy: "contacts",
+};
 export type ContactRequest = {
   id: string;
   senderId: string;

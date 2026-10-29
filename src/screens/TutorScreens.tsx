@@ -1,3 +1,4 @@
+import { HomeworkCards } from "./HomeworkScreens";
 import { CalendarField, TimeField } from "../components/ScheduleFields";
 import { TutorVerificationFields } from "../components/TutorVerificationFields";
 import {
@@ -104,6 +105,14 @@ export function TutorHomeScreen() {
           tone={approved ? "green" : "gold"}
         />
       </View>
+      {approved ? (
+        <Button
+          title="Uy vazifalari"
+          icon="edit-3"
+          variant="soft"
+          onPress={() => navigation.navigate("Assignments")}
+        />
+      ) : null}
       {!approved ? (
         <Card style={{ backgroundColor: C.goldSoft }}>
           <AppText>
@@ -925,6 +934,7 @@ export function ManageClassScreen({
         options={filterChoices([
           "O‘quvchilar",
           "Davomat",
+          "Vazifalar",
           "Testlar",
           "Materiallar",
         ])}
@@ -939,6 +949,7 @@ export function ManageClassScreen({
         />
       ) : null}
       {tab === "Testlar" ? <GroupTests group={group} /> : null}
+      {tab === "Vazifalar" ? <HomeworkCards offeringId={group.id} /> : null}
       {tab === "Materiallar" ? <LessonMaterials offeringId={group.id} /> : null}
       {tab === "Davomat" ? (
         <>

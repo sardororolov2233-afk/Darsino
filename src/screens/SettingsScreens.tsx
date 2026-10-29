@@ -1,3 +1,4 @@
+import { useHomework } from "../state/HomeworkContext";
 import React, { useEffect, useState } from "react";
 import { Linking, Platform, Share, View } from "react-native";
 import { LocalizedPressable as Pressable } from "../i18n/native";
@@ -479,6 +480,7 @@ export function NotificationSettingsScreen() {
   );
 }
 export function DataSettingsScreen() {
+  const homework = useHomework();
   const navigation = useAppNavigation(),
     { user, market } = useApp(),
     action = useAction();
@@ -513,6 +515,7 @@ export function DataSettingsScreen() {
         (r) => r.studentId === user.id || r.tutorId === user.id,
       ),
       learning: learning.data,
+      homework: homework.data,
       workspace: user.role === "tutor" ? teacher.data : undefined,
     };
     const text = JSON.stringify(payload, null, 2);

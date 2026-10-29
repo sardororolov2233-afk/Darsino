@@ -72,7 +72,7 @@ function Person({ user }: { user: User }) {
   );
 }
 export function ProfileIdScreen() {
-  const { user, market } = useApp(),
+  const { user, market, command } = useApp(),
     navigation = useAppNavigation(),
     action = useAction(),
     { t } = useI18n();
@@ -114,9 +114,20 @@ export function ProfileIdScreen() {
             olmaydi.
           </AppText>
           <Button
-            title="Maxfiylik"
+            title="QR orqali topishni yoqish"
             variant="soft"
-            onPress={() => navigation.navigate("PrivacySettings")}
+            onPress={() =>
+              action.run(() =>
+                command({
+                  type: "account-settings",
+                  settings: {
+                    ...readAccountSettings(market.accountSettings?.[user.id]),
+                    discoverable: true,
+                  },
+                  publicId: publicIdOf(user),
+                }),
+              )
+            }
           />
         </Card>
       ) : null}

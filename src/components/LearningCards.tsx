@@ -164,3 +164,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+
+export function LearningSync() {
+  const learning = useLearning(),
+    action = useAction();
+  return (
+    <View style={{ gap: 8 }}>
+      <Button
+        title="Natijalarni yangilash"
+        icon="refresh-cw"
+        variant="soft"
+        loading={action.busy}
+        onPress={() => action.run(learning.refresh)}
+      />
+      {learning.offline ? (
+        <AppText variant="caption" color={C.muted}>
+          Saqlangan natijalar ko‘rsatilmoqda. Internet qaytgach yangilang.
+        </AppText>
+      ) : null}
+      <Feedback error={action.error || learning.error} />
+    </View>
+  );
+}

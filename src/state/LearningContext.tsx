@@ -9,6 +9,7 @@ import React, {
 import { AppState } from "react-native";
 import {
   readPrivateWorkspace,
+  isWorkspaceCached,
   updatePrivateWorkspace,
 } from "../services/privateWorkspace";
 import { useApp } from "./AppContext";
@@ -25,7 +26,13 @@ type LearningContextType = {
   data: LearningState;
   ready: boolean;
   error: string;
-  finishQuiz: (id: string, answers: number[]) => Promise<void>;
+  finishQuiz: (
+    id: string,
+    answers: number[],
+    attemptId?: string,
+  ) => Promise<void>;
+  refresh: () => Promise<void>;
+  offline: boolean;
   completeLesson: (id: string) => Promise<void>;
   toggleClub: (id: string) => Promise<void>;
   rememberSearch: (query: string) => Promise<void>;
@@ -153,8 +160,13 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     },
     [account],
   );
-  const finishQuiz = (id: string, answers: number[]) =>
-    update((data) => {
+  const finishQuiz = (
+    id: string,
+    answers: number[],
+    attemptId = uid("quiz"),
+  ) => {
+    const completedAt = new Date().toISOString();
+    return update((data) => {
       const test = diagnostics.find((t) => t.id === id);
       if (
         !test ||
@@ -167,19 +179,29 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
         )
       )
         throw new Error("Barcha savollarga javob bering.");
+      const previous = data.attempts.find((a) => a.id === attemptId);
+      if (previous) {
+        if (
+          previous.testId !== id ||
+          JSON.stringify(previous.answers) !== JSON.stringify(answers)
+        )
+          throw new Error("Natija kaliti boshqa urinishga tegishli.");
+        return data;
+      }
       return {
         ...data,
         attempts: retainAttempts([
           ...data.attempts,
           {
-            id: uid("quiz"),
+            id: attemptId,
             testId: id,
             answers: [...answers],
-            completedAt: new Date().toISOString(),
+            completedAt,
           },
         ]),
       };
     });
+  };
   const completeLesson = (id: string) =>
     update((data) => {
       if (!openLessons.some((l) => l.id === id))
@@ -210,6 +232,30 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     <Context.Provider
       value={{
         ...visible,
+        offline: isWorkspaceCached("learning", account),
+        refresh: async () => {
+          const target = account;
+          if (!target) throw new Error("Avval akkauntga kiring.");
+          const operation = queue.current
+            .catch(() => {})
+            .then(async () => {
+              const raw = await readPrivateWorkspace(
+                "learning",
+                target,
+                readLearning,
+              );
+              if (identity.current !== target) return;
+              current.current = {
+                account: target,
+                data: readLearning(raw),
+                ready: true,
+                error: "",
+              };
+              setSnapshot(current.current);
+            });
+          queue.current = operation;
+          return operation;
+        },
         finishQuiz,
         completeLesson,
         toggleClub,

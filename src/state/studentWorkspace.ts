@@ -59,10 +59,10 @@ export function studentWorkspace(
     past,
     records,
     present: records.filter((a) => a.status === "present").length,
-    attendancePercent: past.length
+    attendancePercent: records.length
       ? Math.round(
           (records.filter((a) => a.status === "present").length * 100) /
-            past.length,
+            records.length,
         )
       : null,
     tests,
@@ -96,6 +96,10 @@ export function studentResults(
     ).length;
     return [
       {
+        comparisonKey: "diagnostic:" + test.id,
+        method: "Mustaqil diagnostika",
+        score: correct,
+        maxScore: test.questions.length,
         id: attempt.id,
         title: test.title,
         subject: test.subject,
@@ -113,6 +117,11 @@ export function studentResults(
       return test
         ? [
             {
+              comparisonKey: "mock:" + test.id + ":" + test.scoring,
+              method:
+                test.scoring === "dtm" ? "DTM vaznli ball" : "Guruh testi",
+              score: a.score ?? a.correctCount ?? 0,
+              maxScore: a.maxScore ?? test.questionCount,
               id: a.id,
               title: test.title,
               subject: test.subject,
@@ -125,4 +134,16 @@ export function studentResults(
         : [];
     });
   return [...legacy, ...mock].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// Compare repetitions of the same test and grading method, never unrelated tests.
+export function comparableGrowth(results: ReturnType<typeof studentResults>) {
+  const current = results[0];
+  if (!current) return null;
+  const previous = results
+    .slice(1)
+    .find((r) => r.comparisonKey === current.comparisonKey);
+  return previous
+    ? { current, previous, delta: current.percentage - previous.percentage }
+    : null;
 }

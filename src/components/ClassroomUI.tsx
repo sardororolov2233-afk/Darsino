@@ -1,3 +1,5 @@
+import { Brand } from "./Brand";
+import { useHomework } from "../state/HomeworkContext";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { LocalizedPressable as Pressable } from "../i18n/native";
@@ -24,6 +26,7 @@ export function WorkspaceHeader({
 }) {
   const { user, notifications } = useApp(),
     navigation = useAppNavigation();
+  const homework = useHomework();
   return (
     <View style={styles.header}>
       {back ? (
@@ -42,14 +45,12 @@ export function WorkspaceHeader({
           onPress={() => navigation.navigate("Main", { screen: "Home" })}
           style={styles.brand}
         >
-          <Icon name="book-open" size={15} color="white" />
-          <AppText
-            variant="caption"
-            color="white"
-            style={{ fontFamily: font.bold }}
-          >
-            {user.role === "tutor" ? "O‘qi Ustoz" : "O‘qi"}
-          </AppText>
+          <Brand width={64} height={42} />
+          {user.role === "tutor" ? (
+            <AppText variant="caption" color={C.primary}>
+              Ustoz
+            </AppText>
+          ) : null}
         </Pressable>
       )}
       <AppText variant="label" style={{ flex: 1 }} numberOfLines={1}>
@@ -62,7 +63,8 @@ export function WorkspaceHeader({
         style={styles.action}
       >
         <Icon name="bell" size={20} color={C.ink} />
-        {notifications.some((n) => !n.read) ? (
+        {notifications.some((n) => !n.read) ||
+        homework.data.events.some((e) => !e.read) ? (
           <View style={styles.dot} />
         ) : null}
       </Pressable>
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
   },
   brand: {
-    backgroundColor: WORKSPACE,
+    backgroundColor: C.white,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,

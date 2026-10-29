@@ -74,6 +74,18 @@ export function ProviderScreen() {
       onBack={action.busy ? undefined : () => navigation.goBack()}
     >
       <ProviderButtons
+        providers={
+          mode === "demo"
+            ? ["google", "apple"]
+            : [
+                ...(process.env.EXPO_PUBLIC_GOOGLE_AUTH_ENABLED !== "false"
+                  ? ["google" as const]
+                  : []),
+                ...(process.env.EXPO_PUBLIC_APPLE_AUTH_ENABLED === "true"
+                  ? ["apple" as const]
+                  : []),
+              ]
+        }
         demo={mode === "demo"}
         busy={action.busy}
         onPress={(provider) => action.run(() => signInWithProvider(provider))}
@@ -222,6 +234,14 @@ function PasswordForm({
             onSubmit={submit}
           />
         </>
+      ) : null}
+      {!signup ? (
+        <OnboardingButton
+          title="Parolni unutdingizmi?"
+          secondary
+          disabled={action.busy}
+          onPress={() => navigation.navigate("RequestPasswordReset")}
+        />
       ) : null}
       <Feedback error={action.error || syncError} />
       <OnboardingButton

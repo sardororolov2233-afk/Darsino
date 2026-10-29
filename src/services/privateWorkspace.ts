@@ -1,18 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { backendMode, requireBackend } from "./backend";
+import { backendMode, requireActorBackend } from "./backend";
 
 type Kind = "learning" | "teacher";
+const cachedReads = new Set<string>();
+export const isWorkspaceCached = (kind: Kind, account: string) =>
+  cachedReads.has(workspaceKey(kind, account));
 type Remote = { data: object | null; revision: number };
 export const workspaceKey = (kind: Kind, account: string) =>
   "@oqi/" + kind + "-v1:" + encodeURIComponent(account);
 async function readRemote(kind: Kind, account: string): Promise<Remote> {
-  const { data, error } = await requireBackend().rpc(
-    "darsino_private_state_read",
-    {
-      p_kind: kind,
-      p_actor_id: account,
-    },
-  );
+  const { data, error } = await (
+    await requireActorBackend(account)
+  ).rpc("darsino_private_state_read", {
+    p_kind: kind,
+    p_actor_id: account,
+  });
   if (error) throw new Error(error.message);
   return data as Remote;
 }
@@ -22,7 +24,9 @@ async function writeRemote(
   data: object,
   revision: number,
 ): Promise<Remote> {
-  const result = await requireBackend().rpc("darsino_private_state_write", {
+  const result = await (
+    await requireActorBackend(account)
+  ).rpc("darsino_private_state_write", {
     p_kind: kind,
     p_data: data,
     p_revision: revision,
@@ -38,7 +42,24 @@ export async function readPrivateWorkspace<T extends object>(
 ): Promise<string | null> {
   const key = workspaceKey(kind, account);
   if (backendMode === "demo") return AsyncStorage.getItem(key);
-  let remote = await readRemote(kind, account);
+  let remote: Remote;
+  try {
+    remote = await readRemote(kind, account);
+    cachedReads.delete(key);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      /fetch|network|timeout|internet/i.test(error.message)
+    ) {
+      const cached = await AsyncStorage.getItem(key);
+      if (cached) {
+        decode(cached);
+        cachedReads.add(key);
+        return cached;
+      }
+    }
+    throw error;
+  }
   if (remote.data === null) {
     const raw = await AsyncStorage.getItem(key);
     if (raw) {
@@ -78,6 +99,7 @@ export async function updatePrivateWorkspace<T extends object>(
     const data = change(decode(raw));
     try {
       await writeRemote(kind, account, data, remote.revision);
+      cachedReads.delete(key);
       await AsyncStorage.setItem(key, JSON.stringify(data)).catch(() => {});
       return data;
     } catch (e) {

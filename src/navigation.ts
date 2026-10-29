@@ -4,6 +4,8 @@ export type RootStackParamList = {
   Welcome: undefined;
   Providers: undefined;
   SignIn: undefined;
+  RequestPasswordReset: undefined;
+  ResetPassword: undefined;
   Setup: undefined;
   Main:
     | {
@@ -44,6 +46,9 @@ export type RootStackParamList = {
   TeacherClasses: undefined;
   TeacherFinance: undefined;
   StudentTests: undefined;
+  Assignments: { offeringId?: string } | undefined;
+  CreateAssignment: { id?: string; offeringId?: string } | undefined;
+  AssignmentDetail: { id: string };
   StudentGroups: undefined;
   StudentAttendance: undefined;
   StudentPayments: undefined;
@@ -59,7 +64,7 @@ export type RootStackParamList = {
   GroupConversation: { id: string };
   ManageClass: {
     id: string;
-    tab?: "O‘quvchilar" | "Davomat" | "Testlar" | "Materiallar";
+    tab?: "O‘quvchilar" | "Davomat" | "Testlar" | "Materiallar" | "Vazifalar";
     sessionId?: string;
     month?: string;
     paymentStatus?: string;

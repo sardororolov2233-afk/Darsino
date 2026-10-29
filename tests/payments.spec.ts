@@ -155,7 +155,7 @@ test("monthly payments persist, reminders reach the right student and student le
     page.getByText("To‘lov qayd etildi", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Orqaga", exact: true }).click();
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "To‘lovlar", exact: true }).click();
   await expect(page.getByText("To‘ladi", { exact: true })).toBeVisible();
   await actor(page, "ledger-madina");
@@ -201,7 +201,7 @@ test("a teacher targets one student, the student completes the test and shares a
   expect(invites).toHaveLength(1);
   expect(invites[0].recipientId).toBe("ledger-ali");
   await actor(page, "ledger-ali");
-  await page.getByRole("tab", { name: "Radar", exact: true }).click();
+  await page.getByRole("tab", { name: "Bilimim", exact: true }).click();
   await expect(
     page.getByText("Mustaqil bilim diagnostikasi", { exact: true }),
   ).toBeVisible();
@@ -266,6 +266,7 @@ test("teacher and student filters stay inside a small screen and reset coherentl
   await page
     .getByRole("button", { name: "Filtrlarni ochish yoki yopish", exact: true })
     .click();
+  await page.getByRole("button", { name: "Tozalash", exact: true }).click();
   await page.getByRole("button", { name: "Onlayn", exact: true }).click();
   await expect(
     page.getByText("Filtrlar · 1 faol", { exact: true }),

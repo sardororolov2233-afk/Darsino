@@ -61,13 +61,13 @@ test("student application requires tutor approval before My Lessons", async ({
   ).toBeVisible();
   await logout(page);
   await login(page, "sardor@example.com");
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await page.getByRole("button", { name: "Guruhlar", exact: true }).click();
   await expect(
     page.getByText("Qabul qilingansiz", { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("tab", { name: "Dars & Klub", exact: true }).click();
+  await page.getByRole("tab", { name: "Darslarim", exact: true }).click();
   await expect(
     page.getByText("IELTS 6.5+ guruhi", { exact: true }).first(),
   ).toBeVisible();

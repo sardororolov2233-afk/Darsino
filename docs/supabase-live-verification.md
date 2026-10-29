@@ -93,3 +93,11 @@ Custom SMTP mavjud emas. Confirm Signup va Magic Link uchun kodli shablonlarni b
 GitHub’da [draft PR #6](https://github.com/sardororolov2233-afk/Darsino/pull/6) mavjud. `7c4f519` commitidagi CI billing cheklovi sabab runner boshlanmasdan to‘xtagan; keyingi commitlarning masofaviy CI natijasi bu hisobotda hali tasdiqlanmagan.
 
 Deploy tartibi: [Supabase ulanish yo‘riqnomasi](supabase-deployment.md). Mavjud ishlayotgan AI xizmatini kelgusida yangilashda Edge adapteri SQL’dan oldin deploy qilinadi.
+
+## 2026-10-29 — o‘quvchi roadmap’i
+
+Uch qo‘shimcha migratsiya jonli `mhqofwuawwnappstcekh` loyihasiga qo‘llandi: assignments, yangi o‘quvchining privacy defaults’i va recipient ustunini to‘g‘ridan-to‘g‘ri REST’dan himoyalash. [Bajarilish hisoboti va rollback](student-roadmap-implementation.md).
+
+Vaqtinchalik uch akkauntda real signup/login, public ID/kontakt roziligi, ariza → tasdiq → jadval, boshqa sessiyada private progress, boshqa akkauntdan rad etish, PDF/PNG Storage binary upload/download, tegishli bo‘lmagan o‘quvchining faylga kira olmasligi, feedback va ikki urinish tarixi o‘tdi. Recovery token bilan parol yangilanib, yangi parolda kirildi; email yuborilmadi. Teacher faqat fixture uchun admin SQL bilan tasdiqlangan; sertifikat onboarding oqimining brauzer/SQL sinovlari alohida.
+
+Sinov Storage obyektlari rasmiy Storage API orqali, keyin vaqtinchalik metadata va Auth foydalanuvchilari tozalandi. Asl **3 profil va 1 guruh** saqlandi. Ilova jadvallarining yangilashdan oldingi shaxsiy JSON zaxirasi ishchi muhitda saqlandi, repoga kiritilmadi. SMTP, Google/Apple real konsenti, fizik telefon kamerasi va OS notification tekshiruvi bu natijaga qo‘shib da’vo qilinmaydi.
