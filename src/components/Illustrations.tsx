@@ -9,19 +9,26 @@ export function WelcomeIllustration({ height = 224 }: { height?: number }) {
     >
       <Svg viewBox="0 0 350 224" width="100%" height={height}>
         <Rect width="350" height="224" fill={C.navy} />
-        <Circle cx="310" cy="25" r="100" fill="#17357A" />
-        <Circle cx="25" cy="220" r="85" fill="#17357A" />
+        <Circle cx="310" cy="25" r="100" fill={C.navyLight} />
+        <Circle cx="25" cy="220" r="85" fill={C.navyLight} />
         <Circle
           cx="180"
           cy="111"
           r="83"
           fill="none"
-          stroke="#34D39950"
+          stroke={`${C.mint}50`}
           strokeDasharray="5 5"
         />
-        <Circle cx="180" cy="111" r="64" fill="none" stroke="#34D39980" />
+        <Circle cx="180" cy="111" r="64" fill="none" stroke={`${C.mint}80`} />
         <Rect x="122" y="40" width="112" height="156" rx="24" fill="white" />
-        <Rect x="131" y="52" width="94" height="62" rx="14" fill="#EEF2FF" />
+        <Rect
+          x="131"
+          y="52"
+          width="94"
+          height="62"
+          rx="14"
+          fill={C.primarySoft}
+        />
         <Path
           d="M148 66q14-5 30 3q14-8 30-3v31q-14-4-30 3q-15-7-30-3z M178 69v31"
           fill="none"
@@ -29,8 +36,8 @@ export function WelcomeIllustration({ height = 224 }: { height?: number }) {
           strokeWidth="3"
           strokeLinejoin="round"
         />
-        <Rect x="140" y="128" width="76" height="7" rx="3" fill="#D9E1F1" />
-        <Rect x="140" y="143" width="53" height="7" rx="3" fill="#D9E1F1" />
+        <Rect x="140" y="128" width="76" height="7" rx="3" fill={C.border} />
+        <Rect x="140" y="143" width="53" height="7" rx="3" fill={C.border} />
         <Rect x="140" y="164" width="76" height="16" rx="8" fill={C.mint} />
         <Circle cx="74" cy="80" r="27" fill={C.mint} />
         <Path
@@ -41,10 +48,10 @@ export function WelcomeIllustration({ height = 224 }: { height?: number }) {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <Rect x="259" y="131" width="49" height="49" rx="16" fill="#8B7AF3" />
+        <Rect x="259" y="131" width="49" height="49" rx="16" fill={C.primary} />
         <Path d="m283 142 3 9 10 3-10 4-3 10-3-10-10-4 10-3z" fill="white" />
         <Circle cx="265" cy="54" r="5" fill={C.mint} />
-        <Circle cx="93" cy="170" r="4" fill="#A89CF4" />
+        <Circle cx="93" cy="170" r="4" fill={C.mint} />
       </Svg>
     </View>
   );
@@ -59,10 +66,10 @@ export function RoomIllustration({ height = 156 }: { height?: number }) {
       }}
     >
       <Svg viewBox="0 0 350 156" width="100%" height={height}>
-        <Rect width="350" height="156" fill="#EAF1FA" />
+        <Rect width="350" height="156" fill={C.primarySoft} />
         <Rect y="117" width="350" height="39" fill="#FFF4D8" />
         <Rect x="20" y="18" width="92" height="100" rx="8" fill="white" />
-        <Path d="M20 65h92M66 18v100" stroke="#CEDAEB" strokeWidth="2" />
+        <Path d="M20 65h92M66 18v100" stroke={C.borderStrong} strokeWidth="2" />
         <Rect x="169" y="25" width="154" height="76" rx="9" fill={C.navy} />
         <Path
           d="M188 43h90M188 54h61M188 66h111M188 80h92"

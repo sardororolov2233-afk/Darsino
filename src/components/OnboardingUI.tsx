@@ -18,14 +18,15 @@ import { StatusBar } from "expo-status-bar";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 import { AppText, Icon } from "./ui";
 import { Brand } from "./Brand";
-import { font } from "../theme";
+import { C, font } from "../theme";
 
 export const OB = {
-  bg: "#09172F",
-  card: "#1D2D49",
-  line: "#43506A",
-  muted: "#B7C4DB",
-  blue: "#078BF2",
+  bg: C.background,
+  card: C.white,
+  line: C.borderStrong,
+  muted: C.muted,
+  ink: C.ink,
+  blue: C.action,
 };
 export function OnboardingShell({
   children,
@@ -46,7 +47,7 @@ export function OnboardingShell({
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: OB.bg }}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Svg
         pointerEvents="none"
         style={StyleSheet.absoluteFill}
@@ -57,11 +58,11 @@ export function OnboardingShell({
       >
         <Defs>
           <RadialGradient id="onboardingGlow">
-            <Stop offset="0" stopColor="#1469AA" stopOpacity=".5" />
+            <Stop offset="0" stopColor={C.mint} stopOpacity=".65" />
             <Stop offset="1" stopColor={OB.bg} stopOpacity="0" />
           </RadialGradient>
-          <RadialGradient id="onboardingViolet">
-            <Stop offset="0" stopColor="#514394" stopOpacity=".35" />
+          <RadialGradient id="onboardingLeaf">
+            <Stop offset="0" stopColor={C.primaryBorder} stopOpacity=".35" />
             <Stop offset="1" stopColor={OB.bg} stopOpacity="0" />
           </RadialGradient>
         </Defs>
@@ -77,7 +78,7 @@ export function OnboardingShell({
           y="170"
           width="430"
           height="430"
-          fill="url(#onboardingViolet)"
+          fill="url(#onboardingLeaf)"
         />
         <Rect
           x="160"
@@ -97,11 +98,11 @@ export function OnboardingShell({
                 onPress={onBack}
                 style={s.back}
               >
-                <Icon name="chevron-left" color="white" size={24} />
+                <Icon name="chevron-left" color={C.navy} size={24} />
               </Pressable>
             ) : null}
           </View>
-          <Brand light width={115} />
+          <Brand width={115} />
           <View style={s.headerSide} />
         </View>
         <KeyboardAvoidingView
@@ -117,7 +118,7 @@ export function OnboardingShell({
               {step ? (
                 <AppText
                   variant="caption"
-                  color="#8ABDF8"
+                  color={C.primary}
                   style={{ letterSpacing: 2 }}
                 >
                   {step} / {total} · SIZGA MOS O‘QI
@@ -125,7 +126,7 @@ export function OnboardingShell({
               ) : null}
               <AppText
                 variant="display"
-                color="white"
+                color={OB.ink}
                 style={{ textAlign: "center" }}
               >
                 {title}
@@ -168,14 +169,16 @@ export function OnboardingButton({
         s.button,
         {
           backgroundColor: secondary ? "transparent" : OB.blue,
+          borderWidth: 1,
+          borderColor: secondary ? C.borderStrong : C.primaryBorder,
           opacity: disabled || busy ? 0.55 : pressed ? 0.8 : 1,
         },
       ]}
     >
       {busy ? (
-        <ActivityIndicator color="white" />
+        <ActivityIndicator color={C.onAction} />
       ) : (
-        <AppText variant="label" color="white">
+        <AppText variant="label" color={C.onAction}>
           {title}
         </AppText>
       )}
@@ -217,15 +220,15 @@ export function OnboardingOption({
     >
       {icon ? (
         <View style={s.symbol}>
-          <Icon name={icon} color="white" size={compact ? 23 : 28} />
+          <Icon name={icon} color={C.primary} size={compact ? 23 : 28} />
         </View>
       ) : null}
       <View style={{ flex: compact ? undefined : 1, gap: 4 }}>
-        <AppText color="white" variant={compact ? "label" : "heading"}>
+        <AppText color={OB.ink} variant={compact ? "label" : "heading"}>
           {title}
         </AppText>
         {description ? (
-          <AppText color={selected ? "#E5F2FF" : OB.muted} variant="caption">
+          <AppText color={selected ? C.primary : OB.muted} variant="caption">
             {description}
           </AppText>
         ) : null}
@@ -233,11 +236,11 @@ export function OnboardingOption({
       {!compact ? (
         <Icon
           name={selected ? "check-circle" : "chevron-right"}
-          color="white"
+          color={C.primary}
         />
       ) : selected ? (
         <View style={{ position: "absolute", right: 10, top: 10 }}>
-          <Icon name="check-circle" color="white" size={16} />
+          <Icon name="check-circle" color={C.primary} size={16} />
         </View>
       ) : null}
     </Pressable>
@@ -255,8 +258,8 @@ export function OnboardingField({
       <TextInput
         {...props}
         accessibilityLabel={label}
-        placeholderTextColor="#91A0BC"
-        selectionColor="#67BAFF"
+        placeholderTextColor={OB.muted}
+        selectionColor={C.primary}
         style={[
           s.input,
           props.multiline && { minHeight: 94, textAlignVertical: "top" },
@@ -306,7 +309,7 @@ export function OnboardingSelect({
           },
         ]}
       >
-        <AppText color={value ? "white" : OB.muted} style={{ flex: 1 }}>
+        <AppText color={value ? OB.ink : OB.muted} style={{ flex: 1 }}>
           {value || `${label}ni tanlang`}
         </AppText>
         <Icon name="chevron-down" color={OB.muted} />
@@ -320,7 +323,7 @@ export function OnboardingSelect({
         <SafeAreaView
           style={{
             flex: 1,
-            backgroundColor: "#050C1AEF",
+            backgroundColor: "#203C3777",
             alignItems: "center",
             justifyContent: "center",
             padding: 18,
@@ -344,7 +347,7 @@ export function OnboardingSelect({
                 justifyContent: "space-between",
               }}
             >
-              <AppText variant="heading" color="white">
+              <AppText variant="heading" color={OB.ink}>
                 {label}
               </AppText>
               <Pressable
@@ -353,7 +356,7 @@ export function OnboardingSelect({
                 onPress={() => setOpen(false)}
                 style={s.back}
               >
-                <Icon name="x" color="white" />
+                <Icon name="x" color={C.navy} />
               </Pressable>
             </View>
             <OnboardingField
@@ -403,7 +406,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF12",
+    backgroundColor: C.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -443,12 +446,12 @@ const s = StyleSheet.create({
     flexDirection: "column",
     gap: 12,
   },
-  selected: { backgroundColor: "#087CE0", borderColor: "#41ABFF" },
+  selected: { backgroundColor: C.action, borderColor: C.primary },
   symbol: {
     width: 50,
     height: 50,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF19",
+    backgroundColor: C.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -458,8 +461,8 @@ const s = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: OB.line,
-    backgroundColor: "#FFFFFF0C",
-    color: "white",
+    backgroundColor: C.white,
+    color: OB.ink,
     fontFamily: font.medium,
     fontSize: 14,
     ...Platform.select({ web: { outlineWidth: 0 } }),

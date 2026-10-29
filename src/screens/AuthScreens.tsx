@@ -74,7 +74,6 @@ export function ProviderScreen() {
       onBack={action.busy ? undefined : () => navigation.goBack()}
     >
       <ProviderButtons
-        dark
         demo={mode === "demo"}
         busy={action.busy}
         onPress={(provider) => action.run(() => signInWithProvider(provider))}
@@ -180,7 +179,7 @@ function PasswordForm({
           >
             <AppText
               variant="label"
-              color={formMode === value ? "white" : OB.muted}
+              color={formMode === value ? OB.ink : OB.muted}
             >
               {label}
             </AppText>

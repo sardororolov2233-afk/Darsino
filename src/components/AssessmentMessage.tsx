@@ -11,7 +11,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
   const { market, user } = useApp();
   const navigation = useAppNavigation();
   const payload = parseAssessment(message.text);
-  const color = message.mine ? C.white : C.ink;
+  const color = C.ink;
   if (!payload)
     return (
       <AppText localize={false} color={color}>
@@ -24,11 +24,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
     return (
       <View style={{ gap: 10 }}>
         <View style={uiStyles.row}>
-          <Icon
-            name="target"
-            color={message.mine ? C.mint : C.green}
-            size={18}
-          />
+          <Icon name="target" color={C.green} size={18} />
           <AppText variant="label" color={color}>
             Test topshirig‘i
           </AppText>
@@ -36,7 +32,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
         <AppText localize={false} color={color}>
           {payload.title}
         </AppText>
-        <AppText variant="caption" color={message.mine ? "#CAD8F1" : C.muted}>
+        <AppText variant="caption" color={C.muted}>
           {test.subject} · {test.questions.length} savol · {test.minutes} daqiqa
         </AppText>
         {invite && user.role === "student" && invite.studentId === user.id ? (
@@ -52,7 +48,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
             }
           />
         ) : !invite ? (
-          <AppText variant="caption" color={message.mine ? "#CAD8F1" : C.muted}>
+          <AppText variant="caption" color={C.muted}>
             Bu guruh uchun faol topshiriq mavjud emas.
           </AppText>
         ) : null}
@@ -78,11 +74,7 @@ export function AssessmentMessage({ message }: { message: Message }) {
   return (
     <View style={{ gap: 6 }}>
       <View style={uiStyles.row}>
-        <Icon
-          name="bar-chart-2"
-          color={message.mine ? C.mint : C.green}
-          size={18}
-        />
+        <Icon name="bar-chart-2" color={C.green} size={18} />
         <AppText variant="label" color={color}>
           Ulashilgan test natijasi
         </AppText>

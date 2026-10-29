@@ -131,7 +131,9 @@ export function StudentAttendanceScreen() {
     );
   return (
     <Screen lightTop top={<WorkspaceHeader title="Mening davomatim" back />}>
-      <Card style={{ backgroundColor: C.primarySoft, borderColor: "#D9D2FD" }}>
+      <Card
+        style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
+      >
         <AppText variant="caption" color={C.primary}>
           QATNASHUV NATIJASI
         </AppText>
@@ -234,15 +236,15 @@ export function StudentGroupScreen({
     today = Date.now();
   return (
     <Screen lightTop top={<WorkspaceHeader title="Mening guruhim" back />}>
-      <Card style={{ backgroundColor: C.navy, borderColor: C.navy }}>
+      <Card style={{ backgroundColor: C.action, borderColor: C.primaryBorder }}>
         <Chip label={group.subject} tone="purple" />
-        <AppText variant="title" color="white" localize={false}>
+        <AppText variant="title" color={C.navy} localize={false}>
           {group.title}
         </AppText>
-        <AppText color="#CCD7EF" localize={false}>
+        <AppText color={C.primary} localize={false}>
           {group.tutor}
         </AppText>
-        <AppText variant="caption" color="#CCD7EF">
+        <AppText variant="caption" color={C.primary}>
           {group.mode} · {group.location}
         </AppText>
       </Card>

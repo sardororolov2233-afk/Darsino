@@ -53,22 +53,22 @@ export function OpenLessonCard({ lesson }: { lesson: OpenLesson }) {
   const completed = !!data.completedLessons[lesson.id];
   return (
     <Card style={{ padding: 0, overflow: "hidden" }}>
-      <View style={[styles.cover, { backgroundColor: lesson.color }]}>
+      <View style={[styles.cover, { backgroundColor: C.action }]}>
         <View style={styles.coverTop}>
-          <AppText variant="caption" color="white">
+          <AppText variant="caption" color={C.primary}>
             {lesson.subject.toLocaleUpperCase()}
           </AppText>
           <View style={styles.play}>
-            <Icon name="play" size={20} color={C.white} />
+            <Icon name="play" size={20} color={C.navy} />
           </View>
         </View>
         <AppText
-          color="white"
+          color={C.navy}
           style={{ fontFamily: font.extra, fontSize: 32, lineHeight: 42 }}
         >
           {lesson.icon}
         </AppText>
-        <AppText variant="caption" color="#FFFFFFDD">
+        <AppText variant="caption" color={C.primary}>
           {lesson.author} · {lesson.language}
         </AppText>
       </View>
@@ -135,7 +135,7 @@ export function ClubCard({ club }: { club: (typeof clubs)[number] }) {
   );
 }
 const styles = StyleSheet.create({
-  test: { borderColor: "#DDDFFB", backgroundColor: "#FDFDFF" },
+  test: { borderColor: C.primaryBorder, backgroundColor: "#FDFDFF" },
   emoji: {
     width: 48,
     height: 48,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#FFFFFF28",
+    backgroundColor: C.white,
     alignItems: "center",
     justifyContent: "center",
   },

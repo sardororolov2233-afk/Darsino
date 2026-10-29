@@ -128,17 +128,17 @@ export function TutorVerificationFields({
       <Card
         style={{
           backgroundColor: dark ? OB.card : C.background,
-          borderColor: dark ? "#FFFFFF25" : C.border,
+          borderColor: C.borderStrong,
         }}
       >
-        <AppText variant="heading" color={dark ? "white" : C.ink}>
+        <AppText variant="heading" color={C.ink}>
           Sertifikat (majburiy)
         </AppText>
         <AppText variant="caption" color={dark ? OB.muted : C.muted}>
           PDF, JPG, PNG yoki WebP · 10 MB gacha
         </AppText>
         {asset || value.certificateFileId ? (
-          <AppText color={dark ? C.mint : C.green} localize={false}>
+          <AppText color={C.green} localize={false}>
             {asset?.originalName || "Sertifikat yuklandi"}
           </AppText>
         ) : null}

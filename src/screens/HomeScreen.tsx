@@ -29,7 +29,7 @@ const subjects = [
     name: "Matematika",
     subject: "Matematika",
     icon: "triangle" as const,
-    color: "#EFEDFF",
+    color: C.primarySoft,
   },
   { name: "Fizika", subject: "Fizika", icon: "zap" as const, color: "#FFF4DD" },
   {
@@ -48,7 +48,7 @@ const subjects = [
     name: "Dasturlash",
     subject: "IT",
     icon: "code" as const,
-    color: "#F0EDFF",
+    color: C.primarySoft,
   },
   { name: "Tarix", subject: "Tarix", icon: "book" as const, color: "#FFF0F1" },
 ];
@@ -80,8 +80,8 @@ export function HomeScreen() {
       </View>
       <Card
         style={{
-          backgroundColor: C.navy,
-          borderColor: C.navy,
+          backgroundColor: C.action,
+          borderColor: C.primaryBorder,
           padding: 22,
           gap: 12,
           overflow: "hidden",
@@ -97,26 +97,26 @@ export function HomeScreen() {
             height: 180,
             borderRadius: 90,
             borderWidth: 26,
-            borderColor: "#FFFFFF08",
+            borderColor: "#2668460B",
           }}
         />
         <View style={uiStyles.between}>
           <View style={uiStyles.row}>
-            <Icon name="target" color={C.mint} size={18} />
-            <AppText variant="caption" color="#D3DDF4">
+            <Icon name="target" color={C.primary} size={18} />
+            <AppText variant="caption" color={C.primary}>
               MENING MAQSADIM
             </AppText>
           </View>
           <Chip label={user.studyMode || "Ta’lim"} tone="purple" />
         </View>
-        <AppText variant="display" color="white">
+        <AppText variant="display" color={C.navy}>
           {user.goal || "Maqsadingizni belgilang"}
         </AppText>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-          <AppText variant="caption" color="#D3DDF4">
+          <AppText variant="caption" color={C.primary}>
             {user.interests.join(" · ")}
           </AppText>
-          <AppText variant="caption" color="#D3DDF4">
+          <AppText variant="caption" color={C.primary}>
             {user.studySupport || user.area}
           </AppText>
         </View>
@@ -127,6 +127,7 @@ export function HomeScreen() {
               : "Maqsadimga mos ustoz topish"
           }
           icon="arrow-right"
+          variant="outline"
           onPress={() => {
             if (user.studySupport === "Mustaqil")
               navigation.navigate("Main", { screen: "Lessons" });
@@ -233,7 +234,9 @@ export function HomeScreen() {
           />
         </Card>
       )}
-      <Card style={{ backgroundColor: C.primarySoft, borderColor: "#DAD4FD" }}>
+      <Card
+        style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
+      >
         <View style={uiStyles.between}>
           <View style={{ flex: 1, gap: 5 }}>
             <AppText variant="heading">Bilim radari</AppText>
@@ -312,7 +315,7 @@ export function HomeScreen() {
           navigation.navigate("Main", { screen: "Search" });
         }}
         accessibilityLabel="Hududimdagi ustozlarni ko‘rish"
-        style={{ backgroundColor: C.primarySoft, borderColor: "#DAD4FD" }}
+        style={{ backgroundColor: C.primarySoft, borderColor: C.primaryBorder }}
       >
         <View style={uiStyles.row}>
           <Icon name="map-pin" color={C.primary} />
